@@ -165,6 +165,63 @@ function insertNewlineAtCursor(textarea) {
   textarea.dispatchEvent(new Event('input'));
 }
 
+/**
+ * Store last failed message for retry
+ */
+let lastFailedMessage = null;
+let lastFailedChatId = null;
+
+/**
+ * Show error message with retry button
+ * @param {string} errorMessage - Error message to display
+ * @param {string} message - Original message that failed
+ * @param {string} chatId - Chat ID context
+ */
+function showErrorWithRetry(errorMessage, message, chatId) {
+  const messagesContainer = document.getElementById('chatMessages');
+  if (!messagesContainer) return;
+
+  // Store for retry
+  lastFailedMessage = message;
+  lastFailedChatId = chatId;
+
+  // Create error element
+  const errorDiv = document.createElement('div');
+  errorDiv.className = 'message-error';
+  errorDiv.innerHTML = `
+    <div class="message-error-content">
+      <span class="message-error-icon">⚠</span>
+      <span class="message-error-text">${errorMessage}</span>
+      <button class="message-error-retry">重新发送</button>
+    </div>
+  `;
+
+  // Add retry handler
+  const retryBtn = errorDiv.querySelector('.message-error-retry');
+  retryBtn.addEventListener('click', () => {
+    errorDiv.remove();
+    retryMessage();
+  });
+
+  messagesContainer.appendChild(errorDiv);
+  scrollToBottom();
+}
+
+/**
+ * Retry the last failed message
+ */
+function retryMessage() {
+  if (!lastFailedMessage) {
+    showToast('No message to retry', 'error');
+    return;
+  }
+
+  showToast('Retrying message...', 'info');
+
+  // Trigger send with stored message and chat context
+  handleSendMessage(lastFailedMessage, lastFailedChatId);
+}
+
 // Save current chat state
 function saveState() {
   if (!currentChatId) return;
@@ -729,10 +786,15 @@ async function handleSendMessage(e) {
     const loadingIndicator = contentDiv.querySelector('.loading-indicator');
     if (loadingIndicator) loadingIndicator.remove();
 
-    const paragraph = document.createElement('p');
-    paragraph.textContent = `Error: ${error.message}`;
-    paragraph.style.color = '#c0392b';
-    contentDiv.appendChild(paragraph);
+    // Show error with retry button instead of just logging
+    showErrorWithRetry(
+      error.message || 'Network error - please retry',
+      message,
+      currentChatId
+    );
+
+    // Also show toast for visibility
+    showToast('Message failed - click retry to resend', 'error');
   } finally {
     isWaitingForResponse = false;
     saveState();
