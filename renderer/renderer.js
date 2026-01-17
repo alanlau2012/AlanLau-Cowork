@@ -118,6 +118,21 @@ function showToast(message, type = 'info', duration = 3000) {
   };
 }
 
+/**
+ * Auto-resize textarea based on content
+ * @param {HTMLTextAreaElement} textarea - The textarea to resize
+ */
+function autoResizeTextarea(textarea) {
+  // Reset height to get accurate scrollHeight
+  textarea.style.height = 'auto';
+
+  // Calculate new height (constrained by max-height in CSS)
+  const newHeight = Math.min(textarea.scrollHeight, 200);
+
+  // Apply new height
+  textarea.style.height = newHeight + 'px';
+}
+
 // Save current chat state
 function saveState() {
   if (!currentChatId) return;
@@ -300,12 +315,24 @@ function updateGreeting() {
 function setupEventListeners() {
   // Home form
   homeForm.addEventListener('submit', handleSendMessage);
-  homeInput.addEventListener('input', () => updateSendButton(homeInput, homeSendBtn));
+  homeInput.addEventListener('input', () => {
+    updateSendButton(homeInput, homeSendBtn);
+    autoResizeTextarea(homeInput);
+  });
+  homeInput.addEventListener('paste', () => {
+    setTimeout(() => autoResizeTextarea(homeInput), 0);
+  });
   homeInput.addEventListener('keydown', (e) => handleKeyPress(e, homeForm));
 
   // Chat form
   chatForm.addEventListener('submit', handleSendMessage);
-  messageInput.addEventListener('input', () => updateSendButton(messageInput, chatSendBtn));
+  messageInput.addEventListener('input', () => {
+    updateSendButton(messageInput, chatSendBtn);
+    autoResizeTextarea(messageInput);
+  });
+  messageInput.addEventListener('paste', () => {
+    setTimeout(() => autoResizeTextarea(messageInput), 0);
+  });
   messageInput.addEventListener('keydown', (e) => handleKeyPress(e, chatForm));
 
   // Sidebar toggle
@@ -407,9 +434,8 @@ function closeOtherDropdowns(currentDropdown) {
 function handleFileSelect(event, context) {
   const files = Array.from(event.target.files);
   files.forEach(file => {
-    // TODO: Replace alert() with showToast() - see renderer.js:411
     if (attachedFiles.length >= 5) {
-      alert('Maximum 5 files allowed');
+      showToast('Maximum 5 files allowed', 'error');
       return;
     }
 
@@ -1084,4 +1110,9 @@ function scrollToBottom() {
 }
 
 // Initialize on load
-window.addEventListener('load', init);
+window.addEventListener('load', () => {
+  init();
+  // Initial resize for textareas
+  autoResizeTextarea(homeInput);
+  autoResizeTextarea(messageInput);
+});
