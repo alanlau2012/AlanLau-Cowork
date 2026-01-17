@@ -54,21 +54,21 @@ function createWindow() {
 }
 
 // App lifecycle
-app.on('ready', () => {
+app.whenReady().then(() => {
   console.log('Electron app ready');
   createWindow();
+
+  app.on('activate', () => {
+    // On macOS, re-create window when dock icon is clicked
+    if (mainWindow === null) {
+      createWindow();
+    }
+  });
 });
 
 app.on('window-all-closed', () => {
   // On macOS, apps stay active until user explicitly quits
   if (process.platform !== 'darwin') {
     app.quit();
-  }
-});
-
-app.on('activate', () => {
-  // On macOS, re-create window when dock icon is clicked
-  if (mainWindow === null) {
-    createWindow();
   }
 });
