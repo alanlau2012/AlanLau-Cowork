@@ -133,6 +133,38 @@ function autoResizeTextarea(textarea) {
   textarea.style.height = newHeight + 'px';
 }
 
+/**
+ * Check if text has unclosed code block
+ * @param {string} text - Text to check
+ * @returns {boolean} - True if code block is unclosed
+ */
+function hasUnclosedCodeBlock(text) {
+  // Count occurrences of triple backticks
+  const backtickMatches = text.match(/```/g);
+  const count = backtickMatches ? backtickMatches.length : 0;
+
+  // Odd count means unclosed code block
+  return count % 2 !== 0;
+}
+
+/**
+ * Insert newline at cursor position
+ * @param {HTMLTextAreaElement} textarea - Target textarea
+ */
+function insertNewlineAtCursor(textarea) {
+  const start = textarea.selectionStart;
+  const end = textarea.selectionEnd;
+  const value = textarea.value;
+
+  textarea.value = value.substring(0, start) + '\n' + value.substring(end);
+
+  // Move cursor after newline
+  textarea.selectionStart = textarea.selectionEnd = start + 1;
+
+  // Trigger input event for auto-resize
+  textarea.dispatchEvent(new Event('input'));
+}
+
 // Save current chat state
 function saveState() {
   if (!currentChatId) return;
@@ -513,6 +545,21 @@ function updateSendButton(input, button) {
 // Handle key press
 function handleKeyPress(e, form) {
   if (e.key === 'Enter' && !e.shiftKey) {
+    // Get current input based on which view is active
+    const input = isFirstMessage ? homeInput : messageInput;
+
+    // Check for unclosed code block
+    if (hasUnclosedCodeBlock(input.value)) {
+      // Prevent send, insert newline instead
+      e.preventDefault();
+      insertNewlineAtCursor(input);
+
+      // Show hint to user
+      showToast('Code block not closed - Enter adds newline', 'info', 2000);
+      return;
+    }
+
+    // Normal send behavior
     e.preventDefault();
     form.dispatchEvent(new Event('submit'));
   }
