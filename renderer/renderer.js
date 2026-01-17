@@ -52,6 +52,72 @@ function generateId() {
   return 'chat_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
 }
 
+/**
+ * Show a toast notification
+ * @param {string} message - The message to display
+ * @param {string} type - 'success' | 'error' | 'info'
+ * @param {number} duration - Duration in ms (default: 3000)
+ */
+function showToast(message, type = 'info', duration = 3000) {
+  const container = document.getElementById('toast-container');
+  if (!container) {
+    console.error('Toast container not found');
+    return null;
+  }
+
+  // Create toast element
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+
+  // Create icon based on type
+  const icon = document.createElement('span');
+  icon.className = 'toast-icon';
+  switch (type) {
+    case 'success':
+      icon.innerHTML = '✓';
+      icon.style.color = '#10b981';
+      break;
+    case 'error':
+      icon.innerHTML = '✕';
+      icon.style.color = '#ef4444';
+      break;
+    case 'info':
+    default:
+      icon.innerHTML = 'ℹ';
+      icon.style.color = '#3b82f6';
+      break;
+  }
+
+  // Create message
+  const messageEl = document.createElement('span');
+  messageEl.className = 'toast-message';
+  messageEl.textContent = message;
+
+  // Assemble toast
+  toast.appendChild(icon);
+  toast.appendChild(messageEl);
+
+  // Add to container
+  container.appendChild(toast);
+
+  // Auto-remove after duration
+  const timeout = setTimeout(() => {
+    toast.classList.add('toast-out');
+    toast.addEventListener('animationend', () => {
+      toast.remove();
+    });
+  }, duration);
+
+  // Return function to manually dismiss
+  return () => {
+    clearTimeout(timeout);
+    toast.classList.add('toast-out');
+    toast.addEventListener('animationend', () => {
+      toast.remove();
+    });
+  };
+}
+
 // Save current chat state
 function saveState() {
   if (!currentChatId) return;
@@ -341,6 +407,7 @@ function closeOtherDropdowns(currentDropdown) {
 function handleFileSelect(event, context) {
   const files = Array.from(event.target.files);
   files.forEach(file => {
+    // TODO: Replace alert() with showToast() - see renderer.js:411
     if (attachedFiles.length >= 5) {
       alert('Maximum 5 files allowed');
       return;
