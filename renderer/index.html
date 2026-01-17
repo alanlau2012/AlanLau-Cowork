@@ -39,13 +39,12 @@
       <div class="input-container home-input">
         <form id="homeForm" class="input-form">
           <div class="input-wrapper">
-            <input
-              type="text"
+            <textarea
               id="homeInput"
-              class="message-input"
-              placeholder="Ask me anything "
-              autocomplete="off"
-            />
+              class="message-textarea"
+              placeholder="Ask me anything (Shift+Enter for new line)"
+              rows="1"
+            ></textarea>
             <div class="input-controls">
               <div class="left-controls">
                 <input type="file" id="homeFileInput" class="file-input-hidden" multiple />
@@ -106,6 +105,13 @@
           </div>
         </form>
       </div>
+
+      <!-- Temporary test buttons (remove after verification) -->
+      <div class="toast-test-buttons" style="padding: 20px; display: flex; gap: 10px;">
+        <button onclick="showToast('Success message!', 'success')">Test Success</button>
+        <button onclick="showToast('Error message!', 'error')">Test Error</button>
+        <button onclick="showToast('Info message!', 'info')">Test Info</button>
+      </div>
     </div>
 
     <!-- Chat View (shown when there are messages) -->
@@ -134,13 +140,12 @@
           <div class="input-container">
             <form id="chatForm" class="input-form">
               <div class="input-wrapper">
-                <input
-                  type="text"
+                <textarea
                   id="messageInput"
-                  class="message-input"
-                  placeholder="Reply..."
-                  autocomplete="off"
-                />
+                  class="message-textarea"
+                  placeholder="Reply... (Shift+Enter for new line)"
+                  rows="1"
+                ></textarea>
                 <div class="input-controls">
                   <div class="left-controls">
                     <input type="file" id="chatFileInput" class="file-input-hidden" multiple />
