@@ -19,6 +19,21 @@
           </svg>
           <span>New Chat</span>
         </button>
+        <!-- Theme Toggle Button -->
+        <button id="themeToggle" class="theme-toggle" aria-label="Toggle theme" title="切换主题">
+          <span class="theme-icon">🌙</span>
+        </button>
+      </div>
+      <!-- Chat Search -->
+      <div class="chat-search-container">
+        <input
+          type="text"
+          id="chatSearch"
+          class="chat-search-input"
+          placeholder="搜索聊天历史..."
+          aria-label="Search chat history"
+        />
+        <span class="search-icon">🔍</span>
       </div>
       <div class="chat-history-list" id="chatHistoryList">
         <!-- Chat history items will be added here -->
@@ -33,6 +48,31 @@
         <div class="greeting">
           <h1 class="greeting-text">Open Claude Cowork</h1>
           <p class="tagline">Powered by Claude Code and Composio</p>
+        </div>
+      </div>
+
+      <!-- Quick Start Templates -->
+      <div class="quick-start-templates" id="quickStartTemplates">
+        <div class="templates-header">
+          <h2>快速开始</h2>
+          <p>选择一个模板开始对话</p>
+        </div>
+        <div class="templates-grid">
+          <button class="template-card" data-template="code-review">
+            <div class="template-icon">🔍</div>
+            <div class="template-title">代码审查</div>
+            <div class="template-desc">审查代码质量并提供改进建议</div>
+          </button>
+          <button class="template-card" data-template="explain">
+            <div class="template-icon">💡</div>
+            <div class="template-title">概念解释</div>
+            <div class="template-desc">用简单语言解释技术概念</div>
+          </button>
+          <button class="template-card" data-template="debug">
+            <div class="template-icon">🐛</div>
+            <div class="template-title">调试助手</div>
+            <div class="template-desc">帮助分析和修复代码问题</div>
+          </button>
         </div>
       </div>
 
@@ -62,6 +102,13 @@
                 </button>
               </div>
               <div class="right-controls">
+                <!-- Stop Button (hidden by default) -->
+                <button type="button" class="stop-btn" id="homeStopBtn" style="display: none;">
+                  <svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                    <rect x="6" y="6" width="12" height="12" rx="2"></rect>
+                  </svg>
+                  <span>Stop</span>
+                </button>
                 <!-- Model Selector Dropdown -->
                 <div class="dropdown-container" id="homeModelDropdown">
                   <button type="button" class="model-selector">
@@ -73,7 +120,7 @@
                   <div class="dropdown-menu model-menu">
                     <div class="dropdown-item" data-value="claude-opus-4-5-20250514">
                       <div class="item-row">
-                        <span class="item-label">Opus 4.5</span>                      
+                        <span class="item-label">Opus 4.5</span>
                       </div>
                       <span class="item-desc">Most capable for complex work</span>
                     </div>
@@ -156,6 +203,13 @@
                     </button>
                   </div>
                   <div class="right-controls">
+                    <!-- Stop Button (hidden by default) -->
+                    <button type="button" class="stop-btn" id="chatStopBtn" style="display: none;">
+                      <svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                        <rect x="6" y="6" width="12" height="12" rx="2"></rect>
+                      </svg>
+                      <span>Stop</span>
+                    </button>
                     <!-- Model Selector Dropdown -->
                     <div class="dropdown-container" id="chatModelDropdown">
                       <button type="button" class="model-selector">

@@ -1,6 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=EB+Garamond:wght@400;500&display=swap');
 
 :root {
+  /* Light Theme (default) */
   --bg-cream: #f5f5f0;
   --bg-white: #ffffff;
   --text-primary: #1a1a1a;
@@ -12,6 +13,25 @@
   --user-bubble: #e8e8e3;
   --shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.04);
   --shadow-input: 0 4px 16px rgba(0, 0, 0, 0.06);
+  --bg-secondary: #f3f4f6;
+  --message-assistant: #f0f0f0;
+}
+
+/* Dark Theme */
+[data-theme="dark"] {
+  --bg-cream: #1a1a1a;
+  --bg-white: #1f2937;
+  --text-primary: #f9fafb;
+  --text-secondary: #d1d5db;
+  --text-tertiary: #9ca3af;
+  --border-light: #374151;
+  --accent-coral: #d4a574;
+  --accent-coral-dark: #c49060;
+  --user-bubble: #374151;
+  --shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-input: 0 4px 16px rgba(0, 0, 0, 0.4);
+  --bg-secondary: #111827;
+  --message-assistant: #2d3748;
 }
 
 * {
@@ -59,6 +79,8 @@ body {
 }
 
 .left-sidebar-header {
+  display: flex;
+  gap: 8px;
   padding: 16px;
   border-bottom: 1px solid var(--border-light);
 }
@@ -1680,4 +1702,307 @@ body {
 
 .message-error-retry:active {
   background: #b91c1c;
+}
+
+/* Stop Generation Button */
+.stop-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.stop-btn:hover {
+  background: #dc2626;
+}
+
+.stop-btn:active {
+  background: #b91c1c;
+  transform: scale(0.98);
+}
+
+.stop-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Quick Start Templates */
+.quick-start-templates {
+  padding: 40px 20px;
+  text-align: center;
+}
+
+.templates-header {
+  margin-bottom: 32px;
+}
+
+.templates-header h2 {
+  font-size: 24px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 8px 0;
+}
+
+.templates-header p {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0;
+}
+
+.templates-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.template-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.template-card:hover {
+  border-color: #c4917b;
+  box-shadow: 0 4px 12px rgba(196, 145, 123, 0.15);
+  transform: translateY(-2px);
+}
+
+.template-card:active {
+  transform: translateY(0);
+}
+
+.template-icon {
+  font-size: 32px;
+  margin-bottom: 12px;
+}
+
+.template-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 8px;
+}
+
+.template-desc {
+  font-size: 13px;
+  color: #6b7280;
+  line-height: 1.5;
+}
+
+.quick-start-templates.hidden {
+  display: none;
+}
+
+/* Enhanced Code Blocks */
+.code-wrapper {
+  position: relative;
+  margin: 12px 0;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #1e293b;
+}
+
+.code-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: #0f172a;
+  border-bottom: 1px solid #334155;
+}
+
+.lang-tag {
+  font-size: 12px;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.copy-btn {
+  padding: 4px 10px;
+  background: #334155;
+  color: #e2e8f0;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.copy-btn:hover {
+  background: #475569;
+}
+
+.copy-btn:active {
+  background: #64748b;
+}
+
+.copy-btn.copied {
+  background: #10b981;
+  color: white;
+}
+
+.code-wrapper pre {
+  margin: 0;
+  padding: 16px;
+  overflow-x: auto;
+  background: transparent;
+}
+
+.code-wrapper code {
+  font-family: 'Fira Code', 'Consolas', 'Monaco', monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #e2e8f0;
+}
+
+/* Chat Search */
+.chat-search-container {
+  padding: 12px 16px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.chat-search-input {
+  width: 100%;
+  padding: 10px 36px 10px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 14px;
+  background: #f9fafb;
+  transition: all 0.2s;
+}
+
+.chat-search-input:focus {
+  outline: none;
+  border-color: #c4917b;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(196, 145, 123, 0.1);
+}
+
+.chat-search-input::placeholder {
+  color: #9ca3af;
+}
+
+.search-icon {
+  position: absolute;
+  right: 28px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 14px;
+  pointer-events: none;
+}
+
+.chat-item.hidden-by-search {
+  display: none;
+}
+
+.no-search-results {
+  padding: 20px 16px;
+  text-align: center;
+  color: #9ca3af;
+  font-size: 14px;
+  display: none;
+}
+
+.no-search-results.visible {
+  display: block;
+}
+
+/* Time Group Labels */
+.time-group-label {
+  padding: 8px 16px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: #f9fafb;
+  border-top: 1px solid #e5e7eb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.time-group-label:first-child {
+  border-top: none;
+}
+
+/* Theme Toggle Button */
+.theme-toggle {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-tertiary, #f3f4f6);
+  border: 1px solid var(--border-light, #e5e5e0);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.theme-toggle:hover {
+  background: var(--border-light, #e5e5e0);
+}
+
+.theme-icon {
+  font-size: 18px;
+  transition: transform 0.3s;
+}
+
+/* Dark theme specific adjustments */
+[data-theme="dark"] .time-group-label {
+  background: #1f2937;
+  color: #9ca3af;
+  border-color: #374151;
+}
+
+[data-theme="dark"] .no-search-results {
+  color: #6b7280;
+}
+
+[data-theme="dark"] .chat-search-container {
+  border-color: #374151;
+}
+
+[data-theme="dark"] .chat-search-input {
+  background: #1f2937;
+  border-color: #374151;
+}
+
+[data-theme="dark"] .chat-search-input:focus {
+  background: #111827;
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.1);
+}
+
+[data-theme="dark"] .template-card {
+  background: #1f2937;
+  border-color: #374151;
+}
+
+[data-theme="dark"] .template-card:hover {
+  border-color: #d4a574;
+  box-shadow: 0 4px 12px rgba(212, 165, 116, 0.15);
+}
+
+[data-theme="dark"] .templates-header h2 {
+  color: #f9fafb;
+}
+
+[data-theme="dark"] .template-title {
+  color: #f9fafb;
 }

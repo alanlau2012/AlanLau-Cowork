@@ -6,11 +6,13 @@ const chatView = document.getElementById('chatView');
 const homeForm = document.getElementById('homeForm');
 const homeInput = document.getElementById('homeInput');
 const homeSendBtn = document.getElementById('homeSendBtn');
+const homeStopBtn = document.getElementById('homeStopBtn');
 
 // DOM Elements - Chat
 const chatForm = document.getElementById('chatForm');
 const messageInput = document.getElementById('messageInput');
 const chatSendBtn = document.getElementById('chatSendBtn');
+const chatStopBtn = document.getElementById('chatStopBtn');
 const chatMessages = document.getElementById('chatMessages');
 const chatTitle = document.getElementById('chatTitle');
 
@@ -34,6 +36,7 @@ let attachedFiles = [];
 let selectedModel = 'claude-sonnet-4-5-20250514';
 let thinkingMode = 'normal'; // 'normal' or 'extended'
 let isWaitingForResponse = false;
+let currentRequestId = null; // Track current request for abort
 
 // Multi-chat state
 let allChats = [];
@@ -41,10 +44,12 @@ let currentChatId = null;
 
 // Initialize
 function init() {
+  initializeTheme();
   updateGreeting();
   setupEventListeners();
   loadAllChats();
   renderChatHistory();
+  initializeSearch();
   homeInput.focus();
 }
 
@@ -324,6 +329,39 @@ function loadChat(chat) {
   localStorage.setItem('currentChatId', currentChatId);
 }
 
+/**
+ * Get time group label for a timestamp
+ * @param {number} timestamp - Unix timestamp in milliseconds
+ * @returns {string} - Time group label
+ */
+function getTimeGroupLabel(timestamp) {
+  const now = new Date();
+  const chatDate = new Date(timestamp);
+
+  // Reset time to midnight for comparison
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const chatDay = new Date(chatDate.getFullYear(), chatDate.getMonth(), chatDate.getDate());
+
+  // Calculate difference in days
+  const diffTime = today - chatDay;
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 0) {
+    return '今天';
+  } else if (diffDays === 1) {
+    return '昨天';
+  } else if (diffDays <= 7) {
+    return '近 7 天';
+  } else if (diffDays <= 30) {
+    return '近 30 天';
+  } else {
+    // Format as month/year
+    const month = chatDate.getMonth() + 1;
+    const year = chatDate.getFullYear();
+    return `${year}年${month}月`;
+  }
+}
+
 // Render chat history sidebar
 function renderChatHistory() {
   chatHistoryList.innerHTML = '';
@@ -336,14 +374,27 @@ function renderChatHistory() {
   // Sort by updated time (most recent first)
   const sortedChats = [...allChats].sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
 
+  let lastGroup = null;
+
   sortedChats.forEach(chat => {
+    // Add time group label if changed
+    const groupLabel = getTimeGroupLabel(chat.updatedAt || chat.createdAt || Date.now());
+    if (groupLabel !== lastGroup) {
+      const groupDiv = document.createElement('div');
+      groupDiv.className = 'time-group-label';
+      groupDiv.textContent = groupLabel;
+      chatHistoryList.appendChild(groupDiv);
+      lastGroup = groupLabel;
+    }
+
     const item = document.createElement('div');
-    item.className = 'chat-history-item' + (chat.id === currentChatId ? ' active' : '');
+    item.className = 'chat-item chat-history-item' + (chat.id === currentChatId ? ' active' : '');
+    item.dataset.chatId = chat.id;
     item.innerHTML = `
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
       </svg>
-      <span class="chat-title">${escapeHtml(chat.title || 'New chat')}</span>
+      <span class="chat-item-title">${escapeHtml(chat.title || 'New chat')}</span>
       <button class="delete-chat-btn" onclick="deleteChat('${chat.id}', event)" title="Delete">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -445,6 +496,331 @@ function setupEventListeners() {
   document.addEventListener('click', (e) => {
     if (!e.target.closest('.dropdown-container')) {
       document.querySelectorAll('.dropdown-container.open').forEach(d => d.classList.remove('open'));
+    }
+  });
+
+  // Stop button handlers
+  if (homeStopBtn) {
+    homeStopBtn.addEventListener('click', handleStopGeneration);
+  }
+  if (chatStopBtn) {
+    chatStopBtn.addEventListener('click', handleStopGeneration);
+  }
+
+  // Theme toggle handler
+  const themeToggle = document.getElementById('themeToggle');
+  if (themeToggle) {
+    themeToggle.addEventListener('click', toggleTheme);
+  }
+
+  // Quick start template handlers
+  document.querySelectorAll('.template-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const templateType = card.dataset.template;
+      loadTemplate(templateType);
+    });
+  });
+}
+
+/**
+ * Handle stop generation button click
+ */
+function handleStopGeneration() {
+  if (currentRequestId) {
+    console.log('Stopping generation:', currentRequestId);
+    window.electronAPI.abortRequest(currentRequestId);
+    showToast('Stopping generation...', 'info');
+    setGeneratingState(false);
+  }
+}
+
+/**
+ * Set generating state (show/hide stop button)
+ * @param {boolean} generating - Whether AI is generating
+ */
+function setGeneratingState(generating) {
+  if (generating) {
+    // Show stop buttons, hide send buttons
+    if (homeStopBtn) homeStopBtn.style.display = 'flex';
+    if (chatStopBtn) chatStopBtn.style.display = 'flex';
+    if (homeSendBtn) homeSendBtn.style.display = 'none';
+    if (chatSendBtn) chatSendBtn.style.display = 'none';
+
+    // Disable inputs while generating
+    homeInput.disabled = true;
+    messageInput.disabled = true;
+  } else {
+    // Show send buttons, hide stop buttons
+    if (homeStopBtn) homeStopBtn.style.display = 'none';
+    if (chatStopBtn) chatStopBtn.style.display = 'none';
+    if (homeSendBtn) homeSendBtn.style.display = 'flex';
+    if (chatSendBtn) chatSendBtn.style.display = 'flex';
+
+    // Re-enable inputs
+    homeInput.disabled = false;
+    messageInput.disabled = false;
+
+    // Focus appropriate input
+    if (!homeView.classList.contains('hidden')) {
+      homeInput.focus();
+    } else {
+      messageInput.focus();
+    }
+  }
+}
+
+/**
+ * Load a template into the input
+ * @param {string} templateType - The template type to load
+ */
+function loadTemplate(templateType) {
+  const templates = {
+    'code-review': '请帮我审查以下代码，分析其质量、可读性和潜在问题，并提供改进建议：\n\n[粘贴你的代码]',
+    'explain': '请用简单易懂的语言解释以下技术概念：\n\n[输入你想了解的概念]',
+    'debug': '我遇到了一个代码问题，请帮我分析和解决：\n\n[描述问题或粘贴错误信息]'
+  };
+
+  const prompt = templates[templateType];
+  if (!prompt) return;
+
+  // Populate input
+  const input = homeView.classList.contains('hidden') ? messageInput : homeInput;
+  input.value = prompt;
+  autoResizeTextarea(input);
+  input.focus();
+
+  // Hide templates
+  hideTemplates();
+
+  showToast('Template loaded - customize and send!', 'info', 2000);
+}
+
+/**
+ * Hide quick start templates
+ */
+function hideTemplates() {
+  const templates = document.getElementById('quickStartTemplates');
+  if (templates) {
+    templates.classList.add('hidden');
+  }
+}
+
+/**
+ * Show quick start templates (for new chat)
+ */
+function showTemplates() {
+  const templates = document.getElementById('quickStartTemplates');
+  if (templates) {
+    templates.classList.remove('hidden');
+  }
+}
+
+/**
+ * Theme Management
+ */
+const THEMES = {
+  LIGHT: 'light',
+  DARK: 'dark'
+};
+
+const THEME_STORAGE_KEY = 'app-theme';
+
+/**
+ * Get current theme
+ * @returns {string} Current theme
+ */
+function getCurrentTheme() {
+  return localStorage.getItem(THEME_STORAGE_KEY) || THEMES.LIGHT;
+}
+
+/**
+ * Set theme
+ * @param {string} theme - Theme to set
+ */
+function setTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  localStorage.setItem(THEME_STORAGE_KEY, theme);
+
+  // Update theme toggle icon
+  const themeIcon = document.querySelector('.theme-icon');
+  if (themeIcon) {
+    themeIcon.textContent = theme === THEMES.DARK ? '☀️' : '🌙';
+  }
+}
+
+/**
+ * Toggle theme
+ */
+function toggleTheme() {
+  const currentTheme = getCurrentTheme();
+  const newTheme = currentTheme === THEMES.LIGHT ? THEMES.DARK : THEMES.LIGHT;
+  setTheme(newTheme);
+  showToast(`${newTheme === THEMES.DARK ? 'Dark' : 'Light'} theme enabled`, 'info', 1500);
+}
+
+/**
+ * Initialize theme
+ */
+function initializeTheme() {
+  const theme = getCurrentTheme();
+  setTheme(theme);
+}
+
+/**
+ * Enhance code blocks with language tags and copy buttons
+ * @param {HTMLElement} container - Container to process
+ */
+function enhanceCodeBlocks(container) {
+  // Find all code blocks
+  const codeBlocks = container.querySelectorAll('pre code');
+
+  codeBlocks.forEach((block) => {
+    // Skip if already enhanced
+    if (block.closest('.code-wrapper')) return;
+
+    // Extract language from class name (e.g., "language-javascript")
+    const className = block.className;
+    const langMatch = className.match(/language-(\w+)/);
+    const language = langMatch ? langMatch[1] : 'text';
+
+    // Create wrapper
+    const wrapper = document.createElement('div');
+    wrapper.className = 'code-wrapper';
+
+    // Create header
+    const header = document.createElement('div');
+    header.className = 'code-header';
+
+    // Add language tag
+    const langTag = document.createElement('span');
+    langTag.className = 'lang-tag';
+    langTag.textContent = language;
+
+    // Add copy button
+    const copyBtn = document.createElement('button');
+    copyBtn.className = 'copy-btn';
+    copyBtn.textContent = 'Copy';
+    copyBtn.setAttribute('aria-label', `Copy ${language} code`);
+
+    // Copy handler
+    copyBtn.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(block.textContent);
+        copyBtn.textContent = 'Copied!';
+        copyBtn.classList.add('copied');
+
+        // Show toast feedback
+        showToast('Code copied to clipboard', 'success', 1500);
+
+        // Reset button after 2 seconds
+        setTimeout(() => {
+          copyBtn.textContent = 'Copy';
+          copyBtn.classList.remove('copied');
+        }, 2000);
+      } catch (err) {
+        console.error('Copy failed:', err);
+        showToast('Failed to copy code', 'error');
+      }
+    });
+
+    // Assemble header
+    header.appendChild(langTag);
+    header.appendChild(copyBtn);
+
+    // Wrap the pre block
+    const preBlock = block.parentNode;
+    preBlock.parentNode.replaceChild(wrapper, preBlock);
+    wrapper.appendChild(header);
+    wrapper.appendChild(preBlock);
+  });
+}
+
+/**
+ * Debounce function to limit search frequency
+ * @param {Function} func - Function to debounce
+ * @param {number} wait - Wait time in ms
+ */
+function debounce(func, wait) {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+}
+
+/**
+ * Search chat history
+ * @param {string} query - Search query
+ */
+function searchChats(query) {
+  const chatList = document.getElementById('chatHistoryList');
+
+  // Get all chat items
+  const chatItems = chatList.querySelectorAll('.chat-item');
+
+  // Clear existing no-results message
+  const existingNoResults = chatList.querySelector('.no-search-results');
+  if (existingNoResults) {
+    existingNoResults.remove();
+  }
+
+  // Filter chats
+  const lowerQuery = query.toLowerCase().trim();
+  let visibleCount = 0;
+
+  chatItems.forEach(item => {
+    if (!lowerQuery) {
+      // Show all if query is empty
+      item.classList.remove('hidden-by-search');
+      visibleCount++;
+    } else {
+      // Search in chat title
+      const title = item.querySelector('.chat-item-title')?.textContent || '';
+      const searchText = title.toLowerCase();
+
+      if (searchText.includes(lowerQuery)) {
+        item.classList.remove('hidden-by-search');
+        visibleCount++;
+      } else {
+        item.classList.add('hidden-by-search');
+      }
+    }
+  });
+
+  // Show no results message
+  if (lowerQuery && visibleCount === 0) {
+    const noResultsEl = document.createElement('div');
+    noResultsEl.className = 'no-search-results visible';
+    noResultsEl.textContent = '没有匹配的聊天';
+    chatList.appendChild(noResultsEl);
+  }
+}
+
+/**
+ * Initialize search functionality
+ */
+function initializeSearch() {
+  const searchInput = document.getElementById('chatSearch');
+  if (!searchInput) return;
+
+  // Debounced search handler
+  const debouncedSearch = debounce((e) => {
+    searchChats(e.target.value);
+  }, 200);
+
+  // Attach event listener
+  searchInput.addEventListener('input', debouncedSearch);
+
+  // Clear search on Escape
+  searchInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      searchInput.value = '';
+      searchChats('');
+      searchInput.blur();
     }
   });
 }
@@ -655,8 +1031,14 @@ async function handleSendMessage(e) {
   updateSendButton(input, homeSendBtn);
   updateSendButton(messageInput, chatSendBtn);
 
+  // Hide templates when sending first message
+  hideTemplates();
+
   // Set loading state
   isWaitingForResponse = true;
+
+  // Set generating state (show stop button)
+  setGeneratingState(true);
 
   // Create assistant message with loading state
   const assistantMessage = createAssistantMessage();
@@ -665,6 +1047,10 @@ async function handleSendMessage(e) {
   try {
     // Pass chatId for session management
     const response = await window.electronAPI.sendMessage(message, currentChatId);
+
+    // Store request ID for abort
+    currentRequestId = response.requestId;
+
     const reader = await response.getReader();
     let buffer = '';
     let hasContent = false;
@@ -783,20 +1169,30 @@ async function handleSendMessage(e) {
     }
   } catch (error) {
     console.error('Error sending message:', error);
-    const loadingIndicator = contentDiv.querySelector('.loading-indicator');
-    if (loadingIndicator) loadingIndicator.remove();
 
-    // Show error with retry button instead of just logging
-    showErrorWithRetry(
-      error.message || 'Network error - please retry',
-      message,
-      currentChatId
-    );
+    // Check if it was aborted
+    if (error.message === 'Request aborted') {
+      showToast('Generation stopped', 'info');
+      // Remove the empty assistant message
+      assistantMessage.remove();
+    } else {
+      const loadingIndicator = contentDiv.querySelector('.loading-indicator');
+      if (loadingIndicator) loadingIndicator.remove();
 
-    // Also show toast for visibility
-    showToast('Message failed - click retry to resend', 'error');
+      // Show error with retry button instead of just logging
+      showErrorWithRetry(
+        error.message || 'Network error - please retry',
+        message,
+        currentChatId
+      );
+
+      // Also show toast for visibility
+      showToast('Message failed - click retry to resend', 'error');
+    }
   } finally {
     isWaitingForResponse = false;
+    currentRequestId = null;
+    setGeneratingState(false);
     saveState();
     updateSendButton(messageInput, chatSendBtn);
     messageInput.focus();
@@ -899,6 +1295,9 @@ window.startNewChat = function() {
   chatView.classList.add('hidden');
   homeInput.focus();
 
+  // Show quick start templates
+  showTemplates();
+
   // Clear currentChatId from localStorage
   localStorage.removeItem('currentChatId');
 
@@ -932,6 +1331,9 @@ function renderMarkdownContainer(container) {
   });
 
   container.innerHTML = marked.parse(rawContent);
+
+  // Enhance code blocks with copy buttons and language tags
+  enhanceCodeBlocks(container);
 }
 
 // Legacy function for restoring saved messages
@@ -951,6 +1353,9 @@ function renderMarkdown(contentDiv) {
   }
 
   markdownContainer.innerHTML = marked.parse(rawContent);
+
+  // Enhance code blocks with copy buttons and language tags
+  enhanceCodeBlocks(markdownContainer);
 }
 
 function formatToolPreview(toolInput) {
