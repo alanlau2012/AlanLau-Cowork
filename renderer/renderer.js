@@ -230,10 +230,6 @@ function retryMessage() {
 function saveState() {
   if (!currentChatId) return;
 
-  // #region agent log
-  fetch('http://127.0.0.1:7247/ingest/28778416-76fe-4385-9db2-6fb941fcdbc8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'renderer.js:saveState',message:'Saving state',data:{currentChatId,toolCallsLength:toolCalls.length,toolCallsPreview:toolCalls.slice(-3).map(t=>({id:t.id,name:t.name,status:t.status}))},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'SAVE'})}).catch(()=>{});
-  // #endregion
-
   const chatData = {
     id: currentChatId,
     title: chatTitle.textContent,
@@ -1172,6 +1168,10 @@ async function handleSendMessage(e) {
               if (apiId) {
                 pendingToolCalls.set(apiId, toolCall.id);
               }
+              // Handle TodoWrite tool (legacy support)
+              if (toolName === 'TodoWrite' && toolInput.todos) {
+                updateTodos(toolInput.todos);
+              }
               hasContent = true;
             } else if (data.type === 'tool_result' || data.type === 'result') {
               const result = data.result || data.content || data;
@@ -1256,10 +1256,6 @@ async function handleSendMessage(e) {
       showToast('Message failed - click retry to resend', 'error');
     }
   } finally {
-    // #region agent log
-    fetch('http://127.0.0.1:7247/ingest/28778416-76fe-4385-9db2-6fb941fcdbc8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'renderer.js:handleSendMessage:finally',message:'Stream ended, final save',data:{toolCallsLength:toolCalls.length},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'SAVE'})}).catch(()=>{});
-    // #endregion
-
     isWaitingForResponse = false;
     currentRequestId = null;
     setGeneratingState(false);
@@ -1516,11 +1512,10 @@ function addToolCall(name, input, status = 'running') {
   const toolCall = { id, name, input, status, result: null };
   toolCalls.push(toolCall);
 
-  // #region agent log
-  fetch('http://127.0.0.1:7247/ingest/28778416-76fe-4385-9db2-6fb941fcdbc8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'renderer.js:addToolCall',message:'Tool call added',data:{id,name,toolCallsLength:toolCalls.length},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'SAVE'})}).catch(()=>{});
-  // #endregion
-
   emptyTools.style.display = 'none';
+  
+  // Update Progress section
+  renderProgress();
 
   const toolDiv = document.createElement('div');
   toolDiv.className = 'tool-call-item expanded'; // Show expanded by default
@@ -1575,6 +1570,9 @@ function updateToolCallStatus(toolId, status) {
   if (toolCall) {
     toolCall.status = status;
   }
+  
+  // Update Progress section
+  renderProgress();
 }
 
 // Update tool call result
@@ -1603,39 +1601,79 @@ window.toggleToolCall = function(header) {
   toolDiv.classList.toggle('expanded');
 };
 
-// Update todos from TodoWrite
+// Update todos from TodoWrite (legacy, kept for compatibility)
 function updateTodos(newTodos) {
   todos = newTodos;
-  renderTodos();
 }
 
-// Render todos in sidebar
-function renderTodos() {
+// Extract short description from tool input
+function getToolDescription(name, input) {
+  if (!input) return '';
+  
+  // Common patterns for description extraction
+  if (input.description) return input.description;
+  if (input.command) {
+    // Truncate long commands
+    const cmd = input.command.split('\n')[0];
+    return cmd.length > 40 ? cmd.substring(0, 37) + '...' : cmd;
+  }
+  if (input.file_path) return input.file_path.split('/').pop();
+  if (input.path) return input.path.split('/').pop();
+  if (input.query) return input.query.substring(0, 40);
+  if (input.pattern) return input.pattern.substring(0, 40);
+  if (input.url) return input.url.substring(0, 40);
+  if (input.message) return input.message.substring(0, 40);
+  
+  return '';
+}
+
+// Render progress in sidebar (shows tool calls as steps)
+function renderProgress() {
   stepsList.innerHTML = '';
 
-  if (todos.length === 0) {
+  if (toolCalls.length === 0) {
     emptySteps.style.display = 'block';
     stepsCount.textContent = '0 steps';
     return;
   }
 
   emptySteps.style.display = 'none';
-  stepsCount.textContent = `${todos.length} steps`;
+  
+  // Count completed steps
+  const completed = toolCalls.filter(t => t.status === 'success').length;
+  const failed = toolCalls.filter(t => t.status === 'error').length;
+  const total = toolCalls.length;
+  
+  // Update header with statistics
+  if (failed > 0) {
+    stepsCount.textContent = `${completed}/${total} steps (${failed} failed)`;
+  } else {
+    stepsCount.textContent = `${completed}/${total} steps`;
+  }
 
-  todos.forEach((todo) => {
+  // Render each tool call as a step
+  toolCalls.forEach((tc) => {
     const stepDiv = document.createElement('div');
     stepDiv.className = 'step-item';
+    stepDiv.dataset.toolId = tc.id;
 
-    const statusIcon = todo.status === 'completed'
-      ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>'
-      : todo.status === 'in_progress'
-      ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle></svg>'
-      : '';
+    let statusIcon, statusClass;
+    if (tc.status === 'success') {
+      statusClass = 'completed';
+      statusIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+    } else if (tc.status === 'error') {
+      statusClass = 'error';
+      statusIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
+    } else {
+      statusClass = 'in_progress';
+      statusIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle></svg>';
+    }
 
-    const displayText = todo.status === 'in_progress' ? (todo.activeForm || todo.content) : todo.content;
+    const description = getToolDescription(tc.name, tc.input);
+    const displayText = description ? `${tc.name}: ${description}` : tc.name;
 
     stepDiv.innerHTML = `
-      <div class="step-status ${todo.status}">${statusIcon}</div>
+      <div class="step-status ${statusClass}">${statusIcon}</div>
       <div class="step-content">
         <div class="step-text">${escapeHtml(displayText)}</div>
       </div>

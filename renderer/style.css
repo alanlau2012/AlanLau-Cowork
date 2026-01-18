@@ -1211,6 +1211,11 @@ body {
   color: white;
 }
 
+.step-status.error {
+  background: #f87171;
+  color: white;
+}
+
 .step-status svg {
   width: 12px;
   height: 12px;
