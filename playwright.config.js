@@ -2,6 +2,8 @@ const { defineConfig } = require('@playwright/test');
 
 module.exports = defineConfig({
   testDir: './tests',
+  testMatch: ['**/*.spec.js'],
+  testIgnore: ['**/unit/**', '**/api/**'],
   timeout: 60000,
   fullyParallel: false,
   forbidOnly: !!process.env.CI,
