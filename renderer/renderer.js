@@ -135,6 +135,13 @@ function autoResizeTextarea(textarea) {
 
   // Apply new height
   textarea.style.height = newHeight + 'px';
+
+  // 检测内容是否溢出，控制滚动条显示
+  if (textarea.scrollHeight > newHeight) {
+    textarea.classList.add('has-scroll');
+  } else {
+    textarea.classList.remove('has-scroll');
+  }
 }
 
 /**

@@ -291,8 +291,10 @@ body {
   background: var(--bg-white);
   border-radius: 24px;
   box-shadow: var(--shadow-input);
-  overflow: visible;
+  overflow: hidden;
   position: relative;
+  /* 确保所有子元素都在容器内 */
+  contain: layout style;
 }
 
 .message-input {
@@ -314,7 +316,7 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 12px 12px;
+  padding: 8px 24px 12px;
 }
 
 .left-controls,
@@ -1653,26 +1655,65 @@ body {
   width: 100%;
   min-height: 44px;
   max-height: 200px;
-  padding: 12px 16px;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
+  padding: 20px 18px 12px 24px; /* 右侧 padding 减小，为滚动条留出空间 */
+  border: none;
+  border-radius: 0;
   resize: none;
   overflow-y: auto;
+  overflow-x: hidden;
   font-family: inherit;
-  font-size: 14px;
+  font-size: 16px;
   line-height: 1.5;
   box-sizing: border-box;
-  transition: border-color 0.2s;
+  background: transparent;
+  color: var(--text-primary);
+  transition: none;
+  /* 确保不会超出容器 */
+  max-width: 100%;
+  margin: 0;
+  /* 使用 scrollbar-gutter 预留空间，但默认不显示滚动条 */
+  scrollbar-gutter: stable;
 }
 
 .message-textarea:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border: none;
+  box-shadow: none;
 }
 
 .message-textarea::placeholder {
-  color: #9ca3af;
+  color: var(--text-tertiary);
+}
+
+/* Custom scrollbar for textarea - 默认隐藏，hover/focus 时显示 */
+.message-textarea::-webkit-scrollbar {
+  width: 6px;
+}
+
+.message-textarea::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.message-textarea::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 3px;
+  transition: background 0.2s ease;
+}
+
+/* 只在 hover 或 focus 时显示滚动条滑块 */
+.message-textarea:hover::-webkit-scrollbar-thumb,
+.message-textarea:focus::-webkit-scrollbar-thumb {
+  background: var(--border-light);
+}
+
+.message-textarea:hover::-webkit-scrollbar-thumb:hover,
+.message-textarea:focus::-webkit-scrollbar-thumb:hover {
+  background: var(--text-tertiary);
+}
+
+/* 如果内容溢出，即使不 hover 也显示滚动条（通过 JavaScript 添加类） */
+.message-textarea.has-scroll::-webkit-scrollbar-thumb {
+  background: var(--border-light);
 }
 
 /* ==================== ERROR MESSAGE WITH RETRY ==================== */
