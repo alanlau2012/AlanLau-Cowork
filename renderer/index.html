@@ -19,10 +19,6 @@
           </svg>
           <span>New Chat</span>
         </button>
-        <!-- Theme Toggle Button -->
-        <button id="themeToggle" class="theme-toggle" aria-label="Toggle theme" title="切换主题">
-          <span class="theme-icon">🌙</span>
-        </button>
       </div>
       <!-- Chat Search -->
       <div class="chat-search-container">
@@ -158,10 +154,9 @@
               <polyline points="6 9 12 15 18 9"></polyline>
             </svg>
           </button>
-          <button class="new-chat-btn" onclick="startNewChat()" title="New chat">
+          <button class="sidebar-expand-btn" id="sidebarExpandBtn" onclick="toggleSidebar()" title="展开侧边栏" style="display: none;">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <line x1="12" y1="5" x2="12" y2="19"></line>
-              <line x1="5" y1="12" x2="19" y2="12"></line>
+              <polyline points="9 18 15 12 9 6"></polyline>
             </svg>
           </button>
         </header>

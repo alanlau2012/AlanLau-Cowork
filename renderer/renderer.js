@@ -44,7 +44,6 @@ let currentChatId = null;
 
 // Initialize
 function init() {
-  initializeTheme();
   updateGreeting();
   setupEventListeners();
   loadAllChats();
@@ -230,6 +229,10 @@ function retryMessage() {
 // Save current chat state
 function saveState() {
   if (!currentChatId) return;
+
+  // #region agent log
+  fetch('http://127.0.0.1:7247/ingest/28778416-76fe-4385-9db2-6fb941fcdbc8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'renderer.js:saveState',message:'Saving state',data:{currentChatId,toolCallsLength:toolCalls.length,toolCallsPreview:toolCalls.slice(-3).map(t=>({id:t.id,name:t.name,status:t.status}))},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'SAVE'})}).catch(()=>{});
+  // #endregion
 
   const chatData = {
     id: currentChatId,
@@ -621,12 +624,6 @@ function setupEventListeners() {
     chatStopBtn.addEventListener('click', handleStopGeneration);
   }
 
-  // Theme toggle handler
-  const themeToggle = document.getElementById('themeToggle');
-  if (themeToggle) {
-    themeToggle.addEventListener('click', toggleTheme);
-  }
-
   // Quick start template handlers
   document.querySelectorAll('.template-card').forEach(card => {
     card.addEventListener('click', () => {
@@ -727,57 +724,6 @@ function showTemplates() {
   if (templates) {
     templates.classList.remove('hidden');
   }
-}
-
-/**
- * Theme Management
- */
-const THEMES = {
-  LIGHT: 'light',
-  DARK: 'dark'
-};
-
-const THEME_STORAGE_KEY = 'app-theme';
-
-/**
- * Get current theme
- * @returns {string} Current theme
- */
-function getCurrentTheme() {
-  return localStorage.getItem(THEME_STORAGE_KEY) || THEMES.LIGHT;
-}
-
-/**
- * Set theme
- * @param {string} theme - Theme to set
- */
-function setTheme(theme) {
-  document.documentElement.setAttribute('data-theme', theme);
-  localStorage.setItem(THEME_STORAGE_KEY, theme);
-
-  // Update theme toggle icon
-  const themeIcon = document.querySelector('.theme-icon');
-  if (themeIcon) {
-    themeIcon.textContent = theme === THEMES.DARK ? '☀️' : '🌙';
-  }
-}
-
-/**
- * Toggle theme
- */
-function toggleTheme() {
-  const currentTheme = getCurrentTheme();
-  const newTheme = currentTheme === THEMES.LIGHT ? THEMES.DARK : THEMES.LIGHT;
-  setTheme(newTheme);
-  showToast(`${newTheme === THEMES.DARK ? 'Dark' : 'Light'} theme enabled`, 'info', 1500);
-}
-
-/**
- * Initialize theme
- */
-function initializeTheme() {
-  const theme = getCurrentTheme();
-  setTheme(theme);
 }
 
 /**
@@ -1082,6 +1028,12 @@ window.removeAttachedFile = function(index, context) {
 // Toggle sidebar
 function toggleSidebar() {
   sidebar.classList.toggle('collapsed');
+  
+  // Show/hide expand button when sidebar is collapsed
+  const sidebarExpandBtn = document.getElementById('sidebarExpandBtn');
+  if (sidebarExpandBtn) {
+    sidebarExpandBtn.style.display = sidebar.classList.contains('collapsed') ? 'flex' : 'none';
+  }
 }
 
 // Update send button state
@@ -1304,6 +1256,10 @@ async function handleSendMessage(e) {
       showToast('Message failed - click retry to resend', 'error');
     }
   } finally {
+    // #region agent log
+    fetch('http://127.0.0.1:7247/ingest/28778416-76fe-4385-9db2-6fb941fcdbc8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'renderer.js:handleSendMessage:finally',message:'Stream ended, final save',data:{toolCallsLength:toolCalls.length},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'SAVE'})}).catch(()=>{});
+    // #endregion
+
     isWaitingForResponse = false;
     currentRequestId = null;
     setGeneratingState(false);
@@ -1559,6 +1515,10 @@ function addToolCall(name, input, status = 'running') {
   const id = 'tool_' + Date.now();
   const toolCall = { id, name, input, status, result: null };
   toolCalls.push(toolCall);
+
+  // #region agent log
+  fetch('http://127.0.0.1:7247/ingest/28778416-76fe-4385-9db2-6fb941fcdbc8',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'renderer.js:addToolCall',message:'Tool call added',data:{id,name,toolCallsLength:toolCalls.length},timestamp:Date.now(),sessionId:'debug-session',hypothesisId:'SAVE'})}).catch(()=>{});
+  // #endregion
 
   emptyTools.style.display = 'none';
 
