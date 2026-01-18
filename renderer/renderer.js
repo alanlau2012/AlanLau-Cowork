@@ -291,6 +291,8 @@ function loadChat(chat) {
 
   // Restore messages
   chatMessages.innerHTML = '';
+  let lastAssistantContentDiv = null;
+
   (chat.messages || []).forEach(msgData => {
     const messageDiv = document.createElement('div');
     messageDiv.className = msgData.class;
@@ -303,6 +305,7 @@ function loadChat(chat) {
       contentDiv.textContent = msgData.content;
     } else if (msgData.class.includes('assistant')) {
       renderMarkdown(contentDiv);
+      lastAssistantContentDiv = contentDiv;
     }
 
     messageDiv.appendChild(contentDiv);
@@ -324,9 +327,120 @@ function loadChat(chat) {
     chatMessages.appendChild(messageDiv);
   });
 
+  // Restore inline tool calls into the last assistant message
+  if (lastAssistantContentDiv && toolCalls.length > 0) {
+    toolCalls.forEach(tc => {
+      restoreInlineToolCall(lastAssistantContentDiv, tc);
+    });
+  }
+
+  // Restore sidebar tool calls display
+  renderSidebarToolCalls();
+
+  // Restore todos display
+  renderTodos();
+
   scrollToBottom();
   renderChatHistory();
   localStorage.setItem('currentChatId', currentChatId);
+}
+
+// Restore a single inline tool call (for loading saved chats)
+function restoreInlineToolCall(contentDiv, toolCall) {
+  const toolDiv = document.createElement('div');
+  toolDiv.className = 'inline-tool-call'; // Collapsed by default when restored
+  toolDiv.dataset.toolId = toolCall.id;
+
+  const inputPreview = formatToolPreview(toolCall.input);
+  const inputStr = JSON.stringify(toolCall.input, null, 2);
+  const resultStr = toolCall.result 
+    ? (typeof toolCall.result === 'object' ? JSON.stringify(toolCall.result, null, 2) : String(toolCall.result))
+    : '';
+  const truncatedResult = resultStr.substring(0, 2000) + (resultStr.length > 2000 ? '...' : '');
+
+  toolDiv.innerHTML = `
+    <div class="inline-tool-header" onclick="toggleInlineToolCall(this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
+      </svg>
+      <span class="tool-name">${toolCall.name}</span>
+      <span class="tool-preview">${inputPreview}</span>
+      <span class="tool-status-badge ${toolCall.status}">${toolCall.status === 'success' ? '✓' : toolCall.status === 'error' ? '✕' : '...'}</span>
+      <svg class="expand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="6 9 12 15 18 9"></polyline>
+      </svg>
+    </div>
+    <div class="inline-tool-result">
+      <div class="tool-section">
+        <div class="tool-section-label">Input</div>
+        <pre>${escapeHtml(inputStr)}</pre>
+      </div>
+      ${resultStr ? `
+      <div class="tool-section tool-output-section">
+        <div class="tool-section-label">Output</div>
+        <pre class="tool-output-content">${escapeHtml(truncatedResult)}</pre>
+      </div>
+      ` : ''}
+    </div>
+  `;
+
+  contentDiv.appendChild(toolDiv);
+}
+
+// Render sidebar tool calls from restored toolCalls array
+function renderSidebarToolCalls() {
+  toolCallsList.innerHTML = '';
+  
+  if (toolCalls.length === 0) {
+    emptyTools.style.display = 'block';
+    return;
+  }
+
+  emptyTools.style.display = 'none';
+
+  toolCalls.forEach(tc => {
+    const toolDiv = document.createElement('div');
+    toolDiv.className = 'tool-call-item';
+    toolDiv.dataset.toolId = tc.id;
+
+    const resultStr = tc.result 
+      ? (typeof tc.result === 'object' ? JSON.stringify(tc.result, null, 2) : String(tc.result))
+      : '';
+    const truncatedResult = resultStr.substring(0, 2000) + (resultStr.length > 2000 ? '...' : '');
+
+    toolDiv.innerHTML = `
+      <div class="tool-call-header" onclick="toggleToolCall(this)">
+        <div class="tool-call-icon ${tc.status}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
+          </svg>
+        </div>
+        <div class="tool-call-info">
+          <div class="tool-call-name">${tc.name}</div>
+          <div class="tool-call-status">${tc.status === 'success' ? 'Completed' : tc.status === 'error' ? 'Failed' : 'Running...'}</div>
+        </div>
+        <div class="tool-call-expand">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </div>
+      </div>
+      <div class="tool-call-details">
+        <div class="tool-detail-section">
+          <div class="tool-detail-label">Input</div>
+          <pre>${escapeHtml(JSON.stringify(tc.input, null, 2))}</pre>
+        </div>
+        ${resultStr ? `
+        <div class="tool-detail-section tool-output-section">
+          <div class="tool-detail-label">Output</div>
+          <pre class="sidebar-tool-output">${escapeHtml(truncatedResult)}</pre>
+        </div>
+        ` : ''}
+      </div>
+    `;
+
+    toolCallsList.appendChild(toolDiv);
+  });
 }
 
 /**
@@ -575,9 +689,9 @@ function setGeneratingState(generating) {
  */
 function loadTemplate(templateType) {
   const templates = {
-    'code-review': '请帮我审查以下代码，分析其质量、可读性和潜在问题，并提供改进建议：\n\n[粘贴你的代码]',
-    'explain': '请用简单易懂的语言解释以下技术概念：\n\n[输入你想了解的概念]',
-    'debug': '我遇到了一个代码问题，请帮我分析和解决：\n\n[描述问题或粘贴错误信息]'
+    'folder-org': '请帮我整理文件夹结构。我需要你：\n1. 分析当前目录结构\n2. 识别冗余或重复文件\n3. 建议合理的目录组织方案\n\n[描述你的文件夹路径或当前问题]',
+    'data-analysis': '请帮我进行数据分析。我需要你：\n1. 读取和处理数据文件\n2. 统计关键指标\n3. 生成分析报告或可视化\n\n[描述你的数据源和分析需求]',
+    'batch-file': '请帮我批量处理文件。我需要你：\n1. 执行批量重命名操作\n2. 移动或复制文件到指定目录\n3. 按规则分类整理文件\n\n[描述批量处理的具体需求]'
   };
 
   const prompt = templates[templateType];
