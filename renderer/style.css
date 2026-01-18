@@ -350,28 +350,26 @@ body {
   height: 20px;
 }
 
-.model-selector {
-  display: flex;
-  align-items: center;
-  gap: 4px;
+/* Native Model Select */
+.model-select {
   padding: 8px 12px;
-  border: none;
-  background: transparent;
+  border: 1px solid var(--border-light);
+  background: var(--bg-white);
   border-radius: 8px;
-  cursor: pointer;
   font-family: inherit;
   font-size: 14px;
-  color: var(--text-secondary);
-  transition: background 0.15s;
+  color: var(--text-primary);
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.15s;
 }
 
-.model-selector:hover {
-  background: var(--bg-cream);
+.model-select:hover {
+  border-color: var(--text-tertiary);
 }
 
-.model-selector svg {
-  width: 16px;
-  height: 16px;
+.model-select:focus {
+  border-color: var(--accent-coral);
 }
 
 .send-btn {
@@ -445,128 +443,6 @@ body {
 .thinking-btn.active {
   color: var(--accent-coral);
   background: rgba(196, 145, 123, 0.15);
-}
-
-/* Dropdown Container */
-.dropdown-container {
-  position: relative;
-}
-
-/* Model Selector Button */
-.model-selector {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 8px 12px;
-  border: none;
-  background: transparent;
-  border-radius: 8px;
-  cursor: pointer;
-  font-family: inherit;
-  font-size: 14px;
-  color: var(--text-primary);
-  transition: background 0.15s;
-}
-
-.model-selector:hover {
-  background: var(--bg-cream);
-}
-
-.model-selector svg {
-  width: 16px;
-  height: 16px;
-  color: var(--text-tertiary);
-}
-
-/* Dropdown Menu */
-.dropdown-menu {
-  position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
-  min-width: 260px;
-  background: var(--bg-white);
-  border: 1px solid var(--border-light);
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-  padding: 8px;
-  opacity: 0;
-  visibility: hidden;
-  transform: translateY(-4px);
-  transition: opacity 0.15s, visibility 0.15s, transform 0.15s;
-  z-index: 1000;
-}
-
-.dropdown-container.open .dropdown-menu {
-  opacity: 1;
-  visibility: visible;
-  transform: translateY(0);
-}
-
-.dropdown-item {
-  display: flex;
-  flex-direction: column;
-  padding: 12px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: background 0.15s;
-}
-
-.dropdown-item:hover {
-  background: var(--bg-cream);
-}
-
-.dropdown-item .item-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.dropdown-item .item-label {
-  font-size: 15px;
-  font-weight: 500;
-  color: var(--text-primary);
-}
-
-.dropdown-item .item-desc {
-  font-size: 13px;
-  color: var(--text-tertiary);
-  margin-top: 2px;
-}
-
-.dropdown-item .check-icon {
-  width: 18px;
-  height: 18px;
-  color: var(--accent-coral);
-  display: none;
-}
-
-.dropdown-item.selected .check-icon {
-  display: block;
-}
-
-.dropdown-item .upgrade-badge {
-  font-size: 12px;
-  color: var(--accent-coral);
-  font-weight: 500;
-}
-
-.dropdown-divider {
-  height: 1px;
-  background: var(--border-light);
-  margin: 8px 0;
-}
-
-.dropdown-item.more-models {
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.dropdown-item.more-models svg {
-  width: 16px;
-  height: 16px;
-  color: var(--text-tertiary);
 }
 
 /* ==================== CHAT VIEW ==================== */

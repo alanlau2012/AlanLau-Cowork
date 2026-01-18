@@ -609,15 +609,8 @@ function setupEventListeners() {
   homeFileInput.addEventListener('change', (e) => handleFileSelect(e, 'home'));
   chatFileInput.addEventListener('change', (e) => handleFileSelect(e, 'chat'));
 
-  // Setup dropdowns
+  // Setup dropdowns (native select)
   setupDropdowns();
-
-  // Close dropdowns when clicking outside
-  document.addEventListener('click', (e) => {
-    if (!e.target.closest('.dropdown-container')) {
-      document.querySelectorAll('.dropdown-container.open').forEach(d => d.classList.remove('open'));
-    }
-  });
 
   // Stop button handlers
   if (homeStopBtn) {
@@ -906,57 +899,21 @@ function setupDropdowns() {
     });
   });
 
-  // Model selector dropdowns
-  ['homeModelDropdown', 'chatModelDropdown'].forEach(id => {
-    const dropdown = document.getElementById(id);
-    if (!dropdown) return;
+  // Model selector - native select elements
+  ['homeModelSelect', 'chatModelSelect'].forEach(id => {
+    const select = document.getElementById(id);
+    if (!select) return;
 
-    const btn = dropdown.querySelector('.model-selector');
-    const items = dropdown.querySelectorAll('.dropdown-item:not(.more-models)');
-
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      closeOtherDropdowns(dropdown);
-      dropdown.classList.toggle('open');
-    });
-
-    items.forEach(item => {
-      item.addEventListener('click', () => {
-        const value = item.dataset.value;
-        if (!value) return;
-
-        const label = item.querySelector('.item-label').textContent;
-        selectedModel = value;
-
-        // Update all model selectors
-        document.querySelectorAll('.model-selector .model-label').forEach(l => {
-          l.textContent = label;
-        });
-
-        // Update selected state and checkmarks
-        document.querySelectorAll('.model-menu .dropdown-item').forEach(i => {
-          const isSelected = i.dataset.value === value;
-          i.classList.toggle('selected', isSelected);
-
-          // Update checkmark visibility
-          const checkIcon = i.querySelector('.check-icon');
-          if (checkIcon) {
-            checkIcon.style.display = isSelected ? 'block' : 'none';
-          }
-        });
-
-        dropdown.classList.remove('open');
+    select.addEventListener('change', (e) => {
+      selectedModel = e.target.value;
+      // Sync both selects
+      document.querySelectorAll('.model-select').forEach(s => {
+        s.value = selectedModel;
       });
     });
   });
 }
 
-// Close other dropdowns
-function closeOtherDropdowns(currentDropdown) {
-  document.querySelectorAll('.dropdown-container.open').forEach(d => {
-    if (d !== currentDropdown) d.classList.remove('open');
-  });
-}
 
 // Handle file selection
 function handleFileSelect(event, context) {
