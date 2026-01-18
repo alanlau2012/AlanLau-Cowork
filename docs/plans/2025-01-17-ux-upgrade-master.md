@@ -16,12 +16,12 @@ This master plan coordinates 6 sub-development plans for incremental delivery:
 
 | Sub-Plan | File | Effort | Priority | Status |
 |----------|------|--------|----------|--------|
-| #1 反馈基础能力 | [2025-01-17-feedback-foundation.md](2025-01-17-feedback-foundation.md) | 2h | P0 | Pending |
-| #2 核心输入体验 | [2025-01-17-input-experience.md](2025-01-17-input-experience.md) | 5.5h | P0 | Pending |
-| #3 生成控制与启动 | [2025-01-17-generation-control.md](2025-01-17-generation-control.md) | 5.5h | P1 | Pending |
-| #4 开发者体验套件 | [2025-01-17-dev-experience.md](2025-01-17-dev-experience.md) | 7h | P1 | Pending |
-| #5 历史管理增强 | [2025-01-17-history-enhancement.md](2025-01-17-history-enhancement.md) | 6h | P2 | Pending |
-| #6 个性化与可访问性 | [2025-01-17-personalization.md](2025-01-17-personalization.md) | 12h | P3 | Pending |
+| #1 反馈基础能力 | [2025-01-17-feedback-foundation.md](2025-01-17-ux-upgrade-master/2025-01-17-feedback-foundation.md) | 2h | P0 | Pending |
+| #2 核心输入体验 | [2025-01-17-input-experience.md](2025-01-17-ux-upgrade-master/2025-01-17-input-experience.md) | 5.5h | P0 | Pending |
+| #3 生成控制与启动 | [2025-01-17-generation-control.md](2025-01-17-ux-upgrade-master/2025-01-17-generation-control.md) | 5.5h | P1 | Pending |
+| #4 开发者体验套件 | [2025-01-17-dev-experience.md](2025-01-17-ux-upgrade-master/2025-01-17-dev-experience.md) | 7h | P1 | Pending |
+| #5 历史管理增强 | [2025-01-17-history-enhancement.md](2025-01-17-ux-upgrade-master/2025-01-17-history-enhancement.md) | 6h | P2 | Pending |
+| #6 个性化与可访问性 | [2025-01-17-personalization.md](2025-01-17-ux-upgrade-master/2025-01-17-personalization.md) | 12h | P3 | Pending |
 
 ---
 
@@ -106,4 +106,4 @@ Execute sub-plans in dependency order. Each sub-plan is self-contained with:
 - Testing instructions
 - Commit messages
 
-Start with [2025-01-17-feedback-foundation.md](2025-01-17-feedback-foundation.md).
+Start with [2025-01-17-feedback-foundation.md](2025-01-17-ux-upgrade-master/2025-01-17-feedback-foundation.md).
