@@ -190,7 +190,9 @@ let lastFailedChatId = null;
  */
 function showErrorWithRetry(errorMessage, message, chatId) {
   const messagesContainer = document.getElementById('chatMessages');
-  if (!messagesContainer) return;
+  if (!messagesContainer) {
+    return;
+  }
 
   // Store for retry
   lastFailedMessage = message;
@@ -235,14 +237,19 @@ function retryMessage() {
 
 // Save current chat state
 function saveState() {
-  if (!currentChatId) return;
+  if (!currentChatId) {
+    return;
+  }
 
   const chatData = {
     id: currentChatId,
     title: chatTitle.textContent,
     messages: Array.from(chatMessages.children).map(msg => ({
       class: msg.className,
-      content: msg.querySelector('.message-content')?.dataset.rawContent || msg.querySelector('.message-content')?.textContent || ''
+      content:
+        msg.querySelector('.message-content')?.dataset.rawContent ||
+        msg.querySelector('.message-content')?.textContent ||
+        ''
     })),
     todos,
     toolCalls,
@@ -359,8 +366,10 @@ function restoreInlineToolCall(contentDiv, toolCall) {
 
   const inputPreview = formatToolPreview(toolCall.input);
   const inputStr = JSON.stringify(toolCall.input, null, 2);
-  const resultStr = toolCall.result 
-    ? (typeof toolCall.result === 'object' ? JSON.stringify(toolCall.result, null, 2) : String(toolCall.result))
+  const resultStr = toolCall.result
+    ? typeof toolCall.result === 'object'
+      ? JSON.stringify(toolCall.result, null, 2)
+      : String(toolCall.result)
     : '';
   const truncatedResult = resultStr.substring(0, 2000) + (resultStr.length > 2000 ? '...' : '');
 
@@ -381,12 +390,16 @@ function restoreInlineToolCall(contentDiv, toolCall) {
         <div class="tool-section-label">Input</div>
         <pre>${escapeHtml(inputStr)}</pre>
       </div>
-      ${resultStr ? `
+      ${
+        resultStr
+          ? `
       <div class="tool-section tool-output-section">
         <div class="tool-section-label">Output</div>
         <pre class="tool-output-content">${escapeHtml(truncatedResult)}</pre>
       </div>
-      ` : ''}
+      `
+          : ''
+      }
     </div>
   `;
 
@@ -396,7 +409,7 @@ function restoreInlineToolCall(contentDiv, toolCall) {
 // Render sidebar tool calls from restored toolCalls array
 function renderSidebarToolCalls() {
   toolCallsList.innerHTML = '';
-  
+
   if (toolCalls.length === 0) {
     emptyTools.style.display = 'block';
     return;
@@ -409,8 +422,10 @@ function renderSidebarToolCalls() {
     toolDiv.className = 'tool-call-item';
     toolDiv.dataset.toolId = tc.id;
 
-    const resultStr = tc.result 
-      ? (typeof tc.result === 'object' ? JSON.stringify(tc.result, null, 2) : String(tc.result))
+    const resultStr = tc.result
+      ? typeof tc.result === 'object'
+        ? JSON.stringify(tc.result, null, 2)
+        : String(tc.result)
       : '';
     const truncatedResult = resultStr.substring(0, 2000) + (resultStr.length > 2000 ? '...' : '');
 
@@ -436,12 +451,16 @@ function renderSidebarToolCalls() {
           <div class="tool-detail-label">Input</div>
           <pre>${escapeHtml(JSON.stringify(tc.input, null, 2))}</pre>
         </div>
-        ${resultStr ? `
+        ${
+          resultStr
+            ? `
         <div class="tool-detail-section tool-output-section">
           <div class="tool-detail-label">Output</div>
           <pre class="sidebar-tool-output">${escapeHtml(truncatedResult)}</pre>
         </div>
-        ` : ''}
+        `
+            : ''
+        }
       </div>
     `;
 
@@ -522,7 +541,7 @@ function renderChatHistory() {
         </svg>
       </button>
     `;
-    item.onclick = (e) => {
+    item.onclick = e => {
       if (!e.target.closest('.delete-chat-btn')) {
         switchToChat(chat.id);
       }
@@ -544,7 +563,7 @@ function switchToChat(chatId) {
 }
 
 // Delete a chat
-window.deleteChat = function(chatId, event) {
+window.deleteChat = function (chatId, event) {
   event.stopPropagation();
 
   allChats = allChats.filter(c => c.id !== chatId);
@@ -564,7 +583,7 @@ window.deleteChat = function(chatId, event) {
   }
 
   renderChatHistory();
-}
+};
 
 // Update greeting based on time of day
 function updateGreeting() {
@@ -582,7 +601,7 @@ function setupEventListeners() {
   homeInput.addEventListener('paste', () => {
     setTimeout(() => autoResizeTextarea(homeInput), 0);
   });
-  homeInput.addEventListener('keydown', (e) => handleKeyPress(e, homeForm));
+  homeInput.addEventListener('keydown', e => handleKeyPress(e, homeForm));
 
   // Chat form
   chatForm.addEventListener('submit', handleSendMessage);
@@ -593,7 +612,7 @@ function setupEventListeners() {
   messageInput.addEventListener('paste', () => {
     setTimeout(() => autoResizeTextarea(messageInput), 0);
   });
-  messageInput.addEventListener('keydown', (e) => handleKeyPress(e, chatForm));
+  messageInput.addEventListener('keydown', e => handleKeyPress(e, chatForm));
 
   // Sidebar toggle
   sidebarToggle.addEventListener('click', toggleSidebar);
@@ -606,8 +625,8 @@ function setupEventListeners() {
 
   homeAttachBtn.addEventListener('click', () => homeFileInput.click());
   chatAttachBtn.addEventListener('click', () => chatFileInput.click());
-  homeFileInput.addEventListener('change', (e) => handleFileSelect(e, 'home'));
-  chatFileInput.addEventListener('change', (e) => handleFileSelect(e, 'chat'));
+  homeFileInput.addEventListener('change', e => handleFileSelect(e, 'home'));
+  chatFileInput.addEventListener('change', e => handleFileSelect(e, 'chat'));
 
   // Setup dropdowns (native select)
   setupDropdowns();
@@ -648,20 +667,36 @@ function handleStopGeneration() {
 function setGeneratingState(generating) {
   if (generating) {
     // Show stop buttons, hide send buttons
-    if (homeStopBtn) homeStopBtn.style.display = 'flex';
-    if (chatStopBtn) chatStopBtn.style.display = 'flex';
-    if (homeSendBtn) homeSendBtn.style.display = 'none';
-    if (chatSendBtn) chatSendBtn.style.display = 'none';
+    if (homeStopBtn) {
+      homeStopBtn.style.display = 'flex';
+    }
+    if (chatStopBtn) {
+      chatStopBtn.style.display = 'flex';
+    }
+    if (homeSendBtn) {
+      homeSendBtn.style.display = 'none';
+    }
+    if (chatSendBtn) {
+      chatSendBtn.style.display = 'none';
+    }
 
     // Disable inputs while generating
     homeInput.disabled = true;
     messageInput.disabled = true;
   } else {
     // Show send buttons, hide stop buttons
-    if (homeStopBtn) homeStopBtn.style.display = 'none';
-    if (chatStopBtn) chatStopBtn.style.display = 'none';
-    if (homeSendBtn) homeSendBtn.style.display = 'flex';
-    if (chatSendBtn) chatSendBtn.style.display = 'flex';
+    if (homeStopBtn) {
+      homeStopBtn.style.display = 'none';
+    }
+    if (chatStopBtn) {
+      chatStopBtn.style.display = 'none';
+    }
+    if (homeSendBtn) {
+      homeSendBtn.style.display = 'flex';
+    }
+    if (chatSendBtn) {
+      chatSendBtn.style.display = 'flex';
+    }
 
     // Re-enable inputs
     homeInput.disabled = false;
@@ -682,13 +717,18 @@ function setGeneratingState(generating) {
  */
 function loadTemplate(templateType) {
   const templates = {
-    'folder-org': '请帮我整理文件夹结构。我需要你：\n1. 分析当前目录结构\n2. 识别冗余或重复文件\n3. 建议合理的目录组织方案\n\n[描述你的文件夹路径或当前问题]',
-    'data-analysis': '请帮我进行数据分析。我需要你：\n1. 读取和处理数据文件\n2. 统计关键指标\n3. 生成分析报告或可视化\n\n[描述你的数据源和分析需求]',
-    'batch-file': '请帮我批量处理文件。我需要你：\n1. 执行批量重命名操作\n2. 移动或复制文件到指定目录\n3. 按规则分类整理文件\n\n[描述批量处理的具体需求]'
+    'folder-org':
+      '请帮我整理文件夹结构。我需要你：\n1. 分析当前目录结构\n2. 识别冗余或重复文件\n3. 建议合理的目录组织方案\n\n[描述你的文件夹路径或当前问题]',
+    'data-analysis':
+      '请帮我进行数据分析。我需要你：\n1. 读取和处理数据文件\n2. 统计关键指标\n3. 生成分析报告或可视化\n\n[描述你的数据源和分析需求]',
+    'batch-file':
+      '请帮我批量处理文件。我需要你：\n1. 执行批量重命名操作\n2. 移动或复制文件到指定目录\n3. 按规则分类整理文件\n\n[描述批量处理的具体需求]'
   };
 
   const prompt = templates[templateType];
-  if (!prompt) return;
+  if (!prompt) {
+    return;
+  }
 
   // Populate input
   const input = homeView.classList.contains('hidden') ? messageInput : homeInput;
@@ -730,9 +770,11 @@ function enhanceCodeBlocks(container) {
   // Find all code blocks
   const codeBlocks = container.querySelectorAll('pre code');
 
-  codeBlocks.forEach((block) => {
+  codeBlocks.forEach(block => {
     // Skip if already enhanced
-    if (block.closest('.code-wrapper')) return;
+    if (block.closest('.code-wrapper')) {
+      return;
+    }
 
     // Extract language from class name (e.g., "language-javascript")
     const className = block.className;
@@ -861,10 +903,12 @@ function searchChats(query) {
  */
 function initializeSearch() {
   const searchInput = document.getElementById('chatSearch');
-  if (!searchInput) return;
+  if (!searchInput) {
+    return;
+  }
 
   // Debounced search handler
-  const debouncedSearch = debounce((e) => {
+  const debouncedSearch = debounce(e => {
     searchChats(e.target.value);
   }, 200);
 
@@ -872,7 +916,7 @@ function initializeSearch() {
   searchInput.addEventListener('input', debouncedSearch);
 
   // Clear search on Escape
-  searchInput.addEventListener('keydown', (e) => {
+  searchInput.addEventListener('keydown', e => {
     if (e.key === 'Escape') {
       searchInput.value = '';
       searchChats('');
@@ -886,9 +930,11 @@ function setupDropdowns() {
   // Thinking mode toggle buttons
   ['homeThinkingBtn', 'chatThinkingBtn'].forEach(id => {
     const btn = document.getElementById(id);
-    if (!btn) return;
+    if (!btn) {
+      return;
+    }
 
-    btn.addEventListener('click', (e) => {
+    btn.addEventListener('click', e => {
       e.stopPropagation();
       thinkingMode = thinkingMode === 'normal' ? 'extended' : 'normal';
 
@@ -902,9 +948,11 @@ function setupDropdowns() {
   // Model selector - native select elements
   ['homeModelSelect', 'chatModelSelect'].forEach(id => {
     const select = document.getElementById(id);
-    if (!select) return;
+    if (!select) {
+      return;
+    }
 
-    select.addEventListener('change', (e) => {
+    select.addEventListener('change', e => {
       selectedModel = e.target.value;
       // Sync both selects
       document.querySelectorAll('.model-select').forEach(s => {
@@ -913,7 +961,6 @@ function setupDropdowns() {
     });
   });
 }
-
 
 // Handle file selection
 function handleFileSelect(event, context) {
@@ -926,7 +973,7 @@ function handleFileSelect(event, context) {
 
     // Read file as base64 for images or text
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = e => {
       attachedFiles.push({
         name: file.name,
         type: file.type,
@@ -949,9 +996,10 @@ function handleFileSelect(event, context) {
 
 // Render attached files preview
 function renderAttachedFiles(context) {
-  const inputWrapper = context === 'home'
-    ? document.querySelector('#homeForm .input-wrapper')
-    : document.querySelector('#chatForm .input-wrapper');
+  const inputWrapper =
+    context === 'home'
+      ? document.querySelector('#homeForm .input-wrapper')
+      : document.querySelector('#chatForm .input-wrapper');
 
   let filesContainer = inputWrapper.querySelector('.attached-files');
   if (!filesContainer) {
@@ -960,7 +1008,9 @@ function renderAttachedFiles(context) {
     inputWrapper.insertBefore(filesContainer, inputWrapper.firstChild);
   }
 
-  filesContainer.innerHTML = attachedFiles.map((file, index) => `
+  filesContainer.innerHTML = attachedFiles
+    .map(
+      (file, index) => `
     <div class="attached-file">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
@@ -972,7 +1022,9 @@ function renderAttachedFiles(context) {
         <line x1="6" y1="6" x2="18" y2="18"></line>
       </svg>
     </div>
-  `).join('');
+  `
+    )
+    .join('');
 
   if (attachedFiles.length === 0) {
     filesContainer.remove();
@@ -980,15 +1032,15 @@ function renderAttachedFiles(context) {
 }
 
 // Remove attached file
-window.removeAttachedFile = function(index, context) {
+window.removeAttachedFile = function (index, context) {
   attachedFiles.splice(index, 1);
   renderAttachedFiles(context);
-}
+};
 
 // Toggle sidebar
 function toggleSidebar() {
   sidebar.classList.toggle('collapsed');
-  
+
   // Show/hide expand button when sidebar is collapsed
   const sidebarExpandBtn = document.getElementById('sidebarExpandBtn');
   if (sidebarExpandBtn) {
@@ -1083,6 +1135,7 @@ async function handleSendMessage(e) {
     let receivedStreamingText = false;
     const pendingToolCalls = new Map();
 
+    // eslint-disable-next-line no-constant-condition
     while (true) {
       const { done, value } = await reader.read();
 
@@ -1095,7 +1148,7 @@ async function handleSendMessage(e) {
         if (actionsDiv) {
           actionsDiv.classList.remove('hidden');
         }
-        for (const [apiId, localId] of pendingToolCalls) {
+        for (const [, localId] of pendingToolCalls) {
           updateToolCallStatus(localId, 'success');
         }
         break;
@@ -1118,7 +1171,9 @@ async function handleSendMessage(e) {
             } else if (data.type === 'text' && data.content) {
               if (!hasContent) {
                 const loadingIndicator = contentDiv.querySelector('.loading-indicator');
-                if (loadingIndicator) loadingIndicator.remove();
+                if (loadingIndicator) {
+                  loadingIndicator.remove();
+                }
               }
               hasContent = true;
               receivedStreamingText = true;
@@ -1152,7 +1207,9 @@ async function handleSendMessage(e) {
 
               if (!hasContent) {
                 const loadingIndicator = contentDiv.querySelector('.loading-indicator');
-                if (loadingIndicator) loadingIndicator.remove();
+                if (loadingIndicator) {
+                  loadingIndicator.remove();
+                }
               }
               hasContent = true;
             } else if (data.type === 'assistant' && data.message) {
@@ -1172,7 +1229,9 @@ async function handleSendMessage(e) {
                     if (!receivedStreamingText) {
                       if (!hasContent) {
                         const loadingIndicator = contentDiv.querySelector('.loading-indicator');
-                        if (loadingIndicator) loadingIndicator.remove();
+                        if (loadingIndicator) {
+                          loadingIndicator.remove();
+                        }
                       }
                       hasContent = true;
                       appendToContent(contentDiv, block.text);
@@ -1207,14 +1266,12 @@ async function handleSendMessage(e) {
       assistantMessage.remove();
     } else {
       const loadingIndicator = contentDiv.querySelector('.loading-indicator');
-      if (loadingIndicator) loadingIndicator.remove();
+      if (loadingIndicator) {
+        loadingIndicator.remove();
+      }
 
       // Show error with retry button instead of just logging
-      showErrorWithRetry(
-        error.message || 'Network error - please retry',
-        message,
-        currentChatId
-      );
+      showErrorWithRetry(error.message || 'Network error - please retry', message, currentChatId);
 
       // Also show toast for visibility
       showToast('Message failed - click retry to resend', 'error');
@@ -1296,7 +1353,7 @@ function appendToContent(contentDiv, content) {
 }
 
 // Start a new chat
-window.startNewChat = function() {
+window.startNewChat = function () {
   if (currentChatId && chatMessages.children.length > 0) {
     saveState();
   }
@@ -1333,7 +1390,7 @@ window.startNewChat = function() {
 
   // Update chat history display
   renderChatHistory();
-}
+};
 
 // Get or create the current markdown container for streaming
 function getCurrentMarkdownContainer(contentDiv) {
@@ -1394,9 +1451,19 @@ function formatToolPreview(toolInput) {
   }
 
   const keys = Object.keys(toolInput);
-  if (keys.length === 0) return '';
+  if (keys.length === 0) {
+    return '';
+  }
 
-  const previewKeys = ['pattern', 'command', 'file_path', 'path', 'query', 'content', 'description'];
+  const previewKeys = [
+    'pattern',
+    'command',
+    'file_path',
+    'path',
+    'query',
+    'content',
+    'description'
+  ];
   const key = previewKeys.find(k => toolInput[k]) || keys[0];
   const value = toolInput[key];
 
@@ -1457,15 +1524,17 @@ function updateInlineToolResult(toolId, result) {
     const outputSection = toolDiv.querySelector('.tool-output-section');
     const outputContent = toolDiv.querySelector('.tool-output-content');
     if (outputSection && outputContent) {
-      const resultStr = typeof result === 'object' ? JSON.stringify(result, null, 2) : String(result);
-      outputContent.textContent = resultStr.substring(0, 2000) + (resultStr.length > 2000 ? '...' : '');
+      const resultStr =
+        typeof result === 'object' ? JSON.stringify(result, null, 2) : String(result);
+      outputContent.textContent =
+        resultStr.substring(0, 2000) + (resultStr.length > 2000 ? '...' : '');
       outputSection.style.display = 'block';
     }
   }
 }
 
 // Toggle inline tool call expansion
-window.toggleInlineToolCall = function(header) {
+window.toggleInlineToolCall = function (header) {
   const toolDiv = header.closest('.inline-tool-call');
   toolDiv.classList.toggle('expanded');
 };
@@ -1477,7 +1546,7 @@ function addToolCall(name, input, status = 'running') {
   toolCalls.push(toolCall);
 
   emptyTools.style.display = 'none';
-  
+
   // Update Progress section
   renderProgress();
 
@@ -1526,7 +1595,8 @@ function updateToolCallStatus(toolId, status) {
     const statusText = toolDiv.querySelector('.tool-call-status');
 
     icon.className = `tool-call-icon ${status}`;
-    statusText.textContent = status === 'success' ? 'Completed' : status === 'error' ? 'Failed' : 'Running...';
+    statusText.textContent =
+      status === 'success' ? 'Completed' : status === 'error' ? 'Failed' : 'Running...';
   }
 
   // Update in state
@@ -1534,7 +1604,7 @@ function updateToolCallStatus(toolId, status) {
   if (toolCall) {
     toolCall.status = status;
   }
-  
+
   // Update Progress section
   renderProgress();
 }
@@ -1552,15 +1622,17 @@ function updateToolCallResult(toolId, result) {
     const outputSection = toolDiv.querySelector('.tool-output-section');
     const outputContent = toolDiv.querySelector('.sidebar-tool-output');
     if (outputSection && outputContent) {
-      const resultStr = typeof result === 'object' ? JSON.stringify(result, null, 2) : String(result);
-      outputContent.textContent = resultStr.substring(0, 2000) + (resultStr.length > 2000 ? '...' : '');
+      const resultStr =
+        typeof result === 'object' ? JSON.stringify(result, null, 2) : String(result);
+      outputContent.textContent =
+        resultStr.substring(0, 2000) + (resultStr.length > 2000 ? '...' : '');
       outputSection.style.display = 'block';
     }
   }
 }
 
 // Toggle tool call expansion in sidebar
-window.toggleToolCall = function(header) {
+window.toggleToolCall = function (header) {
   const toolDiv = header.closest('.tool-call-item');
   toolDiv.classList.toggle('expanded');
 };
@@ -1572,22 +1644,38 @@ function updateTodos(newTodos) {
 
 // Extract short description from tool input
 function getToolDescription(name, input) {
-  if (!input) return '';
-  
+  if (!input) {
+    return '';
+  }
+
   // Common patterns for description extraction
-  if (input.description) return input.description;
+  if (input.description) {
+    return input.description;
+  }
   if (input.command) {
     // Truncate long commands
     const cmd = input.command.split('\n')[0];
     return cmd.length > 40 ? cmd.substring(0, 37) + '...' : cmd;
   }
-  if (input.file_path) return input.file_path.split('/').pop();
-  if (input.path) return input.path.split('/').pop();
-  if (input.query) return input.query.substring(0, 40);
-  if (input.pattern) return input.pattern.substring(0, 40);
-  if (input.url) return input.url.substring(0, 40);
-  if (input.message) return input.message.substring(0, 40);
-  
+  if (input.file_path) {
+    return input.file_path.split('/').pop();
+  }
+  if (input.path) {
+    return input.path.split('/').pop();
+  }
+  if (input.query) {
+    return input.query.substring(0, 40);
+  }
+  if (input.pattern) {
+    return input.pattern.substring(0, 40);
+  }
+  if (input.url) {
+    return input.url.substring(0, 40);
+  }
+  if (input.message) {
+    return input.message.substring(0, 40);
+  }
+
   return '';
 }
 
@@ -1602,12 +1690,12 @@ function renderProgress() {
   }
 
   emptySteps.style.display = 'none';
-  
+
   // Count completed steps
   const completed = toolCalls.filter(t => t.status === 'success').length;
   const failed = toolCalls.filter(t => t.status === 'error').length;
   const total = toolCalls.length;
-  
+
   // Update header with statistics
   if (failed > 0) {
     stepsCount.textContent = `${completed}/${total} steps (${failed} failed)`;
@@ -1616,7 +1704,7 @@ function renderProgress() {
   }
 
   // Render each tool call as a step
-  toolCalls.forEach((tc) => {
+  toolCalls.forEach(tc => {
     const stepDiv = document.createElement('div');
     stepDiv.className = 'step-item';
     stepDiv.dataset.toolId = tc.id;
@@ -1624,13 +1712,16 @@ function renderProgress() {
     let statusIcon, statusClass;
     if (tc.status === 'success') {
       statusClass = 'completed';
-      statusIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+      statusIcon =
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>';
     } else if (tc.status === 'error') {
       statusClass = 'error';
-      statusIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
+      statusIcon =
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
     } else {
       statusClass = 'in_progress';
-      statusIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle></svg>';
+      statusIcon =
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle></svg>';
     }
 
     const description = getToolDescription(tc.name, tc.input);
@@ -1671,6 +1762,7 @@ function copyMessage(button) {
 window.copyMessage = copyMessage;
 
 // Get conversation history for context
+// eslint-disable-next-line no-unused-vars
 function getConversationHistory() {
   const messages = Array.from(chatMessages.children);
   const history = [];
@@ -1679,10 +1771,14 @@ function getConversationHistory() {
   for (let i = 0; i < messages.length - 1; i++) {
     const msg = messages[i];
     const contentDiv = msg.querySelector('.message-content');
-    if (!contentDiv) continue;
+    if (!contentDiv) {
+      continue;
+    }
 
     const content = contentDiv.dataset.rawContent || contentDiv.textContent || '';
-    if (!content.trim()) continue;
+    if (!content.trim()) {
+      continue;
+    }
 
     if (msg.classList.contains('user')) {
       history.push({ role: 'user', content });

@@ -1,4 +1,4 @@
-const { contextBridge, ipcRenderer } = require('electron');
+const { contextBridge } = require('electron');
 
 const SERVER_URL = 'http://localhost:3001';
 
@@ -13,7 +13,7 @@ function generateRequestId() {
 // Expose safe API to renderer process via contextBridge
 contextBridge.exposeInMainWorld('electronAPI', {
   // Abort a specific request
-  abortRequest: (requestId) => {
+  abortRequest: requestId => {
     const controller = activeRequests.get(requestId);
     if (controller) {
       console.log('[PRELOAD] Aborting request:', requestId);
@@ -65,7 +65,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
           // Return a custom object with methods to read the stream
           resolve({
             requestId,
-            getReader: async function() {
+            getReader: async function () {
               const reader = response.body.getReader();
               const decoder = new TextDecoder();
               return {

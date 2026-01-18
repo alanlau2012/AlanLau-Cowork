@@ -21,7 +21,7 @@ let mainWindow;
 function createWindow() {
   const preloadPath = path.join(__dirname, 'preload.js');
   const htmlPath = path.join(__dirname, 'renderer', 'index.html');
-  
+
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
