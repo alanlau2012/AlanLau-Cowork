@@ -1,0 +1,1532 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claude Cowork - 升级版原型</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=EB+Garamond:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* 保持当前珊瑚色/奶油色主题 */
+            --bg-cream: #f5f5f0;
+            --bg-white: #ffffff;
+            --bg-secondary: #fafaf8;
+            --bg-tertiary: #f0f0eb;
+            
+            /* 文字 */
+            --text-primary: #1a1a1a;
+            --text-secondary: #6b6b6b;
+            --text-tertiary: #9a9a9a;
+            
+            /* 边框 */
+            --border-light: #e5e5e0;
+            --border-default: #d5d5d0;
+            
+            /* 强调色 - 珊瑚色 */
+            --accent-coral: #c4917b;
+            --accent-coral-dark: #b5826c;
+            --accent-coral-light: rgba(196, 145, 123, 0.15);
+            
+            /* 状态色 */
+            --status-success: #4ade80;
+            --status-success-bg: rgba(74, 222, 128, 0.12);
+            --status-error: #ef4444;
+            --status-error-bg: rgba(239, 68, 68, 0.12);
+            --status-info: #5b8def;
+            --status-info-bg: rgba(91, 141, 239, 0.12);
+            --status-running: #c4917b;
+            --status-running-bg: rgba(196, 145, 123, 0.15);
+            
+            /* 用户气泡 */
+            --user-bubble: #e8e8e3;
+            
+            /* 阴影 */
+            --shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.04);
+            --shadow-input: 0 4px 16px rgba(0, 0, 0, 0.06);
+            --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.06);
+            
+            /* 圆角 */
+            --radius-sm: 6px;
+            --radius-md: 10px;
+            --radius-lg: 14px;
+            --radius-xl: 20px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-cream);
+            color: var(--text-primary);
+            height: 100vh;
+            overflow: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* 布局 */
+        .app-container {
+            display: flex;
+            height: 100vh;
+        }
+
+        /* ==================== 左侧边栏 ==================== */
+        .left-sidebar {
+            width: 260px;
+            min-width: 260px;
+            background: var(--bg-white);
+            border-right: 1px solid var(--border-light);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 16px;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .new-chat-btn {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            border: 1px solid var(--border-light);
+            background: var(--bg-white);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-primary);
+            transition: all 0.15s;
+        }
+
+        .new-chat-btn:hover {
+            background: var(--bg-cream);
+            border-color: var(--text-tertiary);
+        }
+
+        .new-chat-btn svg {
+            width: 18px;
+            height: 18px;
+            color: var(--text-secondary);
+        }
+
+        .theme-toggle {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-light);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 18px;
+        }
+
+        /* 任务分组 */
+        .task-section {
+            padding: 12px 8px;
+        }
+
+        .task-section-title {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 0 8px;
+            margin-bottom: 8px;
+        }
+
+        .task-list {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .task-item {
+            padding: 10px 12px;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all 0.15s;
+            border: 1px solid transparent;
+        }
+
+        .task-item:hover {
+            background: var(--bg-cream);
+        }
+
+        .task-item.active {
+            background: var(--bg-tertiary);
+            border-color: var(--border-light);
+        }
+
+        .task-item-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+
+        .task-status {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .task-status.running {
+            background: var(--accent-coral);
+            animation: pulse 2s infinite;
+        }
+
+        .task-status.completed {
+            background: var(--status-success);
+        }
+
+        .task-status.error {
+            background: var(--status-error);
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .task-title {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            flex: 1;
+        }
+
+        .task-meta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 11px;
+            color: var(--text-tertiary);
+        }
+
+        /* ==================== 主面板 ==================== */
+        .main-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        /* 任务头部 */
+        .main-header {
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--border-light);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--bg-white);
+        }
+
+        .task-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .task-info-title {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .task-info-meta {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .task-stats {
+            display: flex;
+            gap: 12px;
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px 14px;
+            background: var(--bg-tertiary);
+            border-radius: var(--radius-md);
+            min-width: 70px;
+        }
+
+        .stat-value {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .stat-label {
+            font-size: 10px;
+            color: var(--text-tertiary);
+            text-transform: uppercase;
+        }
+
+        /* ==================== 时间线容器 ==================== */
+        .timeline-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+            background: var(--bg-cream);
+        }
+
+        .timeline {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .timeline-step {
+            position: relative;
+            padding-left: 36px;
+        }
+
+        /* 连接线 */
+        .timeline-step::before {
+            content: '';
+            position: absolute;
+            left: 11px;
+            top: 28px;
+            bottom: -2px;
+            width: 2px;
+            background: var(--border-light);
+        }
+
+        .timeline-step:last-child::before {
+            display: none;
+        }
+
+        /* 步骤标记器 */
+        .step-marker {
+            position: absolute;
+            left: 0;
+            top: 6px;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--bg-white);
+            border: 2px solid var(--border-default);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1;
+        }
+
+        .step-marker svg {
+            width: 12px;
+            height: 12px;
+        }
+
+        .step-marker.user {
+            background: var(--user-bubble);
+            border-color: var(--border-default);
+            color: var(--text-secondary);
+        }
+
+        .step-marker.success {
+            background: var(--status-success-bg);
+            border-color: var(--status-success);
+            color: var(--status-success);
+        }
+
+        .step-marker.running {
+            background: var(--status-running-bg);
+            border-color: var(--accent-coral);
+            color: var(--accent-coral);
+            animation: pulse 2s infinite;
+        }
+
+        .step-marker.error {
+            background: var(--status-error-bg);
+            border-color: var(--status-error);
+            color: var(--status-error);
+        }
+
+        .step-marker.thinking {
+            background: var(--status-info-bg);
+            border-color: var(--status-info);
+            color: var(--status-info);
+        }
+
+        /* 步骤内容卡片 */
+        .step-content {
+            background: var(--bg-white);
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-lg);
+            margin-bottom: 12px;
+            overflow: hidden;
+            box-shadow: var(--shadow-soft);
+        }
+
+        .step-header {
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .step-header:hover {
+            background: var(--bg-tertiary);
+        }
+
+        .step-header-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+            min-width: 0;
+        }
+
+        /* 类型标签 */
+        .step-type {
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 4px 8px;
+            border-radius: var(--radius-sm);
+            flex-shrink: 0;
+        }
+
+        .step-type.user {
+            background: var(--user-bubble);
+            color: var(--text-secondary);
+        }
+
+        .step-type.thinking {
+            background: var(--status-info-bg);
+            color: var(--status-info);
+        }
+
+        .step-type.tool {
+            background: var(--accent-coral-light);
+            color: var(--accent-coral-dark);
+        }
+
+        .step-type.output {
+            background: var(--status-success-bg);
+            color: #22c55e;
+        }
+
+        .step-summary {
+            font-size: 13px;
+            color: var(--text-primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .step-header-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .step-time {
+            font-size: 11px;
+            color: var(--text-tertiary);
+        }
+
+        .expand-btn {
+            width: 24px;
+            height: 24px;
+            border-radius: var(--radius-sm);
+            border: none;
+            background: transparent;
+            color: var(--text-tertiary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s;
+        }
+
+        .expand-btn:hover {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .expand-btn svg {
+            width: 14px;
+            height: 14px;
+            transition: transform 0.2s;
+        }
+
+        .step-content.expanded .expand-btn svg {
+            transform: rotate(180deg);
+        }
+
+        /* 步骤详情 */
+        .step-body {
+            display: none;
+            padding: 0 16px 16px;
+        }
+
+        .step-content.expanded .step-body {
+            display: block;
+        }
+
+        .step-detail {
+            background: var(--bg-tertiary);
+            border-radius: var(--radius-md);
+            padding: 14px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            line-height: 1.6;
+            color: var(--text-secondary);
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        /* 工具调用卡片 */
+        .tool-card {
+            background: var(--bg-tertiary);
+            border-radius: var(--radius-md);
+            padding: 12px 14px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .tool-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: var(--radius-md);
+            background: var(--bg-white);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent-coral);
+            flex-shrink: 0;
+            border: 1px solid var(--border-light);
+        }
+
+        .tool-icon svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .tool-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .tool-name {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 2px;
+        }
+
+        .tool-path {
+            font-size: 12px;
+            color: var(--text-tertiary);
+            font-family: 'JetBrains Mono', monospace;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .tool-action {
+            padding: 6px 12px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-light);
+            background: var(--bg-white);
+            color: var(--text-secondary);
+            font-size: 11px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .tool-action:hover {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border-color: var(--border-default);
+        }
+
+        /* ==================== 输入区域 ==================== */
+        .input-section {
+            padding: 16px 24px 24px;
+            background: var(--bg-white);
+            border-top: 1px solid var(--border-light);
+        }
+
+        .input-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .input-wrapper {
+            background: var(--bg-white);
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-input);
+            overflow: visible;
+        }
+
+        .input-wrapper:focus-within {
+            border-color: var(--accent-coral);
+            box-shadow: 0 0 0 3px var(--accent-coral-light);
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 16px 20px 8px;
+            border: none;
+            outline: none;
+            font-family: inherit;
+            font-size: 15px;
+            background: transparent;
+            color: var(--text-primary);
+            resize: none;
+            min-height: 24px;
+            max-height: 120px;
+        }
+
+        .input-field::placeholder {
+            color: var(--text-tertiary);
+        }
+
+        .input-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px 12px;
+        }
+
+        .left-controls,
+        .right-controls {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .control-btn {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            background: transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            color: var(--text-tertiary);
+            transition: all 0.15s;
+        }
+
+        .control-btn:hover {
+            background: var(--bg-cream);
+            color: var(--text-secondary);
+        }
+
+        .control-btn svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .model-selector {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 8px 12px;
+            border: none;
+            background: transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .model-selector:hover {
+            background: var(--bg-cream);
+        }
+
+        .model-selector svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .send-btn {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            background: var(--accent-coral);
+            border-radius: 12px;
+            cursor: pointer;
+            color: white;
+            transition: all 0.15s;
+        }
+
+        .send-btn:hover {
+            background: var(--accent-coral-dark);
+        }
+
+        .send-btn.stop {
+            background: var(--status-error);
+        }
+
+        .send-btn svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        /* ==================== 右侧面板（带Tab） ==================== */
+        .right-panel {
+            width: 340px;
+            background: var(--bg-white);
+            border-left: 1px solid var(--border-light);
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Tab 导航 */
+        .panel-tabs {
+            display: flex;
+            padding: 12px 16px;
+            gap: 4px;
+            border-bottom: 1px solid var(--border-light);
+            background: var(--bg-secondary);
+        }
+
+        .panel-tab {
+            padding: 8px 14px;
+            border-radius: var(--radius-md);
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .panel-tab:hover {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        .panel-tab.active {
+            background: var(--bg-white);
+            color: var(--text-primary);
+            box-shadow: var(--shadow-soft);
+        }
+
+        /* Tab 内容 */
+        .panel-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+        }
+
+        .tab-pane {
+            display: none;
+        }
+
+        .tab-pane.active {
+            display: block;
+        }
+
+        /* 进度摘要 */
+        .progress-summary {
+            background: var(--bg-tertiary);
+            border-radius: var(--radius-lg);
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .progress-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .progress-title svg {
+            width: 14px;
+            height: 14px;
+            color: var(--accent-coral);
+        }
+
+        .progress-items {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .progress-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+        }
+
+        .progress-icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            flex-shrink: 0;
+        }
+
+        .progress-icon.success {
+            background: var(--status-success-bg);
+            color: var(--status-success);
+        }
+
+        .progress-icon.running {
+            background: var(--status-running-bg);
+            color: var(--accent-coral);
+        }
+
+        .progress-icon.pending {
+            background: var(--bg-white);
+            border: 1px solid var(--border-light);
+            color: var(--text-tertiary);
+        }
+
+        /* 工具调用列表 */
+        .tool-call-item {
+            background: var(--bg-tertiary);
+            border-radius: var(--radius-md);
+            margin-bottom: 8px;
+            overflow: hidden;
+        }
+
+        .tool-call-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .tool-call-header:hover {
+            background: var(--bg-cream);
+        }
+
+        .tool-call-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .tool-call-icon svg {
+            width: 12px;
+            height: 12px;
+        }
+
+        .tool-call-icon.running {
+            background: var(--status-running-bg);
+            color: var(--accent-coral);
+        }
+
+        .tool-call-icon.success {
+            background: var(--status-success-bg);
+            color: var(--status-success);
+        }
+
+        .tool-call-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .tool-call-name {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .tool-call-status {
+            font-size: 10px;
+            color: var(--text-tertiary);
+        }
+
+        /* 文件变更 */
+        .file-change-item {
+            background: var(--bg-tertiary);
+            border-radius: var(--radius-md);
+            margin-bottom: 8px;
+            overflow: hidden;
+        }
+
+        .file-change-header {
+            padding: 10px 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+        }
+
+        .file-change-header:hover {
+            background: var(--bg-cream);
+        }
+
+        .file-change-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .file-change-icon.added {
+            background: var(--status-success-bg);
+            color: var(--status-success);
+        }
+
+        .file-change-icon.modified {
+            background: rgba(251, 191, 36, 0.15);
+            color: #f59e0b;
+        }
+
+        .file-change-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .file-change-name {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .file-change-path {
+            font-size: 10px;
+            color: var(--text-tertiary);
+        }
+
+        .file-change-stats {
+            display: flex;
+            gap: 6px;
+            font-size: 11px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .stat-added {
+            color: var(--status-success);
+        }
+
+        .stat-removed {
+            color: var(--status-error);
+        }
+
+        /* 空状态 */
+        .empty-state {
+            text-align: center;
+            padding: 32px 16px;
+            color: var(--text-tertiary);
+            font-size: 13px;
+        }
+
+        /* 滚动条 */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-light);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-tertiary);
+        }
+
+        /* 动画 */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        /* 图标 */
+        .icon { width: 16px; height: 16px; }
+        .icon-sm { width: 14px; height: 14px; }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- 左侧边栏 -->
+        <aside class="left-sidebar">
+            <div class="sidebar-header">
+                <button class="new-chat-btn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    <span>New Chat</span>
+                </button>
+                <button class="theme-toggle">🌙</button>
+            </div>
+
+            <div class="task-section">
+                <div class="task-section-title">进行中</div>
+                <div class="task-list">
+                    <div class="task-item active">
+                        <div class="task-item-header">
+                            <div class="task-status running"></div>
+                            <div class="task-title">重构登录模块</div>
+                        </div>
+                        <div class="task-meta">
+                            <span>src/auth</span>
+                            <span>2 分钟前</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="task-section">
+                <div class="task-section-title">今天</div>
+                <div class="task-list">
+                    <div class="task-item">
+                        <div class="task-item-header">
+                            <div class="task-status completed"></div>
+                            <div class="task-title">添加暗色主题支持</div>
+                        </div>
+                        <div class="task-meta">
+                            <span>src/styles</span>
+                            <span>1 小时前</span>
+                        </div>
+                    </div>
+                    <div class="task-item">
+                        <div class="task-item-header">
+                            <div class="task-status error"></div>
+                            <div class="task-title">修复构建错误</div>
+                        </div>
+                        <div class="task-meta">
+                            <span>build</span>
+                            <span>3 小时前</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- 中间主面板 -->
+        <main class="main-panel">
+            <header class="main-header">
+                <div class="task-info">
+                    <div class="task-info-title">重构登录模块</div>
+                    <div class="task-info-meta">
+                        <span>📁 src/auth</span>
+                        <span style="color: var(--accent-coral);">● 执行中</span>
+                    </div>
+                </div>
+                <div class="task-stats">
+                    <div class="stat-item">
+                        <div class="stat-value">2:34</div>
+                        <div class="stat-label">耗时</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">$0.12</div>
+                        <div class="stat-label">费用</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">8</div>
+                        <div class="stat-label">步骤</div>
+                    </div>
+                </div>
+            </header>
+
+            <div class="timeline-container">
+                <div class="timeline">
+                    <!-- 用户输入 -->
+                    <div class="timeline-step fade-in">
+                        <div class="step-marker user">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                <circle cx="12" cy="7" r="4"/>
+                            </svg>
+                        </div>
+                        <div class="step-content">
+                            <div class="step-header">
+                                <div class="step-header-left">
+                                    <span class="step-type user">用户</span>
+                                    <span class="step-summary">帮我重构登录模块，使用更现代的认证方式，支持 OAuth 2.0</span>
+                                </div>
+                                <div class="step-header-right">
+                                    <span class="step-time">14:32:15</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 思考过程 -->
+                    <div class="timeline-step fade-in">
+                        <div class="step-marker thinking">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"/>
+                                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+                                <line x1="12" y1="17" x2="12.01" y2="17"/>
+                            </svg>
+                        </div>
+                        <div class="step-content expanded">
+                            <div class="step-header" onclick="toggleStep(this)">
+                                <div class="step-header-left">
+                                    <span class="step-type thinking">思考</span>
+                                    <span class="step-summary">分析当前登录模块结构...</span>
+                                </div>
+                                <div class="step-header-right">
+                                    <span class="step-time">3.2s</span>
+                                    <button class="expand-btn">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <polyline points="6 9 12 15 18 9"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="step-body">
+                                <div class="step-detail">我需要先了解当前登录模块的结构。让我查看 src/auth 目录下的文件...
+
+根据用户的需求，我需要：
+1. 分析现有的认证逻辑
+2. 设计 OAuth 2.0 集成方案
+3. 重构代码以支持多种认证方式
+4. 添加必要的配置选项
+
+首先，让我读取相关文件来了解当前的实现...</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 工具调用 - 读取文件 -->
+                    <div class="timeline-step fade-in">
+                        <div class="step-marker success">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"/>
+                            </svg>
+                        </div>
+                        <div class="step-content">
+                            <div class="step-header" onclick="toggleStep(this)">
+                                <div class="step-header-left">
+                                    <span class="step-type tool">Read</span>
+                                    <span class="step-summary">读取 auth/login.ts</span>
+                                </div>
+                                <div class="step-header-right">
+                                    <span class="step-time">0.8s</span>
+                                    <button class="expand-btn">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <polyline points="6 9 12 15 18 9"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="step-body">
+                                <div class="tool-card">
+                                    <div class="tool-icon">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                            <polyline points="14 2 14 8 20 8"/>
+                                        </svg>
+                                    </div>
+                                    <div class="tool-info">
+                                        <div class="tool-name">login.ts</div>
+                                        <div class="tool-path">src/auth/login.ts</div>
+                                    </div>
+                                    <button class="tool-action">查看文件</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 工具调用 - 创建文件 -->
+                    <div class="timeline-step fade-in">
+                        <div class="step-marker success">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"/>
+                            </svg>
+                        </div>
+                        <div class="step-content">
+                            <div class="step-header" onclick="toggleStep(this)">
+                                <div class="step-header-left">
+                                    <span class="step-type tool">Edit</span>
+                                    <span class="step-summary">创建 oauth-provider.ts</span>
+                                </div>
+                                <div class="step-header-right">
+                                    <span class="step-time">1.2s</span>
+                                    <button class="expand-btn">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <polyline points="6 9 12 15 18 9"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="step-body">
+                                <div class="tool-card">
+                                    <div class="tool-icon" style="color: var(--status-success);">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <line x1="12" y1="5" x2="12" y2="19"/>
+                                            <line x1="5" y1="12" x2="19" y2="12"/>
+                                        </svg>
+                                    </div>
+                                    <div class="tool-info">
+                                        <div class="tool-name">oauth-provider.ts</div>
+                                        <div class="tool-path">src/auth/oauth-provider.ts (新建)</div>
+                                    </div>
+                                    <button class="tool-action">查看 Diff</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 工具调用 - Bash -->
+                    <div class="timeline-step fade-in">
+                        <div class="step-marker success">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="20 6 9 17 4 12"/>
+                            </svg>
+                        </div>
+                        <div class="step-content expanded">
+                            <div class="step-header" onclick="toggleStep(this)">
+                                <div class="step-header-left">
+                                    <span class="step-type tool">Bash</span>
+                                    <span class="step-summary">npm install passport passport-oauth2</span>
+                                </div>
+                                <div class="step-header-right">
+                                    <span class="step-time">8.5s</span>
+                                    <button class="expand-btn">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <polyline points="6 9 12 15 18 9"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="step-body">
+                                <div class="step-detail">$ npm install passport passport-oauth2
+
+added 15 packages, and audited 892 packages in 8s
+
+found 0 vulnerabilities</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 当前执行中 -->
+                    <div class="timeline-step fade-in">
+                        <div class="step-marker running">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 2v4"/>
+                                <path d="M12 18v4"/>
+                                <path d="M4.93 4.93l2.83 2.83"/>
+                                <path d="M16.24 16.24l2.83 2.83"/>
+                            </svg>
+                        </div>
+                        <div class="step-content">
+                            <div class="step-header">
+                                <div class="step-header-left">
+                                    <span class="step-type tool">Edit</span>
+                                    <span class="step-summary">更新 auth-service.ts...</span>
+                                </div>
+                                <div class="step-header-right">
+                                    <span class="step-time" style="color: var(--accent-coral);">执行中...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 输入区域 -->
+            <div class="input-section">
+                <div class="input-container">
+                    <div class="input-wrapper">
+                        <textarea class="input-field" placeholder="输入指令继续任务，或按 Enter 发送..." rows="1"></textarea>
+                        <div class="input-controls">
+                            <div class="left-controls">
+                                <button class="control-btn" title="附件">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                                    </svg>
+                                </button>
+                                <button class="control-btn" title="深度思考">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="12" cy="12" r="10"></circle>
+                                        <polyline points="12 6 12 12 16 14"></polyline>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="right-controls">
+                                <button class="model-selector">
+                                    <span>Sonnet 4.5</span>
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <polyline points="6 9 12 15 18 9"></polyline>
+                                    </svg>
+                                </button>
+                                <button class="send-btn stop" title="停止执行">
+                                    <svg viewBox="0 0 24 24" fill="currentColor">
+                                        <rect x="6" y="6" width="12" height="12" rx="2"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- 右侧面板（带Tab） -->
+        <aside class="right-panel">
+            <div class="panel-tabs">
+                <button class="panel-tab active" onclick="switchTab('progress')">进度</button>
+                <button class="panel-tab" onclick="switchTab('tools')">工具调用</button>
+                <button class="panel-tab" onclick="switchTab('files')">文件变更</button>
+            </div>
+
+            <div class="panel-content">
+                <!-- 进度 Tab -->
+                <div class="tab-pane active" id="tab-progress">
+                    <div class="progress-summary">
+                        <div class="progress-title">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                                <polyline points="22 4 12 14.01 9 11.01"/>
+                            </svg>
+                            任务进度
+                        </div>
+                        <div class="progress-items">
+                            <div class="progress-item">
+                                <div class="progress-icon success">✓</div>
+                                <span>分析现有代码结构</span>
+                            </div>
+                            <div class="progress-item">
+                                <div class="progress-icon success">✓</div>
+                                <span>安装 OAuth 依赖</span>
+                            </div>
+                            <div class="progress-item">
+                                <div class="progress-icon running">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 10px; height: 10px; animation: spin 1s linear infinite;">
+                                        <path d="M12 2v4"/>
+                                        <path d="M12 18v4"/>
+                                    </svg>
+                                </div>
+                                <span style="color: var(--text-primary); font-weight: 500;">重构认证服务</span>
+                            </div>
+                            <div class="progress-item" style="opacity: 0.5;">
+                                <div class="progress-icon pending">○</div>
+                                <span>添加配置选项</span>
+                            </div>
+                            <div class="progress-item" style="opacity: 0.5;">
+                                <div class="progress-icon pending">○</div>
+                                <span>更新文档</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 工具调用 Tab -->
+                <div class="tab-pane" id="tab-tools">
+                    <div class="tool-call-item">
+                        <div class="tool-call-header">
+                            <div class="tool-call-icon success">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="20 6 9 17 4 12"/>
+                                </svg>
+                            </div>
+                            <div class="tool-call-info">
+                                <div class="tool-call-name">Read File</div>
+                                <div class="tool-call-status">login.ts · 完成</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tool-call-item">
+                        <div class="tool-call-header">
+                            <div class="tool-call-icon success">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="20 6 9 17 4 12"/>
+                                </svg>
+                            </div>
+                            <div class="tool-call-info">
+                                <div class="tool-call-name">Write File</div>
+                                <div class="tool-call-status">oauth-provider.ts · 完成</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tool-call-item">
+                        <div class="tool-call-header">
+                            <div class="tool-call-icon success">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="20 6 9 17 4 12"/>
+                                </svg>
+                            </div>
+                            <div class="tool-call-info">
+                                <div class="tool-call-name">Bash</div>
+                                <div class="tool-call-status">npm install · 完成</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tool-call-item">
+                        <div class="tool-call-header">
+                            <div class="tool-call-icon running">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation: spin 1s linear infinite;">
+                                    <path d="M12 2v4"/>
+                                    <path d="M12 18v4"/>
+                                </svg>
+                            </div>
+                            <div class="tool-call-info">
+                                <div class="tool-call-name">Edit File</div>
+                                <div class="tool-call-status">auth-service.ts · 执行中...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 文件变更 Tab -->
+                <div class="tab-pane" id="tab-files">
+                    <div class="file-change-item">
+                        <div class="file-change-header">
+                            <div class="file-change-icon added">+</div>
+                            <div class="file-change-info">
+                                <div class="file-change-name">oauth-provider.ts</div>
+                                <div class="file-change-path">src/auth/</div>
+                            </div>
+                            <div class="file-change-stats">
+                                <span class="stat-added">+87</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="file-change-item">
+                        <div class="file-change-header">
+                            <div class="file-change-icon modified">M</div>
+                            <div class="file-change-info">
+                                <div class="file-change-name">auth-service.ts</div>
+                                <div class="file-change-path">src/auth/</div>
+                            </div>
+                            <div class="file-change-stats">
+                                <span class="stat-added">+45</span>
+                                <span class="stat-removed">-12</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="file-change-item">
+                        <div class="file-change-header">
+                            <div class="file-change-icon modified">M</div>
+                            <div class="file-change-info">
+                                <div class="file-change-name">package.json</div>
+                                <div class="file-change-path">/</div>
+                            </div>
+                            <div class="file-change-stats">
+                                <span class="stat-added">+3</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="file-change-item">
+                        <div class="file-change-header">
+                            <div class="file-change-icon modified">M</div>
+                            <div class="file-change-info">
+                                <div class="file-change-name">login.ts</div>
+                                <div class="file-change-path">src/auth/</div>
+                            </div>
+                            <div class="file-change-stats">
+                                <span class="stat-added">+28</span>
+                                <span class="stat-removed">-5</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <script>
+        // Tab 切换
+        function switchTab(tabId) {
+            // 更新 Tab 按钮状态
+            document.querySelectorAll('.panel-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // 更新 Tab 内容
+            document.querySelectorAll('.tab-pane').forEach(pane => {
+                pane.classList.remove('active');
+            });
+            document.getElementById('tab-' + tabId).classList.add('active');
+        }
+
+        // 步骤折叠/展开
+        function toggleStep(header) {
+            const stepContent = header.closest('.step-content');
+            stepContent.classList.toggle('expanded');
+        }
+
+        // 自动调整输入框高度
+        const textarea = document.querySelector('.input-field');
+        textarea.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+        });
+
+        // 任务项切换
+        document.querySelectorAll('.task-item').forEach(item => {
+            item.addEventListener('click', function() {
+                document.querySelectorAll('.task-item').forEach(i => i.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+
+        // 添加 spin 动画
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes spin {
+                from { transform: rotate(0deg); }
+                to { transform: rotate(360deg); }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

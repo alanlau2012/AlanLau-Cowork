@@ -1,0 +1,64 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e2]:
+  - complementary [ref=e3]:
+    - generic [ref=e4]:
+      - button "New Chat" [ref=e5] [cursor=pointer]:
+        - img [ref=e6]
+        - generic [ref=e7]: New Chat
+      - button "Toggle theme" [ref=e8] [cursor=pointer]:
+        - generic [ref=e9]: 🌙
+    - generic [ref=e10]:
+      - textbox "Search chat history" [ref=e11]:
+        - /placeholder: 搜索聊天历史...
+      - generic: 🔍
+    - generic [ref=e12]:
+      - generic [ref=e13]: 今天
+      - generic [ref=e14] [cursor=pointer]:
+        - img [ref=e15]
+        - generic [ref=e17]: 请列出3个待办事项
+        - button "Delete" [ref=e18]:
+          - img [ref=e19]
+  - generic [ref=e23]:
+    - generic [ref=e24]:
+      - banner [ref=e25]:
+        - button "请列出3个待办事项" [ref=e26] [cursor=pointer]:
+          - generic [ref=e27]: 请列出3个待办事项
+          - img [ref=e28]
+        - button "New chat" [ref=e30] [cursor=pointer]:
+          - img [ref=e31]
+      - generic [ref=e32]:
+        - generic [ref=e34]: 请列出3个待办事项
+        - button "Copy" [ref=e37] [cursor=pointer]:
+          - img [ref=e38]
+      - generic [ref=e42]:
+        - generic [ref=e45]:
+          - textbox "Reply... (Shift+Enter for new line)" [active] [ref=e46]
+          - generic [ref=e47]:
+            - generic [ref=e48]:
+              - button "Attach file" [ref=e49] [cursor=pointer]:
+                - img [ref=e50]
+              - button "Extended thinking ⇧⌘E" [ref=e51] [cursor=pointer]:
+                - img [ref=e52]
+            - generic [ref=e55]:
+              - button "Sonnet 4.5" [ref=e57] [cursor=pointer]:
+                - generic [ref=e58]: Sonnet 4.5
+                - img [ref=e59]
+              - button [disabled] [ref=e61]:
+                - img [ref=e62]
+        - paragraph [ref=e64]: Claude is AI and can make mistakes. Please double-check responses.
+    - complementary [ref=e65]:
+      - generic [ref=e66]:
+        - heading "Progress" [level=3] [ref=e67]
+        - button "Toggle sidebar" [ref=e68] [cursor=pointer]:
+          - img [ref=e69]
+      - generic [ref=e71]:
+        - button "任务" [ref=e72] [cursor=pointer]
+        - button "活动" [ref=e73] [cursor=pointer]
+      - generic [ref=e75]:
+        - generic [ref=e76] [cursor=pointer]:
+          - img [ref=e77]
+          - generic [ref=e79]: 0 steps
+        - generic [ref=e81]: No active tasks
+```

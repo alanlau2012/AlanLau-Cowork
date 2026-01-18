@@ -4,7 +4,6 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 import { query } from '@anthropic-ai/claude-agent-sdk';
-import { Composio } from '@composio/core';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -14,10 +13,26 @@ dotenv.config({ path: path.join(__dirname, '..', '.env') });
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Initialize Composio
-const composio = new Composio();
-
+// Optional Composio initialization
+let composio = null;
 const composioSessions = new Map();
+
+// Try to initialize Composio if API key is available
+async function initComposio() {
+  if (process.env.COMPOSIO_API_KEY) {
+    try {
+      const { Composio } = await import('@composio/core');
+      composio = new Composio();
+      console.log('[COMPOSIO] Initialized successfully');
+    } catch (err) {
+      console.warn('[COMPOSIO] Failed to initialize:', err.message);
+    }
+  } else {
+    console.log('[COMPOSIO] No API key provided, running without Composio tools');
+  }
+}
+
+initComposio();
 
 const chatSessions = new Map();
 
@@ -43,17 +58,7 @@ app.post('/api/chat', async (req, res) => {
   res.flushHeaders();
 
   try {
-    // Get or create Composio session for this user
-    let composioSession = composioSessions.get(userId);
-    if (!composioSession) {
-      console.log('[COMPOSIO] Creating new session for user:', userId);
-      composioSession = await composio.create(userId);
-      composioSessions.set(userId, composioSession);
-      console.log('[COMPOSIO] Session created with MCP URL:', composioSession.mcp.url);
-    }
-
     // Check if we have an existing Claude session for this chat
-    console.log('[CHAT] All stored sessions:', Array.from(chatSessions.entries()));
     const existingSessionId = chatId ? chatSessions.get(chatId) : null;
     console.log('[CHAT] Existing session ID for', chatId, ':', existingSessionId || 'none (new chat)');
 
@@ -61,15 +66,26 @@ app.post('/api/chat', async (req, res) => {
     const queryOptions = {
       allowedTools: ['Read', 'Write', 'Edit', 'Bash', 'Glob', 'Grep', 'WebSearch', 'WebFetch', 'TodoWrite'],
       maxTurns: 20,
-      mcpServers: {
+      permissionMode: 'bypassPermissions'
+    };
+
+    // Add Composio MCP server if available
+    if (composio) {
+      let composioSession = composioSessions.get(userId);
+      if (!composioSession) {
+        console.log('[COMPOSIO] Creating new session for user:', userId);
+        composioSession = await composio.create(userId);
+        composioSessions.set(userId, composioSession);
+        console.log('[COMPOSIO] Session created with MCP URL:', composioSession.mcp.url);
+      }
+      queryOptions.mcpServers = {
         composio: {
           type: 'http',
           url: composioSession.mcp.url,
           headers: composioSession.mcp.headers
         }
-      },
-      permissionMode: 'bypassPermissions'
-    };
+      };
+    }
 
     // If we have an existing session, resume it
     if (existingSessionId) {
@@ -84,21 +100,12 @@ app.post('/api/chat', async (req, res) => {
       prompt: message,
       options: queryOptions
     })) {
-      // Debug: log all system messages to find session_id
-      if (chunk.type === 'system') {
-        console.log('[CHAT] System message:', JSON.stringify(chunk, null, 2));
-      }
-
       // Capture session ID from system init message
-      // Try multiple possible locations for session_id
       if (chunk.type === 'system' && chunk.subtype === 'init') {
         const newSessionId = chunk.session_id || chunk.data?.session_id || chunk.sessionId;
         if (newSessionId && chatId) {
           chatSessions.set(chatId, newSessionId);
           console.log('[CHAT] Session ID captured:', newSessionId);
-          console.log('[CHAT] Total sessions stored:', chatSessions.size);
-        } else {
-          console.log('[CHAT] No session_id found in init message');
         }
         // Send session ID to frontend
         if (newSessionId) {
