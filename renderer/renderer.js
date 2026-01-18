@@ -343,8 +343,8 @@ function loadChat(chat) {
   // Restore sidebar tool calls display
   renderSidebarToolCalls();
 
-  // Restore todos display
-  renderTodos();
+  // Restore progress display
+  renderProgress();
 
   scrollToBottom();
   renderChatHistory();
