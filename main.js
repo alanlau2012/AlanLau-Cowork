@@ -1,4 +1,4 @@
-const { app, BrowserWindow, shell, ipcMain } = require('electron');
+const { app, BrowserWindow, shell, ipcMain, Menu } = require('electron');
 const path = require('path');
 const { spawn } = require('child_process');
 const Store = require('electron-store');
@@ -104,7 +104,7 @@ const store = new Store({
 // Ensure only one default model
 function ensureSingleDefault(models) {
   let foundDefault = false;
-  return models.map((m, index) => {
+  return models.map(m => {
     const isDefault = m.default && !foundDefault;
     if (m.default && !foundDefault) {
       foundDefault = true;
@@ -161,6 +161,7 @@ function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
+    title: 'GTS Cowork',
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -195,6 +196,9 @@ function createWindow() {
 // App lifecycle
 app.whenReady().then(() => {
   console.log('Electron app ready');
+
+  // Remove default menu bar (File, Edit, View, etc.)
+  Menu.setApplicationMenu(null);
 
   // Start backend server (only in packaged mode or if not using concurrently)
   if (app.isPackaged) {

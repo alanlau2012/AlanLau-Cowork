@@ -293,7 +293,7 @@ test.describe('聊天视图 UI 测试', () => {
     // 验证加载指示器出现
     const loadingIndicator = window.locator('.loading-indicator');
     // 可能很快消失，所以只检查是否存在
-    const wasVisible = await loadingIndicator.isVisible().catch(() => false);
+    await loadingIndicator.isVisible().catch(() => false);
     // 不强制要求，因为加载可能很快
   });
 

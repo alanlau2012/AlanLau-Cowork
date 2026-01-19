@@ -3,7 +3,7 @@
  * Tests the Express endpoints with mocked Claude SDK
  */
 
-import { describe, it, expect, vi, beforeAll, afterAll, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeAll, afterAll } from 'vitest';
 import express from 'express';
 import cors from 'cors';
 
@@ -37,7 +37,7 @@ function createTestServer() {
 
   // Simplified chat endpoint for testing
   app.post('/api/chat', async (req, res) => {
-    const { message, chatId } = req.body;
+    const { message } = req.body;
 
     if (!message) {
       return res.status(400).json({ error: 'Message is required' });

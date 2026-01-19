@@ -1,11 +1,11 @@
 // Module imports
 import {
-  generateId as generateIdUtil,
+  generateId,
   escapeHtmlPure,
-  hasUnclosedCodeBlock as hasUnclosedCodeBlockUtil,
-  getTimeGroupLabel as getTimeGroupLabelUtil,
-  formatToolPreview as formatToolPreviewUtil,
-  debounce as debounceUtil
+  hasUnclosedCodeBlock,
+  getTimeGroupLabel,
+  formatToolPreview,
+  debounce
 } from './utils.js';
 
 import {
@@ -88,11 +88,6 @@ function init() {
   homeInput.focus();
 }
 
-// Use imported generateId from utils.js
-function generateId() {
-  return generateIdUtil();
-}
-
 /**
  * Show a toast notification
  * @param {string} message - The message to display
@@ -169,11 +164,6 @@ function autoResizeTextarea(textarea) {
   } else {
     textarea.classList.remove('has-scroll');
   }
-}
-
-// Use imported hasUnclosedCodeBlock from utils.js
-function hasUnclosedCodeBlock(text) {
-  return hasUnclosedCodeBlockUtil(text);
 }
 
 /**
@@ -393,11 +383,6 @@ function renderSidebarToolCalls() {
     toolDiv.innerHTML = buildSidebarToolCallHTML(tc);
     toolCallsList.appendChild(toolDiv);
   });
-}
-
-// Use imported getTimeGroupLabel from utils.js
-function getTimeGroupLabel(timestamp) {
-  return getTimeGroupLabelUtil(timestamp);
 }
 
 // Render chat history sidebar
@@ -714,11 +699,6 @@ function enhanceCodeBlocks(container) {
     wrapper.appendChild(header);
     wrapper.appendChild(preBlock);
   });
-}
-
-// Use imported debounce from utils.js
-function debounce(func, wait) {
-  return debounceUtil(func, wait);
 }
 
 /**
@@ -1319,11 +1299,6 @@ function renderMarkdown(contentDiv) {
   enhanceCodeBlocks(markdownContainer);
 }
 
-// Use imported formatToolPreview from utils.js
-function formatToolPreview(toolInput) {
-  return formatToolPreviewUtil(toolInput);
-}
-
 // Add inline tool call to message (maintains correct order in stream)
 function addInlineToolCall(contentDiv, toolName, toolInput, toolId) {
   const toolDiv = document.createElement('div');
@@ -1347,7 +1322,7 @@ function addInlineToolCall(contentDiv, toolName, toolInput, toolId) {
     <div class="inline-tool-result">
       <div class="tool-section">
         <div class="tool-section-label">Input</div>
-        <pre>${escapeHtml(inputStr)}</pre>
+        <pre>${escapeHtmlPure(inputStr)}</pre>
       </div>
       <div class="tool-section tool-output-section" style="display: none;">
         <div class="tool-section-label">Output</div>
@@ -1421,7 +1396,7 @@ function addToolCall(name, input, status = 'running') {
     <div class="tool-call-details">
       <div class="tool-detail-section">
         <div class="tool-detail-label">Input</div>
-        <pre>${escapeHtml(JSON.stringify(input, null, 2))}</pre>
+        <pre>${escapeHtmlPure(JSON.stringify(input, null, 2))}</pre>
       </div>
       <div class="tool-detail-section tool-output-section" style="display: none;">
         <div class="tool-detail-label">Output</div>
@@ -1515,11 +1490,6 @@ function renderProgress() {
     stepDiv.innerHTML = buildStepItemHTML(tc);
     stepsList.appendChild(stepDiv);
   });
-}
-
-// Use escapeHtmlPure from utils.js for safe display
-function escapeHtml(str) {
-  return escapeHtmlPure(str);
 }
 
 // Copy message to clipboard
@@ -1652,8 +1622,8 @@ function renderModelsList() {
     modelItem.innerHTML = `
       <div class="model-info">
         <input type="radio" name="defaultModel" ${model.default ? 'checked' : ''} />
-        <input type="text" class="model-name" value="${escapeHtml(model.name)}" data-index="${index}" />
-        <span class="model-id">${escapeHtml(model.id)}</span>
+        <input type="text" class="model-name" value="${escapeHtmlPure(model.name)}" data-index="${index}" />
+        <span class="model-id">${escapeHtmlPure(model.id)}</span>
       </div>
       <button type="button" class="remove-model-btn" data-index="${index}" title="删除模型">×</button>
     `;
@@ -1817,7 +1787,6 @@ async function runDiagnosis() {
 // Update model selectors in the UI
 function updateModelSelectors() {
   const modelSelects = document.querySelectorAll('.model-select');
-  const currentModel = document.querySelector('.model-select')?.value;
 
   modelSelects.forEach(select => {
     const currentValue = select.value;

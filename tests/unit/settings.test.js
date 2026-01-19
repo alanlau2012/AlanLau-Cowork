@@ -3,7 +3,7 @@
  * Tests settings read/write logic, validation, and persistence
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 // Mock electron-store
 const mockStore = {
@@ -26,9 +26,6 @@ vi.mock('electron-store', () => {
     default: vi.fn(() => mockStore)
   };
 });
-
-// Import settings module after mocking
-let settingsModule;
 
 describe('Settings Management', () => {
   beforeEach(() => {
@@ -113,7 +110,7 @@ describe('Settings Management', () => {
       // Function to ensure only one default (first one wins)
       const ensureSingleDefault = models => {
         let foundDefault = false;
-        return models.map((m, index) => {
+        return models.map(m => {
           const isDefault = m.default && !foundDefault;
           if (m.default && !foundDefault) {
             foundDefault = true;
