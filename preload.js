@@ -1,4 +1,4 @@
-const { contextBridge } = require('electron');
+const { contextBridge, ipcRenderer } = require('electron');
 
 const SERVER_URL = 'http://localhost:3001';
 
@@ -93,5 +93,33 @@ contextBridge.exposeInMainWorld('electronAPI', {
           }
         });
     });
+  },
+
+  // Settings API
+  getSettings: async () => {
+    try {
+      return await ipcRenderer.invoke('getSettings');
+    } catch (error) {
+      console.error('[PRELOAD] Failed to get settings:', error);
+      throw error;
+    }
+  },
+
+  saveSettings: async settings => {
+    try {
+      return await ipcRenderer.invoke('saveSettings', settings);
+    } catch (error) {
+      console.error('[PRELOAD] Failed to save settings:', error);
+      throw error;
+    }
+  },
+
+  resetSettings: async () => {
+    try {
+      return await ipcRenderer.invoke('resetSettings');
+    } catch (error) {
+      console.error('[PRELOAD] Failed to reset settings:', error);
+      throw error;
+    }
   }
 });

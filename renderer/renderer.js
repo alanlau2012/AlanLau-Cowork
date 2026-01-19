@@ -1551,9 +1551,312 @@ function scrollToBottom() {
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
+// ==================== SETTINGS MODULE ====================
+
+// Settings module state
+let settings = {
+  apiEndpoint: 'https://api.anthropic.com',
+  apiKey: '',
+  models: [
+    { id: 'minimax-2-1', name: 'Minimax 2.1', default: true },
+    { id: 'glm-4-7', name: 'GLM 4.7' }
+  ]
+};
+
+// Settings UI elements
+const settingsBtn = document.getElementById('settingsBtn');
+const settingsModal = document.getElementById('settingsModal');
+const closeSettingsBtn = document.getElementById('closeSettingsBtn');
+const saveSettingsBtn = document.getElementById('saveSettingsBtn');
+const resetSettingsBtn = document.getElementById('resetSettingsBtn');
+const apiEndpointInput = document.getElementById('apiEndpoint');
+const apiKeyInput = document.getElementById('apiKey');
+const toggleApiKeyBtn = document.getElementById('toggleApiKey');
+const modelsList = document.getElementById('modelsList');
+const addModelBtn = document.getElementById('addModelBtn');
+
+// Initialize settings module
+async function initSettings() {
+  try {
+    if (window.electronAPI && window.electronAPI.getSettings) {
+      settings = await window.electronAPI.getSettings();
+      console.log('[SETTINGS] Loaded settings:', settings);
+    }
+  } catch (error) {
+    console.error('[SETTINGS] Failed to load settings:', error);
+  }
+}
+
+// Open settings modal
+function openSettingsModal() {
+  if (!settingsModal) {
+    return;
+  }
+
+  // Populate form with current settings
+  if (apiEndpointInput) {
+    apiEndpointInput.value = settings.apiEndpoint || '';
+  }
+  if (apiKeyInput) {
+    apiKeyInput.value = settings.apiKey || '';
+  }
+
+  renderModelsList();
+  settingsModal.classList.remove('hidden');
+}
+
+// Close settings modal
+function closeSettingsModal() {
+  if (!settingsModal) {
+    return;
+  }
+  settingsModal.classList.add('hidden');
+}
+
+// Render models list in settings
+function renderModelsList() {
+  if (!modelsList) {
+    return;
+  }
+
+  modelsList.innerHTML = '';
+
+  (settings.models || []).forEach((model, index) => {
+    const modelItem = document.createElement('div');
+    modelItem.className = 'model-item';
+    modelItem.dataset.index = index;
+
+    modelItem.innerHTML = `
+      <div class="model-info">
+        <input type="radio" name="defaultModel" ${model.default ? 'checked' : ''} />
+        <input type="text" class="model-name" value="${escapeHtml(model.name)}" data-index="${index}" />
+        <span class="model-id">${escapeHtml(model.id)}</span>
+      </div>
+      <button type="button" class="remove-model-btn" data-index="${index}" title="删除模型">×</button>
+    `;
+
+    modelsList.appendChild(modelItem);
+  });
+}
+
+// Add new model
+function addModel() {
+  const newModel = {
+    id: `model-${Date.now()}`,
+    name: '新模型',
+    default: false
+  };
+
+  // If no default model, make this one default
+  const hasDefault = (settings.models || []).some(m => m.default);
+  if (!hasDefault) {
+    newModel.default = true;
+  }
+
+  settings.models = settings.models || [];
+  settings.models.push(newModel);
+  renderModelsList();
+}
+
+// Remove model
+function removeModel(index) {
+  settings.models = settings.models || [];
+  if (settings.models.length <= 1) {
+    showToast('至少保留一个模型', 'error');
+    return;
+  }
+
+  const wasDefault = settings.models[index]?.default;
+  settings.models.splice(index, 1);
+
+  // If removed default, set first model as default
+  if (wasDefault && settings.models.length > 0) {
+    settings.models[0].default = true;
+  }
+
+  renderModelsList();
+}
+
+// Save settings
+async function saveSettings() {
+  // Update settings from form
+  settings.apiEndpoint = apiEndpointInput?.value?.trim() || 'https://api.anthropic.com';
+  settings.apiKey = apiKeyInput?.value?.trim() || '';
+
+  // Update models from UI
+  const modelItems = modelsList?.querySelectorAll('.model-item') || [];
+  settings.models = Array.from(modelItems).map((item, index) => {
+    const nameInput = item.querySelector('.model-name');
+    const radioInput = item.querySelector('input[type="radio"]');
+    const idSpan = item.querySelector('.model-id');
+
+    return {
+      id: idSpan?.textContent || `model-${index}`,
+      name: nameInput?.value || '未命名模型',
+      default: radioInput?.checked || false
+    };
+  });
+
+  // Ensure only one default model
+  const defaultIndex = settings.models.findIndex(m => m.default);
+  if (defaultIndex !== -1) {
+    settings.models = settings.models.map((m, i) => ({
+      ...m,
+      default: i === defaultIndex
+    }));
+  }
+
+  try {
+    if (window.electronAPI && window.electronAPI.saveSettings) {
+      await window.electronAPI.saveSettings(settings);
+      showToast('设置已保存', 'success');
+
+      // Update model selectors if they exist
+      updateModelSelectors();
+    }
+    closeSettingsModal();
+  } catch (error) {
+    console.error('[SETTINGS] Failed to save settings:', error);
+    showToast('保存设置失败', 'error');
+  }
+}
+
+// Reset settings to defaults
+async function resetSettings() {
+  try {
+    if (window.electronAPI && window.electronAPI.resetSettings) {
+      settings = await window.electronAPI.resetSettings();
+      showToast('已恢复默认设置', 'success');
+
+      // Update form
+      if (apiEndpointInput) {
+        apiEndpointInput.value = settings.apiEndpoint || '';
+      }
+      if (apiKeyInput) {
+        apiKeyInput.value = settings.apiKey || '';
+      }
+      renderModelsList();
+
+      // Update model selectors
+      updateModelSelectors();
+    }
+  } catch (error) {
+    console.error('[SETTINGS] Failed to reset settings:', error);
+    showToast('恢复默认设置失败', 'error');
+  }
+}
+
+// Update model selectors in the UI
+function updateModelSelectors() {
+  const modelSelects = document.querySelectorAll('.model-select');
+  const currentModel = document.querySelector('.model-select')?.value;
+
+  modelSelects.forEach(select => {
+    const currentValue = select.value;
+    select.innerHTML = '';
+
+    (settings.models || []).forEach(model => {
+      const option = document.createElement('option');
+      option.value = model.id;
+      option.textContent = model.name;
+      if (model.default) {
+        option.selected = true;
+      }
+      select.appendChild(option);
+    });
+
+    // Try to preserve selection
+    if (currentValue && settings.models.some(m => m.id === currentValue)) {
+      select.value = currentValue;
+    }
+  });
+}
+
+// Toggle API key visibility
+function toggleApiKeyVisibility() {
+  if (!apiKeyInput) {
+    return;
+  }
+
+  const isPassword = apiKeyInput.type === 'password';
+  apiKeyInput.type = isPassword ? 'text' : 'password';
+}
+
+// Setup settings event listeners
+function setupSettingsListeners() {
+  // Open/close settings
+  if (settingsBtn) {
+    settingsBtn.addEventListener('click', openSettingsModal);
+  }
+  if (closeSettingsBtn) {
+    closeSettingsBtn.addEventListener('click', closeSettingsModal);
+  }
+  if (settingsModal) {
+    settingsModal.addEventListener('click', e => {
+      if (e.target === settingsModal) {
+        closeSettingsModal();
+      }
+    });
+  }
+
+  // Save/reset buttons
+  if (saveSettingsBtn) {
+    saveSettingsBtn.addEventListener('click', saveSettings);
+  }
+  if (resetSettingsBtn) {
+    resetSettingsBtn.addEventListener('click', resetSettings);
+  }
+
+  // API key toggle
+  if (toggleApiKeyBtn) {
+    toggleApiKeyBtn.addEventListener('click', toggleApiKeyVisibility);
+  }
+
+  // Add model button
+  if (addModelBtn) {
+    addModelBtn.addEventListener('click', addModel);
+  }
+
+  // Models list delegation
+  if (modelsList) {
+    modelsList.addEventListener('click', e => {
+      const removeBtn = e.target.closest('.remove-model-btn');
+      if (removeBtn) {
+        const index = parseInt(removeBtn.dataset.index, 10);
+        removeModel(index);
+      }
+    });
+
+    modelsList.addEventListener('change', e => {
+      if (e.target.name === 'defaultModel') {
+        // Update default model
+        const radioInputs = modelsList.querySelectorAll('input[name="defaultModel"]');
+        radioInputs.forEach((radio, idx) => {
+          if (radio.checked && settings.models[idx]) {
+            settings.models = settings.models.map((m, i) => ({
+              ...m,
+              default: i === idx
+            }));
+          }
+        });
+      }
+    });
+  }
+
+  // Keyboard shortcuts
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && settingsModal && !settingsModal.classList.contains('hidden')) {
+      closeSettingsModal();
+    }
+  });
+}
+
 // Initialize on load
-window.addEventListener('load', () => {
+window.addEventListener('load', async () => {
   init();
+  // Initialize settings module
+  await initSettings();
+  setupSettingsListeners();
   // Initial resize for textareas
   autoResizeTextarea(homeInput);
   autoResizeTextarea(messageInput);

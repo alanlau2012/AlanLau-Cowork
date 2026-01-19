@@ -13,6 +13,14 @@ dotenv.config({ path: path.join(__dirname, '..', '.env') });
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// In-memory config (could be replaced with file-based or shared storage)
+const serverConfig = {
+  apiEndpoint: process.env.ANTHROPIC_API_ENDPOINT || 'https://api.anthropic.com',
+  apiKey: process.env.ANTHROPIC_API_KEY || '',
+  maxTurns: 20,
+  permissionMode: 'bypassPermissions'
+};
+
 // Optional Composio initialization
 let composio = null;
 const composioSessions = new Map();
@@ -60,11 +68,26 @@ app.post('/api/chat', async (req, res) => {
   try {
     // Check if we have an existing Claude session for this chat
     const existingSessionId = chatId ? chatSessions.get(chatId) : null;
-    console.log('[CHAT] Existing session ID for', chatId, ':', existingSessionId || 'none (new chat)');
+    console.log(
+      '[CHAT] Existing session ID for',
+      chatId,
+      ':',
+      existingSessionId || 'none (new chat)'
+    );
 
     // Build query options
     const queryOptions = {
-      allowedTools: ['Read', 'Write', 'Edit', 'Bash', 'Glob', 'Grep', 'WebSearch', 'WebFetch', 'TodoWrite'],
+      allowedTools: [
+        'Read',
+        'Write',
+        'Edit',
+        'Bash',
+        'Glob',
+        'Grep',
+        'WebSearch',
+        'WebFetch',
+        'TodoWrite'
+      ],
       maxTurns: 20,
       permissionMode: 'bypassPermissions'
     };
@@ -109,7 +132,9 @@ app.post('/api/chat', async (req, res) => {
         }
         // Send session ID to frontend
         if (newSessionId) {
-          res.write(`data: ${JSON.stringify({ type: 'session_init', session_id: newSessionId })}\n\n`);
+          res.write(
+            `data: ${JSON.stringify({ type: 'session_init', session_id: newSessionId })}\n\n`
+          );
         }
         continue;
       }
@@ -167,6 +192,51 @@ app.post('/api/chat', async (req, res) => {
 // Health check endpoint
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// Config endpoint - get current config
+app.get('/api/config', (req, res) => {
+  res.json({
+    apiEndpoint: serverConfig.apiEndpoint,
+    hasApiKey: !!serverConfig.apiKey,
+    maxTurns: serverConfig.maxTurns,
+    permissionMode: serverConfig.permissionMode
+  });
+});
+
+// Config endpoint - update config (for dynamic configuration)
+app.post('/api/config', (req, res) => {
+  const { apiEndpoint, apiKey, maxTurns, permissionMode } = req.body;
+
+  if (apiEndpoint !== undefined) {
+    serverConfig.apiEndpoint = apiEndpoint;
+  }
+  if (apiKey !== undefined) {
+    serverConfig.apiKey = apiKey;
+  }
+  if (maxTurns !== undefined) {
+    serverConfig.maxTurns = maxTurns;
+  }
+  if (permissionMode !== undefined) {
+    serverConfig.permissionMode = permissionMode;
+  }
+
+  console.log('[CONFIG] Config updated:', {
+    apiEndpoint: serverConfig.apiEndpoint,
+    hasApiKey: !!serverConfig.apiKey,
+    maxTurns: serverConfig.maxTurns,
+    permissionMode: serverConfig.permissionMode
+  });
+
+  res.json({
+    success: true,
+    config: {
+      apiEndpoint: serverConfig.apiEndpoint,
+      hasApiKey: !!serverConfig.apiKey,
+      maxTurns: serverConfig.maxTurns,
+      permissionMode: serverConfig.permissionMode
+    }
+  });
 });
 
 // Start server

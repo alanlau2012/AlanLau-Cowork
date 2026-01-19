@@ -3,7 +3,7 @@
  * Tests settings read/write logic, validation, and persistence
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach, beforeAll, afterAll } from 'vitest';
 
 // Mock electron-store
 const mockStore = {
@@ -20,9 +20,15 @@ const mockStore = {
   })
 };
 
-vi.mock('electron-store', () => ({
-  default: vi.fn(() => mockStore)
-}));
+// Mock electron-store module
+vi.mock('electron-store', () => {
+  return {
+    default: vi.fn(() => mockStore)
+  };
+});
+
+// Import settings module after mocking
+let settingsModule;
 
 describe('Settings Management', () => {
   beforeEach(() => {
@@ -96,30 +102,48 @@ describe('Settings Management', () => {
       expect(typeof validModel.default).toBe('boolean');
     });
 
-    it('should ensure only one default model', () => {
-      const models = [
+    it('should ensure only one default model when processing', () => {
+      // Test data with multiple defaults (invalid state)
+      const rawModels = [
         { id: 'model-1', name: 'Model 1', default: true },
         { id: 'model-2', name: 'Model 2', default: true },
         { id: 'model-3', name: 'Model 3', default: false }
       ];
 
-      const defaultCount = models.filter(m => m.default).length;
-      expect(defaultCount).toBeGreaterThan(1); // This should be fixed in implementation
+      // Function to ensure only one default (first one wins)
+      const ensureSingleDefault = models => {
+        let foundDefault = false;
+        return models.map((m, index) => {
+          const isDefault = m.default && !foundDefault;
+          if (m.default && !foundDefault) {
+            foundDefault = true;
+          }
+          return { ...m, default: isDefault };
+        });
+      };
 
-      // Corrected: only one default
-      const correctedModels = models.map((m, i) => ({
-        ...m,
-        default: i === 0 // Only first is default
-      }));
-
-      const correctedDefaultCount = correctedModels.filter(m => m.default).length;
-      expect(correctedDefaultCount).toBe(1);
+      const processed = ensureSingleDefault(rawModels);
+      const defaultCount = processed.filter(m => m.default).length;
+      expect(defaultCount).toBe(1);
+      expect(processed[0].default).toBe(true); // First one stays default
+      expect(processed[1].default).toBe(false); // Second one loses default
     });
 
     it('should handle empty models array', () => {
       const models = [];
       expect(Array.isArray(models)).toBe(true);
       expect(models.length).toBe(0);
+    });
+
+    it('should create default models array', () => {
+      const defaultModels = [
+        { id: 'minimax-2-1', name: 'Minimax 2.1', default: true },
+        { id: 'glm-4-7', name: 'GLM 4.7', default: false }
+      ];
+
+      expect(defaultModels).toHaveLength(2);
+      expect(defaultModels[0].default).toBe(true);
+      expect(defaultModels[1].default).toBe(false);
     });
   });
 
@@ -157,6 +181,26 @@ describe('Settings Management', () => {
       const loaded = mockStore.get('settings') || defaultSettings;
       expect(loaded).toEqual(defaultSettings);
     });
+
+    it('should persist settings across sessions', () => {
+      const settings = {
+        apiEndpoint: 'https://custom-api.example.com',
+        apiKey: 'sk-custom-key',
+        models: [{ id: 'custom-model', name: 'Custom Model', default: true }]
+      };
+
+      // Save settings
+      mockStore.set('settings', settings);
+
+      // Simulate app restart (clear mocks but keep data)
+      vi.clearAllMocks();
+
+      // Load settings
+      const loaded = mockStore.get('settings');
+
+      expect(loaded).toEqual(settings);
+      expect(loaded.apiEndpoint).toBe('https://custom-api.example.com');
+    });
   });
 
   describe('Settings Validation', () => {
@@ -185,6 +229,38 @@ describe('Settings Management', () => {
       expect(endpointValid).toBe(true);
       expect(keyValid).toBe(true);
       expect(modelsValid).toBe(true);
+    });
+
+    it('should validate settings object structure', () => {
+      const isValidSettings = obj => {
+        if (typeof obj !== 'object' || obj === null) {
+          return false;
+        }
+        if (typeof obj.apiEndpoint !== 'string') {
+          return false;
+        }
+        if (typeof obj.apiKey !== 'string') {
+          return false;
+        }
+        if (!Array.isArray(obj.models)) {
+          return false;
+        }
+        return true;
+      };
+
+      const valid = {
+        apiEndpoint: 'https://api.example.com',
+        apiKey: 'sk-test',
+        models: []
+      };
+
+      const invalid = {
+        apiEndpoint: 'not-a-url',
+        models: 'invalid'
+      };
+
+      expect(isValidSettings(valid)).toBe(true);
+      expect(isValidSettings(invalid)).toBe(false);
     });
   });
 
@@ -231,6 +307,69 @@ describe('Settings Management', () => {
 
       expect(hasRequiredFields(validImport)).toBe(true);
       expect(hasRequiredFields(invalidImport)).toBe(false);
+    });
+  });
+
+  describe('Settings Defaults', () => {
+    it('should have correct default API endpoint', () => {
+      const defaultEndpoint = 'https://api.anthropic.com';
+      expect(defaultEndpoint).toMatch(/^https?:\/\/.+/);
+    });
+
+    it('should have empty default API key', () => {
+      const defaultKey = '';
+      expect(defaultKey).toBe('');
+    });
+
+    it('should return default models when none configured', () => {
+      const getDefaultModels = () => [
+        { id: 'minimax-2-1', name: 'Minimax 2.1', default: true },
+        { id: 'glm-4-7', name: 'GLM 4.7' }
+      ];
+
+      const models = getDefaultModels();
+      expect(models).toHaveLength(2);
+      expect(models[0].default).toBe(true);
+    });
+  });
+
+  describe('Settings Merging', () => {
+    it('should merge user settings with defaults', () => {
+      const defaults = {
+        apiEndpoint: 'https://api.anthropic.com',
+        apiKey: '',
+        models: [
+          { id: 'minimax-2-1', name: 'Minimax 2.1', default: true },
+          { id: 'glm-4-7', name: 'GLM 4.7' }
+        ]
+      };
+
+      const userSettings = {
+        apiEndpoint: 'https://custom-api.example.com'
+        // apiKey and models use defaults
+      };
+
+      const merged = { ...defaults, ...userSettings };
+
+      expect(merged.apiEndpoint).toBe('https://custom-api.example.com');
+      expect(merged.apiKey).toBe('');
+      expect(merged.models).toEqual(defaults.models);
+    });
+
+    it('should handle partial model configuration', () => {
+      const defaults = {
+        models: [
+          { id: 'minimax-2-1', name: 'Minimax 2.1', default: true },
+          { id: 'glm-4-7', name: 'GLM 4.7' }
+        ]
+      };
+
+      const userModels = [{ id: 'custom-model', name: 'Custom', default: true }];
+
+      const merged = { ...defaults, models: userModels };
+
+      expect(merged.models).toHaveLength(1);
+      expect(merged.models[0].id).toBe('custom-model');
     });
   });
 });

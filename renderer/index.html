@@ -34,6 +34,17 @@
       <div class="chat-history-list" id="chatHistoryList">
         <!-- Chat history items will be added here -->
       </div>
+
+      <!-- Settings Button -->
+      <div class="settings-container">
+        <button id="settingsBtn" class="settings-btn" title="Settings">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+          <span>Settings</span>
+        </button>
+      </div>
     </aside>
 
     <!-- Main Content -->
@@ -246,5 +257,46 @@
 
   <!-- Toast Container -->
   <div id="toast-container" class="toast-container"></div>
+
+  <!-- Settings Modal -->
+  <div id="settingsModal" class="modal-overlay hidden">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>系统设置</h2>
+        <button id="closeSettingsBtn" class="modal-close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <!-- API Endpoint -->
+        <div class="settings-group">
+          <label for="apiEndpoint">API 端点</label>
+          <input type="url" id="apiEndpoint" placeholder="https://api.anthropic.com" />
+          <span class="input-hint">企业内部 Claude API 端点地址</span>
+        </div>
+
+        <!-- API Key -->
+        <div class="settings-group">
+          <label for="apiKey">API 密钥</label>
+          <div class="password-input-wrapper">
+            <input type="password" id="apiKey" placeholder="sk-ant-xxx..." />
+            <button type="button" id="toggleApiKey" class="toggle-password" title="显示/隐藏">👁</button>
+          </div>
+          <span class="input-hint">您的 API 密钥（不会显示在界面上）</span>
+        </div>
+
+        <!-- Models Section -->
+        <div class="settings-group">
+          <label>可用模型</label>
+          <div id="modelsList" class="models-list">
+            <!-- Models will be rendered here -->
+          </div>
+          <button type="button" id="addModelBtn" class="add-model-btn">+ 添加模型</button>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="resetSettingsBtn" class="btn btn-secondary">恢复默认</button>
+        <button id="saveSettingsBtn" class="btn btn-primary">保存设置</button>
+      </div>
+    </div>
+  </div>
 </body>
 </html>

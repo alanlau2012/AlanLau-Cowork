@@ -1,5 +1,6 @@
-const { app, BrowserWindow, shell } = require('electron');
+const { app, BrowserWindow, shell, ipcMain } = require('electron');
 const path = require('path');
+const Store = require('electron-store');
 
 const isDev = process.env.NODE_ENV === 'development';
 
@@ -16,6 +17,74 @@ if (isDev) {
 
 // Global window reference
 let mainWindow;
+
+// Default settings
+const DEFAULT_SETTINGS = {
+  apiEndpoint: 'https://api.anthropic.com',
+  apiKey: '',
+  models: [
+    { id: 'minimax-2-1', name: 'Minimax 2.1', default: true },
+    { id: 'glm-4-7', name: 'GLM 4.7' }
+  ]
+};
+
+// Initialize electron-store
+const store = new Store({
+  name: 'open-claude-cowork-settings',
+  defaults: DEFAULT_SETTINGS
+});
+
+// Ensure only one default model
+function ensureSingleDefault(models) {
+  let foundDefault = false;
+  return models.map((m, index) => {
+    const isDefault = m.default && !foundDefault;
+    if (m.default && !foundDefault) {
+      foundDefault = true;
+    }
+    return { ...m, default: isDefault };
+  });
+}
+
+// IPC handlers for settings
+ipcMain.handle('getSettings', () => {
+  const settings = store.get('settings');
+  if (!settings) {
+    return DEFAULT_SETTINGS;
+  }
+  // Ensure models have valid structure
+  if (settings.models) {
+    settings.models = ensureSingleDefault(settings.models);
+  }
+  return { ...DEFAULT_SETTINGS, ...settings };
+});
+
+ipcMain.handle('saveSettings', (event, newSettings) => {
+  const currentSettings = store.get('settings') || {};
+
+  // Merge with defaults, but respect user-specified values
+  const mergedSettings = {
+    ...DEFAULT_SETTINGS,
+    ...currentSettings,
+    ...newSettings,
+    models: newSettings.models || currentSettings.models || DEFAULT_SETTINGS.models
+  };
+
+  // Ensure only one default model
+  if (mergedSettings.models) {
+    mergedSettings.models = ensureSingleDefault(mergedSettings.models);
+  }
+
+  store.set('settings', mergedSettings);
+  console.log('[MAIN] Settings saved:', mergedSettings);
+  return mergedSettings;
+});
+
+ipcMain.handle('resetSettings', () => {
+  store.set('settings', DEFAULT_SETTINGS);
+  console.log('[MAIN] Settings reset to defaults');
+  return DEFAULT_SETTINGS;
+});
 
 // Create Electron window
 function createWindow() {

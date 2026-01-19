@@ -3,18 +3,18 @@
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## 1 身份定义
+
 -Role：Principal Engineer & Senior Data Scientist.
 -Voice：Professional,Concise,Result-Oriented.No "I hope this help".
--Authority：The user is the Lead Architect.Execute commands immediately. 
+-Authority：The user is the Lead Architect.Execute commands immediately.
 
 ## 2 行动法则
--*Think Before Act*:Before any file modification,outline your plan in 3 bullet points.
--*Verification First*:Never report "Done" until you have run a verification script.
--*Error Handling*:If a command fails,read error log -> analyze root cause -> fix.
+
+-_Think Before Act_:Before any file modification,outline your plan in 3 bullet points. -_Verification First_:Never report "Done" until you have run a verification script. -_Error Handling_:If a command fails,read error log -> analyze root cause -> fix.
 
 ## 3 心法约束
--**DRY**：Don't Repeat Yourself
--**KISS**:Keep It Simple,Stupid
+
+-**DRY**：Don't Repeat Yourself -**KISS**:Keep It Simple,Stupid
 
 ## 项目概述
 
@@ -27,13 +27,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 需要**两个终端窗口**：
 
 **终端 1 - 启动后端服务器：**
+
 ```bash
 cd server
 npm start
 ```
+
 后端运行在 `http://localhost:3001`
 
 **终端 2 - 启动 Electron 应用：**
+
 ```bash
 npm start          # 正常启动
 npm run dev        # 开发模式（带热重载）
@@ -53,6 +56,18 @@ cd server && npm install
 
 ```bash
 ./setup.sh    # 运行自动化配置脚本
+```
+
+### 测试命令
+
+```bash
+npm test        # 运行所有单元测试 (Vitest)
+npm run test:unit   # 运行单元测试
+npm run test:api    # 运行 API 测试
+npm run test:e2e    # 运行 E2E 测试 (Playwright)
+npm run test:all    # 运行所有测试
+npm run lint        # 检查代码风格
+npm run lint:fix    # 自动修复代码风格问题
 ```
 
 ## 架构概览
@@ -89,17 +104,21 @@ cd server && npm install
 ## 核心文件说明
 
 ### Electron 主进程
+
 - **[main.js](main.js)** - Electron 主进程入口，创建窗口，处理应用生命周期
 
 ### IPC 安全桥接
+
 - **[preload.js](preload.js)** - 使用 `contextBridge` 向渲染进程暴露安全的 API，通过 fetch 与后端通信
 
 ### 渲染进程（前端）
+
 - **[renderer/index.html](renderer/index.html)** - 聊天界面 HTML
 - **[renderer/renderer.js](renderer/renderer.js)** - 前端逻辑，处理 UI 交互、SSE 流式响应、多会话管理
 - **[renderer/style.css](renderer/style.css)** - 样式文件
 
 ### 后端服务器
+
 - **[server/server.js](server/server.js)** - Express 服务器，集成 Claude Agent SDK，处理聊天请求和 SSE 流式响应
 - **[server/package.json](server/package.json)** - 后端依赖配置（使用 ES modules：`"type": "module"`）
 
@@ -146,14 +165,14 @@ cd server && npm install
 
 ## 技术栈
 
-| 类别 | 技术 |
-|------|------|
-| 桌面框架 | Electron.js |
-| 后端 | Node.js + Express (ES modules) |
-| AI Agent | Claude Agent SDK |
-| 工具集成 | Composio Tool Router |
-| 流式传输 | Server-Sent Events (SSE) |
-| Markdown | Marked.js |
+| 类别     | 技术                           |
+| -------- | ------------------------------ |
+| 桌面框架 | Electron.js                    |
+| 后端     | Node.js + Express (ES modules) |
+| AI Agent | Claude Agent SDK               |
+| 工具集成 | Composio Tool Router           |
+| 流式传输 | Server-Sent Events (SSE)       |
+| Markdown | Marked.js                      |
 
 ## 开发注意事项
 
@@ -203,6 +222,7 @@ docs/plans/
 ## 已知问题和待办
 
 当前有 UX 升级计划位于 `docs/plans/2025-01-17-ux-upgrade-master.md`，包含六个子计划：
+
 - #1 反馈基础能力（P0）
 - #2 核心输入体验（P0）
 - #3 生成控制与启动（P1）
