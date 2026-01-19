@@ -1,3 +1,39 @@
+// Module imports
+import {
+  generateId as generateIdUtil,
+  escapeHtmlPure,
+  hasUnclosedCodeBlock as hasUnclosedCodeBlockUtil,
+  getTimeGroupLabel as getTimeGroupLabelUtil,
+  formatToolPreview as formatToolPreviewUtil,
+  debounce as debounceUtil
+} from './utils.js';
+
+import {
+  createChatData,
+  findChatById,
+  updateChatInList,
+  removeChatById,
+  sortChatsByTime,
+  saveChatToStorage,
+  loadChatsFromStorage
+} from './chatStore.js';
+
+import { getToolCallStats, formatStepsCount } from './sessionManager.js';
+
+import {
+  calculateTextareaHeight,
+  createToastConfig,
+  buildInlineToolCallHTML,
+  buildSidebarToolCallHTML,
+  buildChatItemHTML,
+  buildStepItemHTML,
+  buildMessageActionsHTML,
+  buildLoadingIndicatorHTML,
+  buildErrorRetryHTML,
+  getTemplateContent,
+  matchesSearch
+} from './uiHelpers.js';
+
 // DOM Elements - Views
 const homeView = document.getElementById('homeView');
 const chatView = document.getElementById('chatView');
@@ -52,8 +88,9 @@ function init() {
   homeInput.focus();
 }
 
+// Use imported generateId from utils.js
 function generateId() {
-  return 'chat_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+  return generateIdUtil();
 }
 
 /**
@@ -73,24 +110,14 @@ function showToast(message, type = 'info', duration = 3000) {
   const toast = document.createElement('div');
   toast.className = `toast ${type}`;
 
+  // Get toast config from uiHelpers
+  const config = createToastConfig(type);
+
   // Create icon based on type
   const icon = document.createElement('span');
   icon.className = 'toast-icon';
-  switch (type) {
-    case 'success':
-      icon.innerHTML = '✓';
-      icon.style.color = '#10b981';
-      break;
-    case 'error':
-      icon.innerHTML = '✕';
-      icon.style.color = '#ef4444';
-      break;
-    case 'info':
-    default:
-      icon.innerHTML = 'ℹ';
-      icon.style.color = '#3b82f6';
-      break;
-  }
+  icon.innerHTML = config.icon;
+  icon.style.color = config.color;
 
   // Create message
   const messageEl = document.createElement('span');
@@ -130,32 +157,23 @@ function autoResizeTextarea(textarea) {
   // Reset height to get accurate scrollHeight
   textarea.style.height = 'auto';
 
-  // Calculate new height (constrained by max-height in CSS)
-  const newHeight = Math.min(textarea.scrollHeight, 200);
+  // Calculate new height using uiHelpers
+  const { height, hasScroll } = calculateTextareaHeight(textarea.scrollHeight, 200);
 
   // Apply new height
-  textarea.style.height = newHeight + 'px';
+  textarea.style.height = height + 'px';
 
   // 检测内容是否溢出，控制滚动条显示
-  if (textarea.scrollHeight > newHeight) {
+  if (hasScroll) {
     textarea.classList.add('has-scroll');
   } else {
     textarea.classList.remove('has-scroll');
   }
 }
 
-/**
- * Check if text has unclosed code block
- * @param {string} text - Text to check
- * @returns {boolean} - True if code block is unclosed
- */
+// Use imported hasUnclosedCodeBlock from utils.js
 function hasUnclosedCodeBlock(text) {
-  // Count occurrences of triple backticks
-  const backtickMatches = text.match(/```/g);
-  const count = backtickMatches ? backtickMatches.length : 0;
-
-  // Odd count means unclosed code block
-  return count % 2 !== 0;
+  return hasUnclosedCodeBlockUtil(text);
 }
 
 /**
@@ -198,16 +216,10 @@ function showErrorWithRetry(errorMessage, message, chatId) {
   lastFailedMessage = message;
   lastFailedChatId = chatId;
 
-  // Create error element
+  // Create error element using uiHelpers
   const errorDiv = document.createElement('div');
   errorDiv.className = 'message-error';
-  errorDiv.innerHTML = `
-    <div class="message-error-content">
-      <span class="message-error-icon">⚠</span>
-      <span class="message-error-text">${errorMessage}</span>
-      <button class="message-error-retry">重新发送</button>
-    </div>
-  `;
+  errorDiv.innerHTML = buildErrorRetryHTML(errorMessage);
 
   // Add retry handler
   const retryBtn = errorDiv.querySelector('.message-error-retry');
@@ -241,53 +253,39 @@ function saveState() {
     return;
   }
 
-  const chatData = {
-    id: currentChatId,
-    title: chatTitle.textContent,
-    messages: Array.from(chatMessages.children).map(msg => ({
-      class: msg.className,
-      content:
-        msg.querySelector('.message-content')?.dataset.rawContent ||
-        msg.querySelector('.message-content')?.textContent ||
-        ''
-    })),
-    todos,
-    toolCalls,
-    updatedAt: Date.now()
-  };
+  // Create chat data using chatStore
+  const messages = Array.from(chatMessages.children).map(msg => ({
+    class: msg.className,
+    content:
+      msg.querySelector('.message-content')?.dataset.rawContent ||
+      msg.querySelector('.message-content')?.textContent ||
+      ''
+  }));
 
-  // Update or add chat in allChats
-  const index = allChats.findIndex(c => c.id === currentChatId);
-  if (index >= 0) {
-    allChats[index] = chatData;
-  } else {
-    allChats.unshift(chatData);
-  }
+  const chatData = createChatData(currentChatId, chatTitle.textContent, messages, todos, toolCalls);
 
-  // Save to localStorage
-  localStorage.setItem('allChats', JSON.stringify(allChats));
-  localStorage.setItem('currentChatId', currentChatId);
+  // Update chat list using chatStore
+  allChats = updateChatInList(allChats, chatData);
+
+  // Save to localStorage using chatStore
+  saveChatToStorage(localStorage, allChats, currentChatId);
 
   renderChatHistory();
 }
 
 // Load all chats from localStorage
 function loadAllChats() {
-  try {
-    const saved = localStorage.getItem('allChats');
-    allChats = saved ? JSON.parse(saved) : [];
-    currentChatId = localStorage.getItem('currentChatId');
+  // Load chats using chatStore
+  const loaded = loadChatsFromStorage(localStorage);
+  allChats = loaded.allChats;
+  currentChatId = loaded.currentChatId;
 
-    // If there's a current chat, load it
-    if (currentChatId) {
-      const chat = allChats.find(c => c.id === currentChatId);
-      if (chat) {
-        loadChat(chat);
-      }
+  // If there's a current chat, load it using chatStore
+  if (currentChatId) {
+    const chat = findChatById(allChats, currentChatId);
+    if (chat) {
+      loadChat(chat);
     }
-  } catch (err) {
-    console.error('Failed to load chats:', err);
-    allChats = [];
   }
 }
 
@@ -364,44 +362,14 @@ function restoreInlineToolCall(contentDiv, toolCall) {
   toolDiv.className = 'inline-tool-call'; // Collapsed by default when restored
   toolDiv.dataset.toolId = toolCall.id;
 
-  const inputPreview = formatToolPreview(toolCall.input);
-  const inputStr = JSON.stringify(toolCall.input, null, 2);
-  const resultStr = toolCall.result
-    ? typeof toolCall.result === 'object'
-      ? JSON.stringify(toolCall.result, null, 2)
-      : String(toolCall.result)
-    : '';
-  const truncatedResult = resultStr.substring(0, 2000) + (resultStr.length > 2000 ? '...' : '');
-
-  toolDiv.innerHTML = `
-    <div class="inline-tool-header" onclick="toggleInlineToolCall(this)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
-      </svg>
-      <span class="tool-name">${toolCall.name}</span>
-      <span class="tool-preview">${inputPreview}</span>
-      <span class="tool-status-badge ${toolCall.status}">${toolCall.status === 'success' ? '✓' : toolCall.status === 'error' ? '✕' : '...'}</span>
-      <svg class="expand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <polyline points="6 9 12 15 18 9"></polyline>
-      </svg>
-    </div>
-    <div class="inline-tool-result">
-      <div class="tool-section">
-        <div class="tool-section-label">Input</div>
-        <pre>${escapeHtml(inputStr)}</pre>
-      </div>
-      ${
-        resultStr
-          ? `
-      <div class="tool-section tool-output-section">
-        <div class="tool-section-label">Output</div>
-        <pre class="tool-output-content">${escapeHtml(truncatedResult)}</pre>
-      </div>
-      `
-          : ''
-      }
-    </div>
-  `;
+  // Use buildInlineToolCallHTML from uiHelpers
+  toolDiv.innerHTML = buildInlineToolCallHTML(
+    toolCall.name,
+    toolCall.input,
+    toolCall.id,
+    toolCall.status,
+    toolCall.result
+  );
 
   contentDiv.appendChild(toolDiv);
 }
@@ -417,88 +385,19 @@ function renderSidebarToolCalls() {
 
   emptyTools.style.display = 'none';
 
+  // Use buildSidebarToolCallHTML from uiHelpers
   toolCalls.forEach(tc => {
     const toolDiv = document.createElement('div');
     toolDiv.className = 'tool-call-item';
     toolDiv.dataset.toolId = tc.id;
-
-    const resultStr = tc.result
-      ? typeof tc.result === 'object'
-        ? JSON.stringify(tc.result, null, 2)
-        : String(tc.result)
-      : '';
-    const truncatedResult = resultStr.substring(0, 2000) + (resultStr.length > 2000 ? '...' : '');
-
-    toolDiv.innerHTML = `
-      <div class="tool-call-header" onclick="toggleToolCall(this)">
-        <div class="tool-call-icon ${tc.status}">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
-          </svg>
-        </div>
-        <div class="tool-call-info">
-          <div class="tool-call-name">${tc.name}</div>
-          <div class="tool-call-status">${tc.status === 'success' ? 'Completed' : tc.status === 'error' ? 'Failed' : 'Running...'}</div>
-        </div>
-        <div class="tool-call-expand">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="6 9 12 15 18 9"></polyline>
-          </svg>
-        </div>
-      </div>
-      <div class="tool-call-details">
-        <div class="tool-detail-section">
-          <div class="tool-detail-label">Input</div>
-          <pre>${escapeHtml(JSON.stringify(tc.input, null, 2))}</pre>
-        </div>
-        ${
-          resultStr
-            ? `
-        <div class="tool-detail-section tool-output-section">
-          <div class="tool-detail-label">Output</div>
-          <pre class="sidebar-tool-output">${escapeHtml(truncatedResult)}</pre>
-        </div>
-        `
-            : ''
-        }
-      </div>
-    `;
-
+    toolDiv.innerHTML = buildSidebarToolCallHTML(tc);
     toolCallsList.appendChild(toolDiv);
   });
 }
 
-/**
- * Get time group label for a timestamp
- * @param {number} timestamp - Unix timestamp in milliseconds
- * @returns {string} - Time group label
- */
+// Use imported getTimeGroupLabel from utils.js
 function getTimeGroupLabel(timestamp) {
-  const now = new Date();
-  const chatDate = new Date(timestamp);
-
-  // Reset time to midnight for comparison
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const chatDay = new Date(chatDate.getFullYear(), chatDate.getMonth(), chatDate.getDate());
-
-  // Calculate difference in days
-  const diffTime = today - chatDay;
-  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
-  if (diffDays === 0) {
-    return '今天';
-  } else if (diffDays === 1) {
-    return '昨天';
-  } else if (diffDays <= 7) {
-    return '近 7 天';
-  } else if (diffDays <= 30) {
-    return '近 30 天';
-  } else {
-    // Format as month/year
-    const month = chatDate.getMonth() + 1;
-    const year = chatDate.getFullYear();
-    return `${year}年${month}月`;
-  }
+  return getTimeGroupLabelUtil(timestamp);
 }
 
 // Render chat history sidebar
@@ -510,8 +409,8 @@ function renderChatHistory() {
     return;
   }
 
-  // Sort by updated time (most recent first)
-  const sortedChats = [...allChats].sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+  // Sort by updated time using chatStore
+  const sortedChats = sortChatsByTime(allChats);
 
   let lastGroup = null;
 
@@ -526,21 +425,12 @@ function renderChatHistory() {
       lastGroup = groupLabel;
     }
 
+    const isActive = chat.id === currentChatId;
     const item = document.createElement('div');
-    item.className = 'chat-item chat-history-item' + (chat.id === currentChatId ? ' active' : '');
+    item.className = 'chat-item chat-history-item' + (isActive ? ' active' : '');
     item.dataset.chatId = chat.id;
-    item.innerHTML = `
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-      </svg>
-      <span class="chat-item-title">${escapeHtml(chat.title || 'New chat')}</span>
-      <button class="delete-chat-btn" onclick="deleteChat('${chat.id}', event)" title="Delete">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <line x1="18" y1="6" x2="6" y2="18"></line>
-          <line x1="6" y1="6" x2="18" y2="18"></line>
-        </svg>
-      </button>
-    `;
+    // Use buildChatItemHTML from uiHelpers
+    item.innerHTML = buildChatItemHTML(chat, isActive);
     item.onclick = e => {
       if (!e.target.closest('.delete-chat-btn')) {
         switchToChat(chat.id);
@@ -556,7 +446,8 @@ function switchToChat(chatId) {
     saveState();
   }
 
-  const chat = allChats.find(c => c.id === chatId);
+  // Find chat using chatStore
+  const chat = findChatById(allChats, chatId);
   if (chat) {
     loadChat(chat);
   }
@@ -566,8 +457,9 @@ function switchToChat(chatId) {
 window.deleteChat = function (chatId, event) {
   event.stopPropagation();
 
-  allChats = allChats.filter(c => c.id !== chatId);
-  localStorage.setItem('allChats', JSON.stringify(allChats));
+  // Remove chat using chatStore
+  allChats = removeChatById(allChats, chatId);
+  saveChatToStorage(localStorage, allChats, currentChatId === chatId ? null : currentChatId);
 
   if (currentChatId === chatId) {
     // If deleting current chat, go to home or load another chat
@@ -575,7 +467,6 @@ window.deleteChat = function (chatId, event) {
       loadChat(allChats[0]);
     } else {
       currentChatId = null;
-      localStorage.removeItem('currentChatId');
       homeView.classList.remove('hidden');
       chatView.classList.add('hidden');
       isFirstMessage = true;
@@ -716,16 +607,8 @@ function setGeneratingState(generating) {
  * @param {string} templateType - The template type to load
  */
 function loadTemplate(templateType) {
-  const templates = {
-    'folder-org':
-      '请帮我整理文件夹结构。我需要你：\n1. 分析当前目录结构\n2. 识别冗余或重复文件\n3. 建议合理的目录组织方案\n\n[描述你的文件夹路径或当前问题]',
-    'data-analysis':
-      '请帮我进行数据分析。我需要你：\n1. 读取和处理数据文件\n2. 统计关键指标\n3. 生成分析报告或可视化\n\n[描述你的数据源和分析需求]',
-    'batch-file':
-      '请帮我批量处理文件。我需要你：\n1. 执行批量重命名操作\n2. 移动或复制文件到指定目录\n3. 按规则分类整理文件\n\n[描述批量处理的具体需求]'
-  };
-
-  const prompt = templates[templateType];
+  // Get template content from uiHelpers
+  const prompt = getTemplateContent(templateType);
   if (!prompt) {
     return;
   }
@@ -833,21 +716,9 @@ function enhanceCodeBlocks(container) {
   });
 }
 
-/**
- * Debounce function to limit search frequency
- * @param {Function} func - Function to debounce
- * @param {number} wait - Wait time in ms
- */
+// Use imported debounce from utils.js
 function debounce(func, wait) {
-  let timeout;
-  return function executedFunction(...args) {
-    const later = () => {
-      clearTimeout(timeout);
-      func(...args);
-    };
-    clearTimeout(timeout);
-    timeout = setTimeout(later, wait);
-  };
+  return debounceUtil(func, wait);
 }
 
 /**
@@ -866,31 +737,22 @@ function searchChats(query) {
     existingNoResults.remove();
   }
 
-  // Filter chats
-  const lowerQuery = query.toLowerCase().trim();
+  // Filter chats using matchesSearch from uiHelpers
   let visibleCount = 0;
 
   chatItems.forEach(item => {
-    if (!lowerQuery) {
-      // Show all if query is empty
+    const title = item.querySelector('.chat-item-title')?.textContent || '';
+
+    if (matchesSearch(title, query)) {
       item.classList.remove('hidden-by-search');
       visibleCount++;
     } else {
-      // Search in chat title
-      const title = item.querySelector('.chat-item-title')?.textContent || '';
-      const searchText = title.toLowerCase();
-
-      if (searchText.includes(lowerQuery)) {
-        item.classList.remove('hidden-by-search');
-        visibleCount++;
-      } else {
-        item.classList.add('hidden-by-search');
-      }
+      item.classList.add('hidden-by-search');
     }
   });
 
   // Show no results message
-  if (lowerQuery && visibleCount === 0) {
+  if (query && query.trim() && visibleCount === 0) {
     const noResultsEl = document.createElement('div');
     noResultsEl.className = 'no-search-results visible';
     noResultsEl.textContent = '没有匹配的聊天';
@@ -1309,26 +1171,17 @@ function createAssistantMessage() {
   const contentDiv = document.createElement('div');
   contentDiv.className = 'message-content';
 
+  // Use buildLoadingIndicatorHTML from uiHelpers
   const loadingDiv = document.createElement('div');
   loadingDiv.className = 'loading-indicator';
-  loadingDiv.innerHTML = `
-    <svg class="loading-asterisk" viewBox="0 0 24 24" fill="none">
-      <path d="M12 2v20M2 12h20M4.93 4.93l14.14 14.14M19.07 4.93L4.93 19.07" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-    </svg>
-  `;
+  loadingDiv.innerHTML = buildLoadingIndicatorHTML();
 
   contentDiv.appendChild(loadingDiv);
 
+  // Use buildMessageActionsHTML from uiHelpers
   const actionsDiv = document.createElement('div');
   actionsDiv.className = 'message-actions hidden';
-  actionsDiv.innerHTML = `
-    <button class="action-btn" title="Copy" onclick="copyMessage(this)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-      </svg>
-    </button>
-  `;
+  actionsDiv.innerHTML = buildMessageActionsHTML();
 
   messageDiv.appendChild(contentDiv);
   messageDiv.appendChild(actionsDiv);
@@ -1445,36 +1298,9 @@ function renderMarkdown(contentDiv) {
   enhanceCodeBlocks(markdownContainer);
 }
 
+// Use imported formatToolPreview from utils.js
 function formatToolPreview(toolInput) {
-  if (!toolInput || typeof toolInput !== 'object') {
-    return String(toolInput || '').substring(0, 50);
-  }
-
-  const keys = Object.keys(toolInput);
-  if (keys.length === 0) {
-    return '';
-  }
-
-  const previewKeys = [
-    'pattern',
-    'command',
-    'file_path',
-    'path',
-    'query',
-    'content',
-    'description'
-  ];
-  const key = previewKeys.find(k => toolInput[k]) || keys[0];
-  const value = toolInput[key];
-
-  if (typeof value === 'string') {
-    return `${key}: ${value.substring(0, 50)}${value.length > 50 ? '...' : ''}`;
-  } else if (Array.isArray(value)) {
-    return `${key}: [${value.length} items]`;
-  } else if (typeof value === 'object') {
-    return `${key}: {...}`;
-  }
-  return `${key}: ${String(value).substring(0, 30)}`;
+  return formatToolPreviewUtil(toolInput);
 }
 
 // Add inline tool call to message (maintains correct order in stream)
@@ -1642,43 +1468,6 @@ function updateTodos(newTodos) {
   todos = newTodos;
 }
 
-// Extract short description from tool input
-function getToolDescription(name, input) {
-  if (!input) {
-    return '';
-  }
-
-  // Common patterns for description extraction
-  if (input.description) {
-    return input.description;
-  }
-  if (input.command) {
-    // Truncate long commands
-    const cmd = input.command.split('\n')[0];
-    return cmd.length > 40 ? cmd.substring(0, 37) + '...' : cmd;
-  }
-  if (input.file_path) {
-    return input.file_path.split('/').pop();
-  }
-  if (input.path) {
-    return input.path.split('/').pop();
-  }
-  if (input.query) {
-    return input.query.substring(0, 40);
-  }
-  if (input.pattern) {
-    return input.pattern.substring(0, 40);
-  }
-  if (input.url) {
-    return input.url.substring(0, 40);
-  }
-  if (input.message) {
-    return input.message.substring(0, 40);
-  }
-
-  return '';
-}
-
 // Render progress in sidebar (shows tool calls as steps)
 function renderProgress() {
   stepsList.innerHTML = '';
@@ -1691,58 +1480,25 @@ function renderProgress() {
 
   emptySteps.style.display = 'none';
 
-  // Count completed steps
-  const completed = toolCalls.filter(t => t.status === 'success').length;
-  const failed = toolCalls.filter(t => t.status === 'error').length;
-  const total = toolCalls.length;
+  // Get statistics using sessionManager
+  const stats = getToolCallStats(toolCalls);
 
-  // Update header with statistics
-  if (failed > 0) {
-    stepsCount.textContent = `${completed}/${total} steps (${failed} failed)`;
-  } else {
-    stepsCount.textContent = `${completed}/${total} steps`;
-  }
+  // Update header with statistics using sessionManager
+  stepsCount.textContent = formatStepsCount(stats);
 
-  // Render each tool call as a step
+  // Render each tool call as a step using uiHelpers
   toolCalls.forEach(tc => {
     const stepDiv = document.createElement('div');
     stepDiv.className = 'step-item';
     stepDiv.dataset.toolId = tc.id;
-
-    let statusIcon, statusClass;
-    if (tc.status === 'success') {
-      statusClass = 'completed';
-      statusIcon =
-        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"></polyline></svg>';
-    } else if (tc.status === 'error') {
-      statusClass = 'error';
-      statusIcon =
-        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
-    } else {
-      statusClass = 'in_progress';
-      statusIcon =
-        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle></svg>';
-    }
-
-    const description = getToolDescription(tc.name, tc.input);
-    const displayText = description ? `${tc.name}: ${description}` : tc.name;
-
-    stepDiv.innerHTML = `
-      <div class="step-status ${statusClass}">${statusIcon}</div>
-      <div class="step-content">
-        <div class="step-text">${escapeHtml(displayText)}</div>
-      </div>
-    `;
-
+    stepDiv.innerHTML = buildStepItemHTML(tc);
     stepsList.appendChild(stepDiv);
   });
 }
 
-// Escape HTML for safe display
+// Use escapeHtmlPure from utils.js for safe display
 function escapeHtml(str) {
-  const div = document.createElement('div');
-  div.textContent = str;
-  return div.innerHTML;
+  return escapeHtmlPure(str);
 }
 
 // Copy message to clipboard
