@@ -189,9 +189,16 @@ app.post('/api/chat', async (req, res) => {
   }
 });
 
-// Health check endpoint
+// Health check endpoint with diagnostic info
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+  res.json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    config: {
+      hasApiKey: !!serverConfig.apiKey,
+      apiEndpoint: serverConfig.apiEndpoint
+    }
+  });
 });
 
 // Config endpoint - get current config

@@ -2268,3 +2268,63 @@ body {
 .models-list::-webkit-scrollbar-thumb:hover {
   background: var(--text-tertiary);
 }
+
+/* Diagnosis Result Styles */
+.diagnose-result {
+  margin-top: 12px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.6;
+  background: var(--bg-cream);
+  border: 1px solid var(--border-light);
+}
+
+.diagnose-result.hidden {
+  display: none;
+}
+
+.diagnose-result.loading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-secondary);
+}
+
+.diagnose-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--border-light);
+  border-top-color: var(--accent-coral);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.diagnose-item {
+  padding: 4px 0;
+}
+
+.diagnose-item.success {
+  color: #16a34a;
+}
+
+.diagnose-item.warning {
+  color: #ca8a04;
+}
+
+.diagnose-item.error {
+  color: #dc2626;
+}
+
+.diagnose-item.error-detail {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  padding-left: 16px;
+}

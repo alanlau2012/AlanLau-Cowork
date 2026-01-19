@@ -506,7 +506,7 @@ function setupEventListeners() {
   messageInput.addEventListener('keydown', e => handleKeyPress(e, chatForm));
 
   // Sidebar toggle
-  sidebarToggle.addEventListener('click', toggleSidebar);
+  sidebarToggle.addEventListener('click', window.toggleSidebar);
 
   // File attachment buttons
   const homeAttachBtn = document.getElementById('homeAttachBtn');
@@ -900,7 +900,7 @@ window.removeAttachedFile = function (index, context) {
 };
 
 // Toggle sidebar
-function toggleSidebar() {
+window.toggleSidebar = function () {
   sidebar.classList.toggle('collapsed');
 
   // Show/hide expand button when sidebar is collapsed
@@ -908,7 +908,7 @@ function toggleSidebar() {
   if (sidebarExpandBtn) {
     sidebarExpandBtn.style.display = sidebar.classList.contains('collapsed') ? 'flex' : 'none';
   }
-}
+};
 
 // Update send button state
 function updateSendButton(input, button) {
@@ -1574,6 +1574,8 @@ const apiKeyInput = document.getElementById('apiKey');
 const toggleApiKeyBtn = document.getElementById('toggleApiKey');
 const modelsList = document.getElementById('modelsList');
 const addModelBtn = document.getElementById('addModelBtn');
+const diagnoseBtn = document.getElementById('diagnoseBtn');
+const diagnoseResult = document.getElementById('diagnoseResult');
 
 // Initialize settings module
 async function initSettings() {
@@ -1746,6 +1748,51 @@ async function resetSettings() {
   }
 }
 
+// Run connection diagnosis
+async function runDiagnosis() {
+  if (!diagnoseResult) {
+    return;
+  }
+
+  // Show loading state
+  diagnoseResult.classList.remove('hidden', 'success', 'error');
+  diagnoseResult.classList.add('loading');
+  diagnoseResult.innerHTML = '<span class="diagnose-spinner"></span> 检测中...';
+
+  try {
+    if (!window.electronAPI || !window.electronAPI.checkHealth) {
+      throw new Error('诊断功能不可用');
+    }
+
+    const result = await window.electronAPI.checkHealth();
+
+    diagnoseResult.classList.remove('loading');
+
+    if (result.status === 'ok') {
+      diagnoseResult.classList.add('success');
+      diagnoseResult.innerHTML = `
+        <div class="diagnose-item success">✓ 后端服务器: 正常</div>
+        <div class="diagnose-item ${result.config?.hasApiKey ? 'success' : 'warning'}">
+          ${result.config?.hasApiKey ? '✓' : '⚠'} API Key: ${result.config?.hasApiKey ? '已配置' : '未配置'}
+        </div>
+        <div class="diagnose-item success">✓ API 端点: ${result.config?.apiEndpoint || '默认'}</div>
+      `;
+    } else {
+      diagnoseResult.classList.add('error');
+      diagnoseResult.innerHTML = `
+        <div class="diagnose-item error">✗ 后端服务器: 连接失败</div>
+        <div class="diagnose-item error-detail">${result.message || '未知错误'}</div>
+      `;
+    }
+  } catch (error) {
+    diagnoseResult.classList.remove('loading');
+    diagnoseResult.classList.add('error');
+    diagnoseResult.innerHTML = `
+      <div class="diagnose-item error">✗ 诊断失败: ${error.message}</div>
+    `;
+  }
+}
+
 // Update model selectors in the UI
 function updateModelSelectors() {
   const modelSelects = document.querySelectorAll('.model-select');
@@ -1815,6 +1862,11 @@ function setupSettingsListeners() {
   // Add model button
   if (addModelBtn) {
     addModelBtn.addEventListener('click', addModel);
+  }
+
+  // Diagnosis button
+  if (diagnoseBtn) {
+    diagnoseBtn.addEventListener('click', runDiagnosis);
   }
 
   // Models list delegation

@@ -121,5 +121,30 @@ contextBridge.exposeInMainWorld('electronAPI', {
       console.error('[PRELOAD] Failed to reset settings:', error);
       throw error;
     }
+  },
+
+  // Health check for diagnosis
+  checkHealth: async () => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+    try {
+      const response = await fetch(`${SERVER_URL}/api/health`, {
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      clearTimeout(timeoutId);
+      console.error('[PRELOAD] Health check failed:', error.message);
+      return {
+        status: 'error',
+        message: error.name === 'AbortError' ? '连接超时' : error.message
+      };
+    }
   }
 });
