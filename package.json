@@ -17,7 +17,10 @@
     "lint:fix": "eslint . --ext .js --fix",
     "format": "prettier --write \"**/*.{js,json,md}\"",
     "format:check": "prettier --check \"**/*.{js,json,md}\"",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder",
+    "dist:win": "electron-builder --win"
   },
   "author": "",
   "license": "ISC",
@@ -35,6 +38,7 @@
     "concurrently": "^9.2.1",
     "cross-env": "^10.1.0",
     "electron": "^40.0.0",
+    "electron-builder": "^26.4.0",
     "electron-reload": "^2.0.0-alpha.1",
     "eslint": "^8.57.0",
     "eslint-plugin-vitest": "^0.5.4",
@@ -51,5 +55,60 @@
     "*.{json,md}": [
       "prettier --write"
     ]
+  },
+  "build": {
+    "appId": "com.openclaudecowork.app",
+    "productName": "Open Claude Cowork",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "renderer/**/*",
+      "node_modules/**/*",
+      "!node_modules/*/{CHANGELOG.md,README.md,readme.md,test,tests,__tests__}",
+      "!**/*.{map,ts}"
+    ],
+    "extraResources": [
+      {
+        "from": "server/server.js",
+        "to": "server/server.js"
+      },
+      {
+        "from": "server/package.json",
+        "to": "server/package.json"
+      },
+      {
+        "from": "server/node_modules",
+        "to": "server/node_modules"
+      },
+      {
+        "from": ".env",
+        "to": ".env"
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "differentialPackage": false
+    },
+    "compression": "maximum"
   }
 }
