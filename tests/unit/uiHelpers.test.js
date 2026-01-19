@@ -282,25 +282,46 @@ describe('buildAttachedFileHTML', () => {
 });
 
 describe('getTemplateContent', () => {
-  it('should return folder-org template', () => {
-    const content = getTemplateContent('folder-org');
+  it('should return config-translate template', () => {
+    const content = getTemplateContent('config-translate');
 
-    expect(content).toContain('整理文件夹结构');
-    expect(content).toContain('目录结构');
+    expect(content).toContain('跨厂商配置翻译');
+    expect(content).toContain('华为设备脚本');
   });
 
-  it('should return data-analysis template', () => {
-    const content = getTemplateContent('data-analysis');
+  it('should return lld-calibration template', () => {
+    const content = getTemplateContent('lld-calibration');
 
-    expect(content).toContain('数据分析');
-    expect(content).toContain('统计');
+    expect(content).toContain('LLD与现网数据校准');
+    expect(content).toContain('资源分配差异');
   });
 
-  it('should return batch-file template', () => {
-    const content = getTemplateContent('batch-file');
+  it('should return pac-review template', () => {
+    const content = getTemplateContent('pac-review');
 
-    expect(content).toContain('批量处理');
-    expect(content).toContain('重命名');
+    expect(content).toContain('审核验收交付件');
+    expect(content).toContain('验收标准');
+  });
+
+  it('should return fault-evidence template', () => {
+    const content = getTemplateContent('fault-evidence');
+
+    expect(content).toContain('梳理故障证据链');
+    expect(content).toContain('故障时间轴');
+  });
+
+  it('should return soc-response template', () => {
+    const content = getTemplateContent('soc-response');
+
+    expect(content).toContain('应答技术规范书要求');
+    expect(content).toContain('SOC技术需求');
+  });
+
+  it('should return subcon-audit template', () => {
+    const content = getTemplateContent('subcon-audit');
+
+    expect(content).toContain('审计分包商作业质量');
+    expect(content).toContain('操作日志');
   });
 
   it('should return null for unknown template', () => {

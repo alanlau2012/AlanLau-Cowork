@@ -64,20 +64,54 @@
           <p>选择一个模板开始对话</p>
         </div>
         <div class="templates-grid">
-          <button class="template-card" data-template="folder-org">
-            <div class="template-icon">📁</div>
-            <div class="template-title">文件夹整理</div>
-            <div class="template-desc">整理文件结构，清理冗余文件</div>
+          <!-- 第一行 -->
+          <!-- 1. 跨厂商配置翻译 - NIS -->
+          <button class="template-card" data-template="config-translate">
+            <span class="domain-tag nis">NIS</span>
+            <div class="template-icon">🔄</div>
+            <div class="template-title">跨厂商配置翻译</div>
+            <div class="template-desc">旧网/异构网配置导出，翻译成目标脚本，自动勾稽差异</div>
           </button>
-          <button class="template-card" data-template="data-analysis">
-            <div class="template-icon">📊</div>
-            <div class="template-title">数据分析</div>
-            <div class="template-desc">处理和分析数据文件</div>
+
+          <!-- 2. LLD实时校准 - NIS -->
+          <button class="template-card" data-template="lld-calibration">
+            <span class="domain-tag nis">NIS</span>
+            <div class="template-icon">📐</div>
+            <div class="template-title">LLD实时校准</div>
+            <div class="template-desc">详细设计与现网数据对比，实时识别资源冲突，避免回滚</div>
           </button>
-          <button class="template-card" data-template="batch-file">
+
+          <!-- 3. 验收件自动纠错 - SEC -->
+          <button class="template-card" data-template="pac-review">
+            <span class="domain-tag sec">SEC</span>
+            <div class="template-icon">✅</div>
+            <div class="template-title">验收件自动纠错</div>
+            <div class="template-desc">PAC/FAC截图自动审核，比对合同要求，标记不合格项</div>
+          </button>
+
+          <!-- 第二行 -->
+          <!-- 4. 故障证据链梳理 - AMS -->
+          <button class="template-card" data-template="fault-evidence">
+            <span class="domain-tag ams">AMS</span>
+            <div class="template-icon">🔍</div>
+            <div class="template-title">故障证据链梳理</div>
+            <div class="template-desc">多源日志/邮件自动整合，生成时间轴与根因推测草稿</div>
+          </button>
+
+          <!-- 5. SOC规范应答 - 交付 -->
+          <button class="template-card" data-template="soc-response">
+            <span class="domain-tag delivery">交付</span>
             <div class="template-icon">📋</div>
-            <div class="template-title">批量文件处理</div>
-            <div class="template-desc">批量重命名、移动或处理文件</div>
+            <div class="template-title">SOC规范应答</div>
+            <div class="template-desc">投标技术规范书逐条判断，快速生成应答初稿供专家审核</div>
+          </button>
+
+          <!-- 6. 分包商影子审计 - SEC -->
+          <button class="template-card" data-template="subcon-audit">
+            <span class="domain-tag sec">SEC</span>
+            <div class="template-icon">👁️</div>
+            <div class="template-title">分包商影子审计</div>
+            <div class="template-desc">全量扫描分包商操作日志，自动抓取违规操作如跳步执行</div>
           </button>
         </div>
       </div>
