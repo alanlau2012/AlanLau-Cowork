@@ -28,7 +28,9 @@ export function escapeHtml(str) {
  * @returns {string} Escaped string
  */
 export function escapeHtmlPure(str) {
-  if (typeof str !== 'string') return '';
+  if (typeof str !== 'string') {
+    return '';
+  }
   return str
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -43,7 +45,9 @@ export function escapeHtmlPure(str) {
  * @returns {boolean} True if code block is unclosed
  */
 export function hasUnclosedCodeBlock(text) {
-  if (typeof text !== 'string') return false;
+  if (typeof text !== 'string') {
+    return false;
+  }
   // Count occurrences of triple backticks
   const backtickMatches = text.match(/```/g);
   const count = backtickMatches ? backtickMatches.length : 0;
@@ -95,9 +99,19 @@ export function formatToolPreview(toolInput) {
   }
 
   const keys = Object.keys(toolInput);
-  if (keys.length === 0) return '';
+  if (keys.length === 0) {
+    return '';
+  }
 
-  const previewKeys = ['pattern', 'command', 'file_path', 'path', 'query', 'content', 'description'];
+  const previewKeys = [
+    'pattern',
+    'command',
+    'file_path',
+    'path',
+    'query',
+    'content',
+    'description'
+  ];
   const key = previewKeys.find(k => toolInput[k]) || keys[0];
   const value = toolInput[key];
 
@@ -118,22 +132,38 @@ export function formatToolPreview(toolInput) {
  * @returns {string} Short description
  */
 export function getToolDescription(name, input) {
-  if (!input) return '';
-  
+  if (!input) {
+    return '';
+  }
+
   // Common patterns for description extraction
-  if (input.description) return input.description;
+  if (input.description) {
+    return input.description;
+  }
   if (input.command) {
     // Truncate long commands
     const cmd = input.command.split('\n')[0];
     return cmd.length > 40 ? cmd.substring(0, 37) + '...' : cmd;
   }
-  if (input.file_path) return input.file_path.split('/').pop();
-  if (input.path) return input.path.split('/').pop();
-  if (input.query) return input.query.substring(0, 40);
-  if (input.pattern) return input.pattern.substring(0, 40);
-  if (input.url) return input.url.substring(0, 40);
-  if (input.message) return input.message.substring(0, 40);
-  
+  if (input.file_path) {
+    return input.file_path.split('/').pop();
+  }
+  if (input.path) {
+    return input.path.split('/').pop();
+  }
+  if (input.query) {
+    return input.query.substring(0, 40);
+  }
+  if (input.pattern) {
+    return input.pattern.substring(0, 40);
+  }
+  if (input.url) {
+    return input.url.substring(0, 40);
+  }
+  if (input.message) {
+    return input.message.substring(0, 40);
+  }
+
   return '';
 }
 
@@ -162,8 +192,12 @@ export function debounce(func, wait) {
  * @returns {string} Truncated string
  */
 export function truncateString(str, maxLength = 30) {
-  if (typeof str !== 'string') return '';
-  if (str.length <= maxLength) return str;
+  if (typeof str !== 'string') {
+    return '';
+  }
+  if (str.length <= maxLength) {
+    return str;
+  }
   return str.substring(0, maxLength) + '...';
 }
 
@@ -190,16 +224,18 @@ export function parseSSELine(line) {
  * @returns {string} Formatted size string
  */
 export function formatFileSize(bytes) {
-  if (typeof bytes !== 'number' || bytes < 0) return '0 B';
-  
+  if (typeof bytes !== 'number' || bytes < 0) {
+    return '0 B';
+  }
+
   const units = ['B', 'KB', 'MB', 'GB'];
   let unitIndex = 0;
   let size = bytes;
-  
+
   while (size >= 1024 && unitIndex < units.length - 1) {
     size /= 1024;
     unitIndex++;
   }
-  
+
   return `${size.toFixed(unitIndex > 0 ? 1 : 0)} ${units[unitIndex]}`;
 }

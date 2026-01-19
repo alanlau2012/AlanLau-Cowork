@@ -50,8 +50,12 @@ function createTestServer() {
 
     try {
       // Mock response for testing
-      res.write(`data: ${JSON.stringify({ type: 'session_init', session_id: 'test-session-123' })}\n\n`);
-      res.write(`data: ${JSON.stringify({ type: 'text', content: 'Hello, this is a test response.' })}\n\n`);
+      res.write(
+        `data: ${JSON.stringify({ type: 'session_init', session_id: 'test-session-123' })}\n\n`
+      );
+      res.write(
+        `data: ${JSON.stringify({ type: 'text', content: 'Hello, this is a test response.' })}\n\n`
+      );
       res.write('data: {"type": "done"}\n\n');
       res.end();
     } catch (error) {
@@ -70,9 +74,9 @@ describe('Server API Tests', () => {
 
   beforeAll(async () => {
     app = createTestServer();
-    
+
     // Start server on random port
-    await new Promise((resolve) => {
+    await new Promise(resolve => {
       server = app.listen(0, () => {
         const port = server.address().port;
         baseUrl = `http://localhost:${port}`;
@@ -83,7 +87,7 @@ describe('Server API Tests', () => {
 
   afterAll(async () => {
     if (server) {
-      await new Promise((resolve) => server.close(resolve));
+      await new Promise(resolve => server.close(resolve));
     }
   });
 
@@ -145,11 +149,11 @@ describe('Server API Tests', () => {
 
       const text = await response.text();
       const lines = text.split('\n').filter(line => line.startsWith('data:'));
-      
+
       // Parse first data line (session_init)
       const firstLine = lines[0];
       const data = JSON.parse(firstLine.slice(6));
-      
+
       expect(data.type).toBe('session_init');
       expect(data.session_id).toBeDefined();
     });
@@ -212,7 +216,7 @@ describe('Request Validation', () => {
 
   beforeAll(async () => {
     app = createTestServer();
-    await new Promise((resolve) => {
+    await new Promise(resolve => {
       server = app.listen(0, () => {
         baseUrl = `http://localhost:${server.address().port}`;
         resolve();
@@ -222,7 +226,7 @@ describe('Request Validation', () => {
 
   afterAll(async () => {
     if (server) {
-      await new Promise((resolve) => server.close(resolve));
+      await new Promise(resolve => server.close(resolve));
     }
   });
 

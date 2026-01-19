@@ -21,7 +21,7 @@ describe('generateId', () => {
   it('should generate unique IDs', () => {
     const id1 = generateId();
     const id2 = generateId();
-    
+
     expect(id1).not.toBe(id2);
   });
 
@@ -34,11 +34,11 @@ describe('generateId', () => {
     const before = Date.now();
     const id = generateId();
     const after = Date.now();
-    
+
     // Extract timestamp from ID (format: chat_TIMESTAMP_RANDOM)
     const parts = id.split('_');
     const timestamp = parseInt(parts[1], 10);
-    
+
     expect(timestamp).toBeGreaterThanOrEqual(before);
     expect(timestamp).toBeLessThanOrEqual(after);
   });
@@ -56,7 +56,7 @@ describe('escapeHtmlPure', () => {
   });
 
   it('should escape single quotes', () => {
-    expect(escapeHtmlPure("it's")).toBe("it&#039;s");
+    expect(escapeHtmlPure("it's")).toBe('it&#039;s');
   });
 
   it('should handle empty string', () => {
@@ -193,7 +193,8 @@ describe('getToolDescription', () => {
   });
 
   it('should extract command and truncate', () => {
-    const longCommand = 'npm install --save-dev eslint prettier typescript @types/node some-very-long-package-name';
+    const longCommand =
+      'npm install --save-dev eslint prettier typescript @types/node some-very-long-package-name';
     const input = { command: longCommand };
     const result = getToolDescription('Bash', input);
     expect(result.length).toBeLessThanOrEqual(43); // 40 + "..."

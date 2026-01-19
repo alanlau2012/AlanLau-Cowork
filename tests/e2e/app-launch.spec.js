@@ -135,10 +135,11 @@ test.describe('应用启动测试', () => {
     await window.waitForTimeout(1000);
 
     // 过滤掉一些已知的非关键错误
-    const criticalErrors = errors.filter(err => 
-      !err.includes('favicon') && 
-      !err.includes('net::ERR') &&
-      !err.includes('Failed to load resource')
+    const criticalErrors = errors.filter(
+      err =>
+        !err.includes('favicon') &&
+        !err.includes('net::ERR') &&
+        !err.includes('Failed to load resource')
     );
 
     expect(criticalErrors).toHaveLength(0);
