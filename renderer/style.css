@@ -287,10 +287,13 @@ body {
 .input-container {
   width: 100%;
   max-width: 680px;
+  box-sizing: border-box;
 }
 
 .home-input {
   margin-top: 8px;
+  width: 100%;
+  max-width: 680px;
 }
 
 .input-form {
@@ -669,6 +672,7 @@ body {
 .chat-input-wrapper .input-container {
   width: 100%;
   max-width: 680px;
+  box-sizing: border-box;
 }
 
 .disclaimer {
@@ -1569,6 +1573,8 @@ body {
   margin: 0;
   /* 使用 scrollbar-gutter 预留空间，但默认不显示滚动条 */
   scrollbar-gutter: stable;
+  /* 确保宽度不会超出父容器 */
+  min-width: 0;
 }
 
 .message-textarea:focus {

@@ -1233,6 +1233,27 @@ window.startNewChat = function () {
   // Switch back to home view
   homeView.classList.remove('hidden');
   chatView.classList.add('hidden');
+
+  // Force reset input container widths to prevent layout issues
+  const homeInputContainer = homeInput.closest('.input-container');
+  const chatInputContainer = messageInput.closest('.input-container');
+  if (homeInputContainer) {
+    homeInputContainer.style.width = '';
+    homeInputContainer.style.maxWidth = '';
+  }
+  if (chatInputContainer) {
+    chatInputContainer.style.width = '';
+    chatInputContainer.style.maxWidth = '';
+  }
+
+  // Reset input heights to ensure proper sizing
+  autoResizeTextarea(homeInput);
+  autoResizeTextarea(messageInput);
+
+  // Reset send button states
+  updateSendButton(homeInput, homeSendBtn);
+  updateSendButton(messageInput, chatSendBtn);
+
   homeInput.focus();
 
   // Show quick start templates
