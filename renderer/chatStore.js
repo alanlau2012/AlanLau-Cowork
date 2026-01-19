@@ -10,15 +10,24 @@
  * @param {Array} messages - 消息列表
  * @param {Array} todos - 待办事项列表
  * @param {Array} toolCalls - 工具调用列表
+ * @param {Array} fileChanges - 文件变更列表
  * @returns {object} 聊天数据对象
  */
-export function createChatData(id, title, messages = [], todos = [], toolCalls = []) {
+export function createChatData(
+  id,
+  title,
+  messages = [],
+  todos = [],
+  toolCalls = [],
+  fileChanges = []
+) {
   return {
     id,
     title: title || 'New chat',
     messages,
     todos,
     toolCalls,
+    fileChanges,
     updatedAt: Date.now()
   };
 }
@@ -40,9 +49,10 @@ export function findChatById(allChats, chatId) {
  * 更新聊天列表中的聊天数据
  * @param {Array} allChats - 所有聊天列表
  * @param {object} chatData - 要更新的聊天数据
+ * @param {boolean} preserveUpdatedAt - 是否保留原有的 updatedAt（默认 false，会更新为当前时间）
  * @returns {Array} 更新后的聊天列表（新数组）
  */
-export function updateChatInList(allChats, chatData) {
+export function updateChatInList(allChats, chatData, preserveUpdatedAt = false) {
   if (!Array.isArray(allChats) || !chatData || !chatData.id) {
     return allChats || [];
   }
@@ -51,7 +61,10 @@ export function updateChatInList(allChats, chatData) {
   const newChats = [...allChats];
 
   if (index >= 0) {
-    newChats[index] = { ...chatData, updatedAt: Date.now() };
+    const existingChat = allChats[index];
+    const updatedAt =
+      preserveUpdatedAt && existingChat?.updatedAt ? existingChat.updatedAt : Date.now();
+    newChats[index] = { ...chatData, updatedAt };
   } else {
     // 添加到开头
     newChats.unshift({ ...chatData, updatedAt: Date.now() });

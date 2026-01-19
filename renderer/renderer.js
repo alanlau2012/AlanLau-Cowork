@@ -1,10 +1,12 @@
 // Module imports
 import {
   generateId,
+  escapeHtml,
   escapeHtmlPure,
   hasUnclosedCodeBlock,
   getTimeGroupLabel,
   formatToolPreview,
+  getToolDescription,
   debounce
 } from './utils.js';
 
@@ -18,7 +20,7 @@ import {
   loadChatsFromStorage
 } from './chatStore.js';
 
-import { getToolCallStats, formatStepsCount } from './sessionManager.js';
+// Note: sessionManager.js available for future use
 
 import {
   calculateTextareaHeight,
@@ -26,7 +28,6 @@ import {
   buildInlineToolCallHTML,
   buildSidebarToolCallHTML,
   buildChatItemHTML,
-  buildStepItemHTML,
   buildMessageActionsHTML,
   buildLoadingIndicatorHTML,
   buildErrorRetryHTML,
@@ -55,10 +56,7 @@ const chatTitle = document.getElementById('chatTitle');
 // DOM Elements - Right Sidebar
 const sidebar = document.getElementById('sidebar');
 const sidebarToggle = document.getElementById('sidebarToggle');
-const stepsList = document.getElementById('stepsList');
-const stepsCount = document.getElementById('stepsCount');
 const toolCallsList = document.getElementById('toolCallsList');
-const emptySteps = document.getElementById('emptySteps');
 const emptyTools = document.getElementById('emptyTools');
 
 // DOM Elements - Left Sidebar (Chat History)
@@ -238,7 +236,7 @@ function retryMessage() {
 }
 
 // Save current chat state
-function saveState() {
+function saveState(preserveUpdatedAt = false, skipRenderHistory = false) {
   if (!currentChatId) {
     return;
   }
@@ -252,15 +250,27 @@ function saveState() {
       ''
   }));
 
-  const chatData = createChatData(currentChatId, chatTitle.textContent, messages, todos, toolCalls);
+  const chatData = createChatData(
+    currentChatId,
+    chatTitle.textContent,
+    messages,
+    todos,
+    toolCalls,
+    fileChanges
+  );
 
   // Update chat list using chatStore
-  allChats = updateChatInList(allChats, chatData);
+  allChats = updateChatInList(allChats, chatData, preserveUpdatedAt);
 
   // Save to localStorage using chatStore
   saveChatToStorage(localStorage, allChats, currentChatId);
 
-  renderChatHistory();
+  if (!skipRenderHistory) {
+    renderChatHistory();
+  } else {
+    // 只更新 active 状态，避免完全重新渲染
+    updateChatHistoryActiveState();
+  }
 }
 
 // Load all chats from localStorage
@@ -286,6 +296,7 @@ function loadChat(chat) {
   isFirstMessage = false;
   todos = chat.todos || [];
   toolCalls = chat.toolCalls || [];
+  fileChanges = chat.fileChanges || [];
 
   // Switch to chat view
   switchToChatView();
@@ -339,11 +350,58 @@ function loadChat(chat) {
   renderSidebarToolCalls();
 
   // Restore progress display
-  renderProgress();
+  renderProgressSummary();
+
+  // Restore file changes display
+  renderFileChanges();
 
   scrollToBottom();
-  renderChatHistory();
+  // 只更新 active 状态，避免完全重新渲染导致视觉跳动
+  updateChatHistoryActiveState();
   localStorage.setItem('currentChatId', currentChatId);
+}
+
+// 只更新历史记录中的 active 状态，避免完全重新渲染
+function updateChatHistoryActiveState() {
+  // #region agent log
+  fetch('http://127.0.0.1:7242/ingest/bc4b6979-3551-47d8-8d38-fd1c1280fe34', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      location: 'renderer.js:364',
+      message: 'updateChatHistoryActiveState called',
+      data: { currentChatId, itemsCount: chatHistoryList.querySelectorAll('.chat-item').length },
+      timestamp: Date.now(),
+      sessionId: 'debug-session',
+      runId: 'post-fix',
+      hypothesisId: 'F'
+    })
+  }).catch(() => {});
+  // #endregion
+  const items = chatHistoryList.querySelectorAll('.chat-item');
+  // #region agent log
+  fetch('http://127.0.0.1:7242/ingest/bc4b6979-3551-47d8-8d38-fd1c1280fe34', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      location: 'renderer.js:366',
+      message: 'Updating active state',
+      data: { itemsCount: items.length, currentChatId },
+      timestamp: Date.now(),
+      sessionId: 'debug-session',
+      runId: 'post-fix',
+      hypothesisId: 'F'
+    })
+  }).catch(() => {});
+  // #endregion
+  items.forEach(item => {
+    const isActive = item.dataset.chatId === currentChatId;
+    if (isActive) {
+      item.classList.add('active');
+    } else {
+      item.classList.remove('active');
+    }
+  });
 }
 
 // Restore a single inline tool call (for loading saved chats)
@@ -387,6 +445,9 @@ function renderSidebarToolCalls() {
 
 // Render chat history sidebar
 function renderChatHistory() {
+  // 保存当前滚动位置
+  const scrollTop = chatHistoryList.scrollTop;
+
   chatHistoryList.innerHTML = '';
 
   if (allChats.length === 0) {
@@ -423,12 +484,18 @@ function renderChatHistory() {
     };
     chatHistoryList.appendChild(item);
   });
+
+  // 恢复滚动位置（如果列表内容没有变化）
+  if (scrollTop > 0 && chatHistoryList.scrollHeight >= scrollTop) {
+    chatHistoryList.scrollTop = scrollTop;
+  }
 }
 
 // Switch to a different chat
 function switchToChat(chatId) {
   if (currentChatId) {
-    saveState();
+    // 切换聊天时，保存状态但不更新 updatedAt，也不重新渲染历史记录，避免顺序乱跳和视觉跳动
+    saveState(true, true);
   }
 
   // Find chat using chatStore
@@ -890,6 +957,174 @@ window.toggleSidebar = function () {
   }
 };
 
+// Switch panel tab
+window.switchPanelTab = function (tabId) {
+  // Update tab buttons
+  document.querySelectorAll('.panel-tab').forEach(tab => {
+    tab.classList.remove('active');
+    if (tab.dataset.tab === tabId) {
+      tab.classList.add('active');
+    }
+  });
+
+  // Update tab panes
+  document.querySelectorAll('.tab-pane').forEach(pane => {
+    pane.classList.remove('active');
+  });
+  const targetPane = document.getElementById('tab-' + tabId);
+  if (targetPane) {
+    targetPane.classList.add('active');
+  }
+};
+
+// File changes state
+let fileChanges = [];
+
+// Add file change
+function addFileChange(name, path, type, stats = {}) {
+  const id = 'file_' + Date.now();
+  const change = { id, name, path, type, stats };
+  fileChanges.push(change);
+  renderFileChanges();
+  return change;
+}
+
+// Render file changes
+function renderFileChanges() {
+  const fileChangesList = document.getElementById('fileChangesList');
+
+  if (!fileChangesList) {
+    return;
+  }
+
+  // Clear dynamic content but preserve structure
+  fileChangesList.innerHTML = '';
+
+  // Create empty state element
+  const emptyDiv = document.createElement('div');
+  emptyDiv.className = 'empty-state';
+  emptyDiv.id = 'emptyFiles';
+  emptyDiv.textContent = '暂无文件变更';
+
+  if (fileChanges.length === 0) {
+    emptyDiv.style.display = 'block';
+    fileChangesList.appendChild(emptyDiv);
+    return;
+  }
+
+  // Hide empty state
+  emptyDiv.style.display = 'none';
+  fileChangesList.appendChild(emptyDiv);
+
+  // Render file changes
+  fileChanges.forEach(change => {
+    const item = document.createElement('div');
+    item.className = 'file-change-item';
+    item.innerHTML = `
+      <div class="file-change-header">
+        <div class="file-change-icon ${change.type}">${getFileChangeIcon(change.type)}</div>
+        <div class="file-change-info">
+          <div class="file-change-name">${escapeHtml(change.name)}</div>
+          <div class="file-change-path">${escapeHtml(change.path)}</div>
+        </div>
+        ${renderFileStats(change.stats)}
+      </div>
+    `;
+    fileChangesList.appendChild(item);
+  });
+}
+
+// Get file change icon
+function getFileChangeIcon(type) {
+  switch (type) {
+    case 'added':
+      return '+';
+    case 'modified':
+      return 'M';
+    case 'deleted':
+      return '-';
+    default:
+      return '?';
+  }
+}
+
+// Render file stats
+function renderFileStats(stats) {
+  if (!stats || (!stats.added && !stats.removed)) {
+    return '';
+  }
+  let html = '<div class="file-change-stats">';
+  if (stats.added) {
+    html += `<span class="stat-added">+${stats.added}</span>`;
+  }
+  if (stats.removed) {
+    html += `<span class="stat-removed">-${stats.removed}</span>`;
+  }
+  html += '</div>';
+  return html;
+}
+
+// Render progress items in progress summary
+function renderProgressSummary() {
+  const progressItems = document.getElementById('progressItems');
+  const emptyProgress = document.getElementById('emptyProgress');
+
+  if (!progressItems) {
+    return;
+  }
+
+  progressItems.innerHTML = '';
+
+  // Convert tool calls to progress items with description
+  const items = toolCalls.map(tc => ({
+    id: tc.id,
+    name: tc.name,
+    description: getToolDescription(tc.name, tc.input),
+    status: tc.status
+  }));
+
+  if (items.length === 0) {
+    if (emptyProgress) {
+      emptyProgress.style.display = 'block';
+    }
+    return;
+  }
+
+  if (emptyProgress) {
+    emptyProgress.style.display = 'none';
+  }
+
+  items.forEach(item => {
+    // Display tool name with description if available
+    const displayText = item.description ? `${item.name}: ${item.description}` : item.name;
+    const div = document.createElement('div');
+    div.className = `progress-item ${item.status === 'running' ? 'current' : ''} ${item.status === 'pending' ? 'pending' : ''}`;
+    div.innerHTML = `
+      <div class="progress-icon ${item.status}">
+        ${getProgressIcon(item.status)}
+      </div>
+      <span>${escapeHtml(displayText)}</span>
+    `;
+    progressItems.appendChild(div);
+  });
+}
+
+// Get progress icon
+function getProgressIcon(status) {
+  switch (status) {
+    case 'success':
+      return '✓';
+    case 'running':
+      return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 10px; height: 10px;">
+        <path d="M12 2v4"/><path d="M12 18v4"/>
+      </svg>`;
+    case 'error':
+      return '✕';
+    default:
+      return '○';
+  }
+}
+
 // Update send button state
 function updateSendButton(input, button) {
   button.disabled = !input.value.trim() || isWaitingForResponse;
@@ -1033,6 +1268,19 @@ async function handleSendMessage(e) {
               if (toolName === 'TodoWrite' && toolInput.todos) {
                 updateTodos(toolInput.todos);
               }
+              // Track file changes from file operation tools
+              if (['Write', 'Edit', 'StrReplace', 'Delete'].includes(toolName)) {
+                const filePath = toolInput.path || toolInput.file_path || '';
+                const pathSeparator = filePath.includes('\\') ? '\\' : '/';
+                const fileName = filePath.split(pathSeparator).pop() || 'unknown';
+                let changeType = 'modified';
+                if (toolName === 'Delete') {
+                  changeType = 'deleted';
+                } else if (toolName === 'Write') {
+                  changeType = 'added';
+                }
+                addFileChange(fileName, filePath, changeType);
+              }
               hasContent = true;
             } else if (data.type === 'tool_result' || data.type === 'result') {
               const result = data.result || data.content || data;
@@ -1065,6 +1313,19 @@ async function handleSendMessage(e) {
                     addInlineToolCall(contentDiv, toolName, toolInput, toolCall.id);
                     if (apiId) {
                       pendingToolCalls.set(apiId, toolCall.id);
+                    }
+                    // Track file changes from file operation tools
+                    if (['Write', 'Edit', 'StrReplace', 'Delete'].includes(toolName)) {
+                      const filePath = toolInput.path || toolInput.file_path || '';
+                      const pathSeparator = filePath.includes('\\') ? '\\' : '/';
+                      const fileName = filePath.split(pathSeparator).pop() || 'unknown';
+                      let changeType = 'modified';
+                      if (toolName === 'Delete') {
+                        changeType = 'deleted';
+                      } else if (toolName === 'Write') {
+                        changeType = 'added';
+                      }
+                      addFileChange(fileName, filePath, changeType);
                     }
                     hasContent = true;
                   } else if (block.type === 'text' && block.text) {
@@ -1202,13 +1463,31 @@ window.startNewChat = function () {
   todos = [];
   toolCalls = [];
   attachedFiles = [];
+  fileChanges = [];
 
-  // Reset sidebar
-  stepsList.innerHTML = '';
-  emptySteps.style.display = 'block';
-  stepsCount.textContent = '0 steps';
+  // Reset sidebar/right panel
   toolCallsList.innerHTML = '';
   emptyTools.style.display = 'block';
+
+  // Reset progress summary
+  const progressItems = document.getElementById('progressItems');
+  const emptyProgress = document.getElementById('emptyProgress');
+  if (progressItems) {
+    progressItems.innerHTML = '';
+  }
+  if (emptyProgress) {
+    emptyProgress.style.display = 'block';
+  }
+
+  // Reset file changes
+  const fileChangesList = document.getElementById('fileChangesList');
+  const emptyFiles = document.getElementById('emptyFiles');
+  if (fileChangesList) {
+    fileChangesList.innerHTML = '';
+  }
+  if (emptyFiles) {
+    emptyFiles.style.display = 'block';
+  }
 
   // Switch back to home view
   homeView.classList.remove('hidden');
@@ -1370,7 +1649,7 @@ function addToolCall(name, input, status = 'running') {
   emptyTools.style.display = 'none';
 
   // Update Progress section
-  renderProgress();
+  renderProgressSummary();
 
   const toolDiv = document.createElement('div');
   toolDiv.className = 'tool-call-item expanded'; // Show expanded by default
@@ -1428,7 +1707,7 @@ function updateToolCallStatus(toolId, status) {
   }
 
   // Update Progress section
-  renderProgress();
+  renderProgressSummary();
 }
 
 // Update tool call result
@@ -1462,34 +1741,6 @@ window.toggleToolCall = function (header) {
 // Update todos from TodoWrite (legacy, kept for compatibility)
 function updateTodos(newTodos) {
   todos = newTodos;
-}
-
-// Render progress in sidebar (shows tool calls as steps)
-function renderProgress() {
-  stepsList.innerHTML = '';
-
-  if (toolCalls.length === 0) {
-    emptySteps.style.display = 'block';
-    stepsCount.textContent = '0 steps';
-    return;
-  }
-
-  emptySteps.style.display = 'none';
-
-  // Get statistics using sessionManager
-  const stats = getToolCallStats(toolCalls);
-
-  // Update header with statistics using sessionManager
-  stepsCount.textContent = formatStepsCount(stats);
-
-  // Render each tool call as a step using uiHelpers
-  toolCalls.forEach(tc => {
-    const stepDiv = document.createElement('div');
-    stepDiv.className = 'step-item';
-    stepDiv.dataset.toolId = tc.id;
-    stepDiv.innerHTML = buildStepItemHTML(tc);
-    stepsList.appendChild(stepDiv);
-  });
 }
 
 // Copy message to clipboard
