@@ -38,6 +38,28 @@
   --tag-delivery-bg: #f5f3ff;
 }
 
+/* Dark Theme */
+:root.dark {
+  --bg-cream: #121212;
+  --bg-white: #1e1e1e;
+  --bg-secondary: #252525;
+  --bg-tertiary: #2d2d2d;
+  --text-primary: #e5e5e5;
+  --text-secondary: #a0a0a0;
+  --text-tertiary: #707070;
+  --border-light: #333333;
+  --user-bubble: #2d2d2d;
+  --message-assistant: #1e1e1e;
+  --shadow-soft: 0 4px 12px rgba(0, 0, 0, 0.3);
+  --shadow-input: 0 8px 24px rgba(0, 0, 0, 0.4);
+
+  /* 领域标签颜色微调以适应深色背景 */
+  --tag-nis-bg: rgba(59, 130, 246, 0.15);
+  --tag-sec-bg: rgba(16, 185, 129, 0.15);
+  --tag-ams-bg: rgba(245, 158, 11, 0.15);
+  --tag-delivery-bg: rgba(139, 92, 246, 0.15);
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -734,6 +756,33 @@ body {
   margin-bottom: 0;
 }
 
+/* Generation Status Line */
+.generation-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 8px 12px;
+  background: rgba(196, 145, 123, 0.08);
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  animation: fadeIn 0.3s ease-out;
+}
+
+.status-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--accent-coral);
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.status-text {
+  font-weight: 500;
+}
+
 /* Message Actions */
 .message-actions {
   display: flex;
@@ -789,6 +838,45 @@ body {
     opacity: 0.5;
     transform: scale(0.95);
   }
+}
+
+/* Generation Status */
+.generation-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  animation: fadeIn 0.3s ease-out;
+}
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  background: var(--accent-coral);
+  border-radius: 50%;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.status-text {
+  font-style: italic;
+  opacity: 0.8;
+}
+
+/* Resizer */
+.resizer.horizontal {
+  width: 4px;
+  cursor: col-resize;
+  background: transparent;
+  transition: background 0.2s;
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+.resizer.horizontal:hover,
+.resizer.horizontal.active {
+  background: var(--accent-coral);
 }
 
 /* Chat Input Wrapper */
@@ -2074,10 +2162,30 @@ body {
 }
 
 /* ==================== SETTINGS BUTTON ==================== */
-.settings-container {
-  padding: 12px;
+.theme-toggle-container {
+  padding: 12px 12px 0;
   border-top: 1px solid var(--border-light);
   margin-top: auto;
+}
+
+:root.dark .sun-icon {
+  display: none;
+}
+
+:root.dark .moon-icon {
+  display: block !important;
+}
+
+:root:not(.dark) .sun-icon {
+  display: block !important;
+}
+
+:root:not(.dark) .moon-icon {
+  display: none;
+}
+
+.settings-container {
+  padding: 12px;
 }
 
 .settings-btn {
@@ -2733,6 +2841,7 @@ body {
   overflow-y: auto;
   padding: 16px;
   min-height: 0;
+  background: var(--bg-cream);
 }
 
 .tab-pane {

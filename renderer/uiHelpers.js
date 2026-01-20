@@ -237,6 +237,13 @@ export function buildStepItemHTML(toolCall) {
  */
 export function buildMessageActionsHTML() {
   return `
+    <button class="action-btn regenerate-btn" title="Regenerate" onclick="regenerateMessage(this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M1 4v6h6"></path>
+        <path d="M23 20v-6h-6"></path>
+        <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"></path>
+      </svg>
+    </button>
     <button class="action-btn" title="Copy" onclick="copyMessage(this)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>

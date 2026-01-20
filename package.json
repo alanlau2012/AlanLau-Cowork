@@ -59,7 +59,7 @@
   },
   "build": {
     "appId": "com.openclaudecowork.app",
-    "productName": "Open Claude Cowork",
+    "productName": "GTS Cowork",
     "directories": {
       "output": "dist"
     },

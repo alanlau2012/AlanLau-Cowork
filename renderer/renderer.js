@@ -85,6 +85,7 @@ function init() {
   loadAllChats();
   renderChatHistory();
   initializeSearch();
+  setupResizers();
   homeInput.focus();
 }
 
@@ -348,11 +349,8 @@ function loadChat(chat) {
     });
   }
 
-  // Restore sidebar tool calls display
-  renderSidebarToolCalls();
-
-  // Restore progress display
-  renderProgressSummary();
+  // Restore timeline display
+  renderTimeline();
 
   // Restore file changes display
   renderFileChanges();
@@ -394,24 +392,35 @@ function restoreInlineToolCall(contentDiv, toolCall) {
   contentDiv.appendChild(toolDiv);
 }
 
-// Render sidebar tool calls from restored toolCalls array
-function renderSidebarToolCalls() {
-  toolCallsList.innerHTML = '';
+// Restore sidebar tool calls display
+function renderTimeline() {
+  const timelineList = document.getElementById('timelineList');
+  const emptyTimeline = document.getElementById('emptyTimeline');
 
-  if (toolCalls.length === 0) {
-    emptyTools.style.display = 'block';
+  if (!timelineList) {
     return;
   }
 
-  emptyTools.style.display = 'none';
+  timelineList.innerHTML = '';
 
-  // Use buildSidebarToolCallHTML from uiHelpers
+  if (toolCalls.length === 0) {
+    if (emptyTimeline) {
+      emptyTimeline.style.display = 'block';
+    }
+    return;
+  }
+
+  if (emptyTimeline) {
+    emptyTimeline.style.display = 'none';
+  }
+
+  // Use buildSidebarToolCallHTML from uiHelpers (already includes details)
   toolCalls.forEach(tc => {
     const toolDiv = document.createElement('div');
     toolDiv.className = 'tool-call-item';
     toolDiv.dataset.toolId = tc.id;
     toolDiv.innerHTML = buildSidebarToolCallHTML(tc);
-    toolCallsList.appendChild(toolDiv);
+    timelineList.appendChild(toolDiv);
   });
 }
 
@@ -1178,51 +1187,6 @@ function renderFileStats(stats) {
   return html;
 }
 
-// Render progress items in progress summary
-function renderProgressSummary() {
-  const progressItems = document.getElementById('progressItems');
-  const emptyProgress = document.getElementById('emptyProgress');
-
-  if (!progressItems) {
-    return;
-  }
-
-  progressItems.innerHTML = '';
-
-  // Convert tool calls to progress items with description
-  const items = toolCalls.map(tc => ({
-    id: tc.id,
-    name: tc.name,
-    description: getToolDescription(tc.name, tc.input),
-    status: tc.status
-  }));
-
-  if (items.length === 0) {
-    if (emptyProgress) {
-      emptyProgress.style.display = 'block';
-    }
-    return;
-  }
-
-  if (emptyProgress) {
-    emptyProgress.style.display = 'none';
-  }
-
-  items.forEach(item => {
-    // Display tool name with description if available
-    const displayText = item.description ? `${item.name}: ${item.description}` : item.name;
-    const div = document.createElement('div');
-    div.className = `progress-item ${item.status === 'running' ? 'current' : ''} ${item.status === 'pending' ? 'pending' : ''}`;
-    div.innerHTML = `
-      <div class="progress-icon ${item.status}">
-        ${getProgressIcon(item.status)}
-      </div>
-      <span>${escapeHtml(displayText)}</span>
-    `;
-    progressItems.appendChild(div);
-  });
-}
-
 // Get progress icon
 function getProgressIcon(status) {
   switch (status) {
@@ -1358,6 +1322,7 @@ async function handleSendMessage(e) {
             const data = JSON.parse(jsonStr);
 
             if (data.type === 'done') {
+              removeGenerationStatus(assistantMessage);
               break;
             } else if (data.type === 'text' && data.content) {
               if (!hasContent) {
@@ -1368,11 +1333,13 @@ async function handleSendMessage(e) {
               }
               hasContent = true;
               receivedStreamingText = true;
+              updateGenerationStatus(assistantMessage, '正在生成回复...');
               appendToContent(contentDiv, data.content);
             } else if (data.type === 'tool_use') {
               const toolName = data.name || data.tool || 'Tool';
               const toolInput = data.input || {};
               const apiId = data.id; // API's tool ID
+              updateGenerationStatus(assistantMessage, `正在调用工具: ${toolName}...`);
               const toolCall = addToolCall(toolName, toolInput, 'running');
               addInlineToolCall(contentDiv, toolName, toolInput, toolCall.id);
               if (apiId) {
@@ -1399,6 +1366,7 @@ async function handleSendMessage(e) {
             } else if (data.type === 'tool_result' || data.type === 'result') {
               const result = data.result || data.content || data;
               const apiId = data.tool_use_id;
+              updateGenerationStatus(assistantMessage, '收到工具执行结果，正在处理...');
 
               // Find the matching tool call by API ID
               const localId = apiId ? pendingToolCalls.get(apiId) : null;
@@ -1423,6 +1391,7 @@ async function handleSendMessage(e) {
                     const toolName = block.name || 'Tool';
                     const toolInput = block.input || {};
                     const apiId = block.id; // API's tool ID
+                    updateGenerationStatus(assistantMessage, `准备使用工具: ${toolName}...`);
                     const toolCall = addToolCall(toolName, toolInput, 'running');
                     addInlineToolCall(contentDiv, toolName, toolInput, toolCall.id);
                     if (apiId) {
@@ -1451,6 +1420,7 @@ async function handleSendMessage(e) {
                         }
                       }
                       hasContent = true;
+                      updateGenerationStatus(assistantMessage, '正在组织语言...');
                       appendToContent(contentDiv, block.text);
                     }
                   }
@@ -1547,6 +1517,39 @@ function createAssistantMessage() {
   return messageDiv;
 }
 
+/**
+ * 更新生成状态文本
+ * @param {HTMLElement} assistantMessage - 助手消息容器
+ * @param {string} text - 状态文本
+ */
+function updateGenerationStatus(assistantMessage, text) {
+  let statusDiv = assistantMessage.querySelector('.generation-status');
+  if (!statusDiv) {
+    statusDiv = document.createElement('div');
+    statusDiv.className = 'generation-status';
+    statusDiv.innerHTML = '<div class="status-dot"></div><span class="status-text"></span>';
+    // 插入在 message-content 之后
+    const contentDiv = assistantMessage.querySelector('.message-content');
+    contentDiv.after(statusDiv);
+  }
+
+  const statusTextEl = statusDiv.querySelector('.status-text');
+  if (statusTextEl) {
+    statusTextEl.textContent = text;
+  }
+}
+
+/**
+ * 移除生成状态
+ * @param {HTMLElement} assistantMessage - 助手消息容器
+ */
+function removeGenerationStatus(assistantMessage) {
+  const statusDiv = assistantMessage.querySelector('.generation-status');
+  if (statusDiv) {
+    statusDiv.remove();
+  }
+}
+
 function appendToContent(contentDiv, content) {
   if (!contentDiv.dataset.rawContent) {
     contentDiv.dataset.rawContent = '';
@@ -1580,17 +1583,13 @@ window.startNewChat = function () {
   fileChanges = [];
 
   // Reset sidebar/right panel
-  toolCallsList.innerHTML = '';
-  emptyTools.style.display = 'block';
-
-  // Reset progress summary
-  const progressItems = document.getElementById('progressItems');
-  const emptyProgress = document.getElementById('emptyProgress');
-  if (progressItems) {
-    progressItems.innerHTML = '';
+  const timelineList = document.getElementById('timelineList');
+  const emptyTimeline = document.getElementById('emptyTimeline');
+  if (timelineList) {
+    timelineList.innerHTML = '';
   }
-  if (emptyProgress) {
-    emptyProgress.style.display = 'block';
+  if (emptyTimeline) {
+    emptyTimeline.style.display = 'block';
   }
 
   // Reset file changes
@@ -1760,10 +1759,12 @@ function addToolCall(name, input, status = 'running') {
   const toolCall = { id, name, input, status, result: null };
   toolCalls.push(toolCall);
 
-  emptyTools.style.display = 'none';
+  const timelineList = document.getElementById('timelineList');
+  const emptyTimeline = document.getElementById('emptyTimeline');
 
-  // Update Progress section
-  renderProgressSummary();
+  if (emptyTimeline) {
+    emptyTimeline.style.display = 'none';
+  }
 
   const toolDiv = document.createElement('div');
   toolDiv.className = 'tool-call-item expanded'; // Show expanded by default
@@ -1798,7 +1799,9 @@ function addToolCall(name, input, status = 'running') {
     </div>
   `;
 
-  toolCallsList.appendChild(toolDiv);
+  if (timelineList) {
+    timelineList.appendChild(toolDiv);
+  }
   return toolCall;
 }
 
@@ -1819,9 +1822,6 @@ function updateToolCallStatus(toolId, status) {
   if (toolCall) {
     toolCall.status = status;
   }
-
-  // Update Progress section
-  renderProgressSummary();
 }
 
 // Update tool call result
@@ -1871,7 +1871,60 @@ function copyMessage(button) {
   });
 }
 
+/**
+ * 重新生成消息
+ * @param {HTMLButtonElement} button - 触发按钮
+ */
+async function regenerateMessage(button) {
+  if (isWaitingForResponse) {
+    showToast('请等待当前响应完成', 'info');
+    return;
+  }
+
+  const messageDiv = button.closest('.message');
+  if (!messageDiv || !messageDiv.classList.contains('assistant')) {
+    return;
+  }
+
+  const messages = Array.from(chatMessages.children);
+  const index = messages.indexOf(messageDiv);
+  if (index <= 0) {
+    return;
+  }
+
+  // 找到上一条用户消息
+  let userMessageIndex = -1;
+  for (let i = index - 1; i >= 0; i--) {
+    if (messages[i].classList.contains('user')) {
+      userMessageIndex = i;
+      break;
+    }
+  }
+
+  if (userMessageIndex === -1) {
+    showToast('找不到可以重新生成的消息', 'error');
+    return;
+  }
+
+  const userMessageDiv = messages[userMessageIndex];
+  const userContent = userMessageDiv.querySelector('.message-content').textContent;
+
+  // 移除从该用户消息开始的所有后续消息
+  while (chatMessages.children.length > userMessageIndex) {
+    chatMessages.lastElementChild.remove();
+  }
+
+  // 填充输入框并触发发送
+  const input = isFirstMessage ? homeInput : messageInput;
+  input.value = userContent;
+  autoResizeTextarea(input);
+
+  // 触发发送
+  handleSendMessage(new Event('submit'));
+}
+
 window.copyMessage = copyMessage;
+window.regenerateMessage = regenerateMessage;
 
 // Get conversation history for context
 // eslint-disable-next-line no-unused-vars
@@ -2266,11 +2319,126 @@ function setupSettingsListeners() {
       closeSettingsModal();
     }
   });
+
+  // Theme toggle
+  const themeToggleBtn = document.getElementById('themeToggleBtn');
+  if (themeToggleBtn) {
+    themeToggleBtn.addEventListener('click', toggleTheme);
+  }
+}
+
+// ==================== RESIZERS MODULE ====================
+
+/**
+ * Setup resizable panels
+ */
+function setupResizers() {
+  const leftSidebar = document.getElementById('leftSidebar');
+  const rightSidebar = document.getElementById('sidebar');
+  const leftResizer = document.getElementById('leftResizer');
+  const rightResizer = document.getElementById('rightResizer');
+
+  if (!leftResizer || !rightResizer) {
+    return;
+  }
+
+  // Load saved widths
+  const savedLeftWidth = localStorage.getItem('leftSidebarWidth');
+  const savedRightWidth = localStorage.getItem('rightSidebarWidth');
+
+  if (savedLeftWidth) {
+    leftSidebar.style.width = savedLeftWidth + 'px';
+    leftSidebar.style.minWidth = savedLeftWidth + 'px';
+  }
+  if (savedRightWidth) {
+    rightSidebar.style.width = savedRightWidth + 'px';
+  }
+
+  // Left Sidebar Resizer
+  leftResizer.addEventListener('mousedown', e => {
+    e.preventDefault();
+    leftResizer.classList.add('active');
+    document.addEventListener('mousemove', handleLeftMouseMove);
+    document.addEventListener('mouseup', () => {
+      leftResizer.classList.remove('active');
+      document.removeEventListener('mousemove', handleLeftMouseMove);
+      localStorage.setItem('leftSidebarWidth', leftSidebar.offsetWidth);
+    });
+  });
+
+  function handleLeftMouseMove(e) {
+    const newWidth = e.clientX;
+    if (newWidth > 150 && newWidth < 500) {
+      leftSidebar.style.width = newWidth + 'px';
+      leftSidebar.style.minWidth = newWidth + 'px';
+    }
+  }
+
+  // Right Sidebar Resizer
+  rightResizer.addEventListener('mousedown', e => {
+    e.preventDefault();
+    rightResizer.classList.add('active');
+    document.addEventListener('mousemove', handleRightMouseMove);
+    document.addEventListener('mouseup', () => {
+      rightResizer.classList.remove('active');
+      document.removeEventListener('mousemove', handleRightMouseMove);
+      localStorage.setItem('rightSidebarWidth', rightSidebar.offsetWidth);
+    });
+  });
+
+  function handleRightMouseMove(e) {
+    const newWidth = window.innerWidth - e.clientX;
+    if (newWidth > 200 && newWidth < 600) {
+      rightSidebar.style.width = newWidth + 'px';
+    }
+  }
+}
+
+// ==================== THEME MODULE ====================
+
+/**
+ * Initialize theme from localStorage
+ */
+function initTheme() {
+  const savedTheme = localStorage.getItem('theme') || 'light';
+  applyTheme(savedTheme);
+}
+
+/**
+ * Apply theme to document
+ * @param {string} theme - 'light' | 'dark'
+ */
+function applyTheme(theme) {
+  const root = document.documentElement;
+  const themeToggleBtn = document.getElementById('themeToggleBtn');
+  const themeText = themeToggleBtn?.querySelector('span');
+
+  if (theme === 'dark') {
+    root.classList.add('dark');
+    if (themeText) {
+      themeText.textContent = 'Dark Mode';
+    }
+  } else {
+    root.classList.remove('dark');
+    if (themeText) {
+      themeText.textContent = 'Light Mode';
+    }
+  }
+  localStorage.setItem('theme', theme);
+}
+
+/**
+ * Toggle between light and dark theme
+ */
+function toggleTheme() {
+  const isDark = document.documentElement.classList.contains('dark');
+  applyTheme(isDark ? 'light' : 'dark');
 }
 
 // Initialize on load
 window.addEventListener('load', async () => {
   init();
+  initTheme();
   // Initialize settings module
   await initSettings();
   setupSettingsListeners();

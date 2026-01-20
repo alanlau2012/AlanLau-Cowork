@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Claude</title>
+  <title>GTS Cowork</title>
   <link rel="stylesheet" href="style.css">
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
@@ -34,6 +34,27 @@
         <!-- Chat history items will be added here -->
       </div>
 
+      <!-- Theme Toggle -->
+      <div class="theme-toggle-container">
+        <button id="themeToggleBtn" class="settings-btn" title="Toggle theme">
+          <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+          </svg>
+          <svg class="moon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: none;">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+          </svg>
+          <span>Light Mode</span>
+        </button>
+      </div>
+
       <!-- Settings Button -->
       <div class="settings-container">
         <button id="settingsBtn" class="settings-btn" title="Settings">
@@ -45,6 +66,7 @@
         </button>
       </div>
     </aside>
+    <div class="resizer horizontal" id="leftResizer"></div>
 
     <!-- Main Content -->
     <div class="main-content">
@@ -238,9 +260,10 @@
               </div>
             </form>
           </div>
-          <p class="disclaimer">Claude is AI and can make mistakes. Please double-check responses.</p>
+          <p class="disclaimer">AI的回答未必正确无误，请注意核查</p>
         </div>
       </div>
+      <div class="resizer horizontal" id="rightResizer"></div>
 
       <!-- Right Panel with Tabs -->
       <aside class="right-panel" id="sidebar">
@@ -256,35 +279,17 @@
 
         <!-- Tab Navigation -->
         <div class="panel-tabs">
-          <button class="panel-tab active" data-tab="progress" onclick="window.switchPanelTab('progress')">执行过程</button>
-          <button class="panel-tab" data-tab="tools" onclick="window.switchPanelTab('tools')">工具调用</button>
+          <button class="panel-tab active" data-tab="timeline" onclick="window.switchPanelTab('timeline')">时间线</button>
           <button class="panel-tab" data-tab="files" onclick="window.switchPanelTab('files')">文件变更</button>
         </div>
 
         <!-- Tab Content -->
         <div class="panel-content">
-          <!-- Progress Tab -->
-          <div class="tab-pane active" id="tab-progress">
-            <div class="progress-summary">
-              <div class="progress-title">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                  <polyline points="22 4 12 14.01 9 11.01"/>
-                </svg>
-                执行过程
-              </div>
-              <div class="progress-items" id="progressItems">
-                <!-- Progress items will be added here -->
-                <div class="empty-state" id="emptyProgress">暂无执行中的任务</div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Tools Tab -->
-          <div class="tab-pane" id="tab-tools">
-            <div class="tool-calls-list" id="toolCallsList">
-              <!-- Tool calls will be added here -->
-              <div class="empty-state" id="emptyTools">No tool calls yet</div>
+          <!-- Timeline Tab (Unified Progress & Tools) -->
+          <div class="tab-pane active" id="tab-timeline">
+            <div class="timeline-list" id="timelineList">
+              <!-- Timeline items will be added here -->
+              <div class="empty-state" id="emptyTimeline">暂无执行记录</div>
             </div>
           </div>
 
