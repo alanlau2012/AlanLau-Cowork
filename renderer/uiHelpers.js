@@ -153,25 +153,48 @@ export function buildSidebarToolCallHTML(toolCall) {
  * 构建聊天历史项 HTML
  * @param {object} chat - 聊天对象
  * @param {boolean} isActive - 是否为当前活动聊天
+ * @param {string} status - 聊天状态 ('running' | 'completed' | 'error')
+ * @param {string} relativeTime - 相对时间字符串（如"2 分钟前"）
+ * @param {string} path - 路径信息（可选）
  * @returns {string} HTML 字符串
  */
-export function buildChatItemHTML(chat, _isActive) {
-  // _isActive is passed for potential future use but class is set by caller
-  void _isActive;
+export function buildChatItemHTML(
+  chat,
+  isActive,
+  status = 'completed',
+  relativeTime = '',
+  path = ''
+) {
   const title = chat.title || 'New chat';
+  const statusClass = status || 'completed';
+  const timeDisplay = relativeTime || '';
+  const pathDisplay = path || '';
 
   return `
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-    </svg>
-    <span class="chat-item-title">${escapeHtmlPure(title)}</span>
-    <button class="delete-chat-btn" onclick="deleteChat('${chat.id}', event)" title="Delete">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <line x1="18" y1="6" x2="6" y2="18"></line>
-        <line x1="6" y1="6" x2="18" y2="18"></line>
-      </svg>
-    </button>
+    <div class="task-item-header">
+      <div class="task-status ${statusClass}"></div>
+      <div class="task-title">${escapeHtmlPure(title)}</div>
+    </div>
+    <div class="task-meta">
+      ${pathDisplay ? `<span>${escapeHtmlPure(pathDisplay)}</span>` : ''}
+      ${timeDisplay ? `<span>${escapeHtmlPure(timeDisplay)}</span>` : ''}
+      <button class="delete-chat-btn" onclick="deleteChat('${chat.id}', event)" title="Delete">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
   `;
+}
+
+/**
+ * 构建任务分组标题 HTML
+ * @param {string} groupName - 分组名称（如"进行中"、"今天"）
+ * @returns {string} HTML 字符串
+ */
+export function buildTaskSectionTitleHTML(groupName) {
+  return `<div class="task-section-title">${escapeHtmlPure(groupName)}</div>`;
 }
 
 /**

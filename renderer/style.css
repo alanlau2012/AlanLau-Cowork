@@ -14,7 +14,18 @@
   --shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.04);
   --shadow-input: 0 4px 16px rgba(0, 0, 0, 0.06);
   --bg-secondary: #f3f4f6;
+  --bg-tertiary: #f0f0eb;
   --message-assistant: #f0f0f0;
+
+  /* 圆角 */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+
+  /* 状态色 */
+  --status-success: #4ade80;
+  --status-error: #ef4444;
 
   /* 领域标签颜色 */
   --tag-nis: #3b82f6; /* 蓝色 - 网络服务 */
@@ -193,6 +204,129 @@ body {
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* ==================== TASK SECTION (历史记录分组) ==================== */
+.task-section {
+  padding: 12px 8px;
+}
+
+.task-section-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 0 8px;
+  margin-bottom: 8px;
+}
+
+.task-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.task-item {
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.15s;
+  border: 1px solid transparent;
+}
+
+.task-item:hover {
+  background: var(--bg-cream);
+}
+
+.task-item.active {
+  background: var(--bg-tertiary);
+  border-color: var(--border-light);
+}
+
+.task-item-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.task-status {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.task-status.running {
+  background: var(--accent-coral);
+  animation: pulse 2s infinite;
+}
+
+.task-status.completed {
+  background: var(--status-success);
+}
+
+.task-status.error {
+  background: var(--status-error);
+}
+
+.task-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+}
+
+.task-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--text-tertiary);
+  position: relative;
+}
+
+.task-item .delete-chat-btn {
+  opacity: 0;
+  padding: 4px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.15s, background 0.15s;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.task-item:hover .delete-chat-btn {
+  opacity: 1;
+}
+
+.task-item .delete-chat-btn:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.task-item .delete-chat-btn svg {
+  width: 14px;
+  height: 14px;
+  color: var(--text-tertiary);
+}
+
+.task-item.hidden-by-search,
+.task-section.hidden-by-search {
+  display: none;
 }
 
 /* Main Content */

@@ -89,6 +89,49 @@ export function getTimeGroupLabel(timestamp) {
 }
 
 /**
+ * Format relative time for display (e.g., "2 分钟前", "1 小时前")
+ * @param {number} timestamp - Unix timestamp in milliseconds
+ * @returns {string} Relative time string
+ */
+export function formatRelativeTime(timestamp) {
+  if (!timestamp) {
+    return '';
+  }
+
+  const now = Date.now();
+  const diff = now - timestamp;
+
+  // Less than 1 minute
+  if (diff < 60 * 1000) {
+    return '刚刚';
+  }
+
+  // Less than 1 hour
+  if (diff < 60 * 60 * 1000) {
+    const minutes = Math.floor(diff / (60 * 1000));
+    return `${minutes} 分钟前`;
+  }
+
+  // Less than 24 hours
+  if (diff < 24 * 60 * 60 * 1000) {
+    const hours = Math.floor(diff / (60 * 60 * 1000));
+    return `${hours} 小时前`;
+  }
+
+  // Less than 7 days
+  if (diff < 7 * 24 * 60 * 60 * 1000) {
+    const days = Math.floor(diff / (24 * 60 * 60 * 1000));
+    return `${days} 天前`;
+  }
+
+  // Format as date
+  const date = new Date(timestamp);
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
+  return `${month}月${day}日`;
+}
+
+/**
  * Format tool input for preview display
  * @param {object} toolInput - Tool input object
  * @returns {string} Formatted preview string

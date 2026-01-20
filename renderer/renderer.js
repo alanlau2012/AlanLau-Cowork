@@ -5,6 +5,7 @@ import {
   escapeHtmlPure,
   hasUnclosedCodeBlock,
   getTimeGroupLabel,
+  formatRelativeTime,
   formatToolPreview,
   getToolDescription,
   debounce
@@ -28,6 +29,7 @@ import {
   buildInlineToolCallHTML,
   buildSidebarToolCallHTML,
   buildChatItemHTML,
+  buildTaskSectionTitleHTML,
   buildMessageActionsHTML,
   buildLoadingIndicatorHTML,
   buildErrorRetryHTML,
@@ -363,37 +365,7 @@ function loadChat(chat) {
 
 // 只更新历史记录中的 active 状态，避免完全重新渲染
 function updateChatHistoryActiveState() {
-  // #region agent log
-  fetch('http://127.0.0.1:7242/ingest/bc4b6979-3551-47d8-8d38-fd1c1280fe34', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      location: 'renderer.js:364',
-      message: 'updateChatHistoryActiveState called',
-      data: { currentChatId, itemsCount: chatHistoryList.querySelectorAll('.chat-item').length },
-      timestamp: Date.now(),
-      sessionId: 'debug-session',
-      runId: 'post-fix',
-      hypothesisId: 'F'
-    })
-  }).catch(() => {});
-  // #endregion
-  const items = chatHistoryList.querySelectorAll('.chat-item');
-  // #region agent log
-  fetch('http://127.0.0.1:7242/ingest/bc4b6979-3551-47d8-8d38-fd1c1280fe34', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      location: 'renderer.js:366',
-      message: 'Updating active state',
-      data: { itemsCount: items.length, currentChatId },
-      timestamp: Date.now(),
-      sessionId: 'debug-session',
-      runId: 'post-fix',
-      hypothesisId: 'F'
-    })
-  }).catch(() => {});
-  // #endregion
+  const items = chatHistoryList.querySelectorAll('.task-item');
   items.forEach(item => {
     const isActive = item.dataset.chatId === currentChatId;
     if (isActive) {
@@ -458,32 +430,159 @@ function renderChatHistory() {
   // Sort by updated time using chatStore
   const sortedChats = sortChatsByTime(allChats);
 
-  let lastGroup = null;
+  // 分组聊天
+  const now = Date.now();
+  const today = new Date(now);
+  today.setHours(0, 0, 0, 0);
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+
+  const runningChats = [];
+  const todayChats = [];
+  const yesterdayChats = [];
+  const olderChats = [];
 
   sortedChats.forEach(chat => {
-    // Add time group label if changed
-    const groupLabel = getTimeGroupLabel(chat.updatedAt || chat.createdAt || Date.now());
-    if (groupLabel !== lastGroup) {
-      const groupDiv = document.createElement('div');
-      groupDiv.className = 'time-group-label';
-      groupDiv.textContent = groupLabel;
-      chatHistoryList.appendChild(groupDiv);
-      lastGroup = groupLabel;
-    }
-
     const isActive = chat.id === currentChatId;
-    const item = document.createElement('div');
-    item.className = 'chat-item chat-history-item' + (isActive ? ' active' : '');
-    item.dataset.chatId = chat.id;
-    // Use buildChatItemHTML from uiHelpers
-    item.innerHTML = buildChatItemHTML(chat, isActive);
-    item.onclick = e => {
-      if (!e.target.closest('.delete-chat-btn')) {
-        switchToChat(chat.id);
-      }
-    };
-    chatHistoryList.appendChild(item);
+    const timestamp = chat.updatedAt || chat.createdAt || now;
+    const chatDate = new Date(timestamp);
+    chatDate.setHours(0, 0, 0, 0);
+
+    // 判断是否为进行中的聊天（当前活动且正在生成响应）
+    if (isActive && isWaitingForResponse) {
+      runningChats.push(chat);
+    } else if (chatDate.getTime() === today.getTime()) {
+      todayChats.push(chat);
+    } else if (chatDate.getTime() === yesterday.getTime()) {
+      yesterdayChats.push(chat);
+    } else {
+      olderChats.push(chat);
+    }
   });
+
+  // 渲染"进行中"分组
+  if (runningChats.length > 0) {
+    const section = document.createElement('div');
+    section.className = 'task-section';
+    section.innerHTML = buildTaskSectionTitleHTML('进行中');
+
+    const taskList = document.createElement('div');
+    taskList.className = 'task-list';
+
+    runningChats.forEach(chat => {
+      const isActive = chat.id === currentChatId;
+      const timestamp = chat.updatedAt || chat.createdAt || now;
+      const relativeTime = formatRelativeTime(timestamp);
+      const status = isWaitingForResponse ? 'running' : 'completed';
+
+      const item = document.createElement('div');
+      item.className = 'task-item' + (isActive ? ' active' : '');
+      item.dataset.chatId = chat.id;
+      item.innerHTML = buildChatItemHTML(chat, isActive, status, relativeTime);
+      item.onclick = e => {
+        if (!e.target.closest('.delete-chat-btn')) {
+          switchToChat(chat.id);
+        }
+      };
+      taskList.appendChild(item);
+    });
+
+    section.appendChild(taskList);
+    chatHistoryList.appendChild(section);
+  }
+
+  // 渲染"今天"分组
+  if (todayChats.length > 0) {
+    const section = document.createElement('div');
+    section.className = 'task-section';
+    section.innerHTML = buildTaskSectionTitleHTML('今天');
+
+    const taskList = document.createElement('div');
+    taskList.className = 'task-list';
+
+    todayChats.forEach(chat => {
+      const isActive = chat.id === currentChatId;
+      const timestamp = chat.updatedAt || chat.createdAt || now;
+      const relativeTime = formatRelativeTime(timestamp);
+      const status = isActive && isWaitingForResponse ? 'running' : 'completed';
+
+      const item = document.createElement('div');
+      item.className = 'task-item' + (isActive ? ' active' : '');
+      item.dataset.chatId = chat.id;
+      item.innerHTML = buildChatItemHTML(chat, isActive, status, relativeTime);
+      item.onclick = e => {
+        if (!e.target.closest('.delete-chat-btn')) {
+          switchToChat(chat.id);
+        }
+      };
+      taskList.appendChild(item);
+    });
+
+    section.appendChild(taskList);
+    chatHistoryList.appendChild(section);
+  }
+
+  // 渲染"昨天"分组
+  if (yesterdayChats.length > 0) {
+    const section = document.createElement('div');
+    section.className = 'task-section';
+    section.innerHTML = buildTaskSectionTitleHTML('昨天');
+
+    const taskList = document.createElement('div');
+    taskList.className = 'task-list';
+
+    yesterdayChats.forEach(chat => {
+      const isActive = chat.id === currentChatId;
+      const timestamp = chat.updatedAt || chat.createdAt || now;
+      const relativeTime = formatRelativeTime(timestamp);
+      const status = 'completed';
+
+      const item = document.createElement('div');
+      item.className = 'task-item' + (isActive ? ' active' : '');
+      item.dataset.chatId = chat.id;
+      item.innerHTML = buildChatItemHTML(chat, isActive, status, relativeTime);
+      item.onclick = e => {
+        if (!e.target.closest('.delete-chat-btn')) {
+          switchToChat(chat.id);
+        }
+      };
+      taskList.appendChild(item);
+    });
+
+    section.appendChild(taskList);
+    chatHistoryList.appendChild(section);
+  }
+
+  // 渲染"更早"分组
+  if (olderChats.length > 0) {
+    const section = document.createElement('div');
+    section.className = 'task-section';
+    section.innerHTML = buildTaskSectionTitleHTML('更早');
+
+    const taskList = document.createElement('div');
+    taskList.className = 'task-list';
+
+    olderChats.forEach(chat => {
+      const isActive = chat.id === currentChatId;
+      const timestamp = chat.updatedAt || chat.createdAt || now;
+      const relativeTime = formatRelativeTime(timestamp);
+      const status = 'completed';
+
+      const item = document.createElement('div');
+      item.className = 'task-item' + (isActive ? ' active' : '');
+      item.dataset.chatId = chat.id;
+      item.innerHTML = buildChatItemHTML(chat, isActive, status, relativeTime);
+      item.onclick = e => {
+        if (!e.target.closest('.delete-chat-btn')) {
+          switchToChat(chat.id);
+        }
+      };
+      taskList.appendChild(item);
+    });
+
+    section.appendChild(taskList);
+    chatHistoryList.appendChild(section);
+  }
 
   // 恢复滚动位置（如果列表内容没有变化）
   if (scrollTop > 0 && chatHistoryList.scrollHeight >= scrollTop) {
@@ -775,8 +874,8 @@ function enhanceCodeBlocks(container) {
 function searchChats(query) {
   const chatList = document.getElementById('chatHistoryList');
 
-  // Get all chat items
-  const chatItems = chatList.querySelectorAll('.chat-item');
+  // Get all chat items (both old and new class names for compatibility)
+  const chatItems = chatList.querySelectorAll('.task-item, .chat-item');
 
   // Clear existing no-results message
   const existingNoResults = chatList.querySelector('.no-search-results');
@@ -788,13 +887,28 @@ function searchChats(query) {
   let visibleCount = 0;
 
   chatItems.forEach(item => {
-    const title = item.querySelector('.chat-item-title')?.textContent || '';
+    // Try both old and new title selectors
+    const titleEl = item.querySelector('.task-title') || item.querySelector('.chat-item-title');
+    const title = titleEl?.textContent || '';
 
     if (matchesSearch(title, query)) {
       item.classList.remove('hidden-by-search');
+      // Also hide/show parent task-section if needed
+      const section = item.closest('.task-section');
+      if (section) {
+        section.classList.remove('hidden-by-search');
+      }
       visibleCount++;
     } else {
       item.classList.add('hidden-by-search');
+      // Hide parent task-section if all items are hidden
+      const section = item.closest('.task-section');
+      if (section) {
+        const visibleItems = section.querySelectorAll('.task-item:not(.hidden-by-search)');
+        if (visibleItems.length === 0) {
+          section.classList.add('hidden-by-search');
+        }
+      }
     }
   });
 
