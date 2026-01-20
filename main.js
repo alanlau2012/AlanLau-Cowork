@@ -86,14 +86,7 @@ function stopBackendServer() {
 }
 
 // Default settings
-const DEFAULT_SETTINGS = {
-  apiEndpoint: 'https://api.anthropic.com',
-  apiKey: '',
-  models: [
-    { id: 'minimax-2-1', name: 'Minimax 2.1', default: true },
-    { id: 'glm-4-7', name: 'GLM 4.7' }
-  ]
-};
+const DEFAULT_SETTINGS = {};
 
 // Initialize electron-store
 const store = new Store({
@@ -101,46 +94,28 @@ const store = new Store({
   defaults: DEFAULT_SETTINGS
 });
 
-// Ensure only one default model
-function ensureSingleDefault(models) {
-  let foundDefault = false;
-  return models.map(m => {
-    const isDefault = m.default && !foundDefault;
-    if (m.default && !foundDefault) {
-      foundDefault = true;
-    }
-    return { ...m, default: isDefault };
-  });
-}
-
 // IPC handlers for settings
 ipcMain.handle('getSettings', () => {
   const settings = store.get('settings');
   if (!settings) {
     return DEFAULT_SETTINGS;
   }
-  // Ensure models have valid structure
-  if (settings.models) {
-    settings.models = ensureSingleDefault(settings.models);
-  }
-  return { ...DEFAULT_SETTINGS, ...settings };
+  // Merge with defaults, ignoring deprecated fields (apiEndpoint, apiKey, models)
+  const { apiEndpoint, apiKey, models, ...cleanSettings } = settings;
+  return { ...DEFAULT_SETTINGS, ...cleanSettings };
 });
 
 ipcMain.handle('saveSettings', (event, newSettings) => {
   const currentSettings = store.get('settings') || {};
 
   // Merge with defaults, but respect user-specified values
+  // Remove deprecated fields (apiEndpoint, apiKey, models) from old settings
+  const { apiEndpoint, apiKey, models, ...cleanCurrentSettings } = currentSettings;
   const mergedSettings = {
     ...DEFAULT_SETTINGS,
-    ...currentSettings,
-    ...newSettings,
-    models: newSettings.models || currentSettings.models || DEFAULT_SETTINGS.models
+    ...cleanCurrentSettings,
+    ...newSettings
   };
-
-  // Ensure only one default model
-  if (mergedSettings.models) {
-    mergedSettings.models = ensureSingleDefault(mergedSettings.models);
-  }
 
   store.set('settings', mergedSettings);
   console.log('[MAIN] Settings saved:', mergedSettings);

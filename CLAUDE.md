@@ -10,7 +10,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 2 行动法则
 
--_Think Before Act_:Before any file modification,outline your plan in 3 bullet points. -_Verification First_:Never report "Done" until you have run a verification script. -_Error Handling_:If a command fails,read error log -> analyze root cause -> fix.
+-_Think Before Act_:Before any file modification,outline your plan in 3 bullet points. -_Verification First_:Never report "Done" until you have run a verification script. -_Error Handling_:If a command fails,read error log -> analyze root cause -> fix. -_Test Coverage_:After any code changes,run `npm test` to verify all tests pass. Never commit code that breaks existing tests.
 
 ## 3 心法约束
 
@@ -69,6 +69,12 @@ npm run test:all    # 运行所有测试
 npm run lint        # 检查代码风格
 npm run lint:fix    # 自动修复代码风格问题
 ```
+
+**重要：代码修改后必须运行测试验证**
+
+- 完成任何代码修改后，必须运行 `npm test` 验证所有测试用例通过
+- 如果测试失败，必须修复问题后再提交代码
+- 这是强制要求，不得跳过测试验证步骤
 
 ## 架构概览
 
