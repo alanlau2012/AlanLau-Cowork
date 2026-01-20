@@ -246,7 +246,7 @@
       <aside class="right-panel" id="sidebar">
         <!-- Panel Header -->
         <div class="panel-header">
-          <h3>Progress</h3>
+          <h3>Agent执行过程</h3>
           <button class="sidebar-toggle" id="sidebarToggle" title="Toggle sidebar">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <polyline points="9 18 15 12 9 6"></polyline>
@@ -256,7 +256,7 @@
 
         <!-- Tab Navigation -->
         <div class="panel-tabs">
-          <button class="panel-tab active" data-tab="progress" onclick="window.switchPanelTab('progress')">进度</button>
+          <button class="panel-tab active" data-tab="progress" onclick="window.switchPanelTab('progress')">执行过程</button>
           <button class="panel-tab" data-tab="tools" onclick="window.switchPanelTab('tools')">工具调用</button>
           <button class="panel-tab" data-tab="files" onclick="window.switchPanelTab('files')">文件变更</button>
         </div>
@@ -271,11 +271,11 @@
                   <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
                   <polyline points="22 4 12 14.01 9 11.01"/>
                 </svg>
-                任务进度
+                执行过程
               </div>
               <div class="progress-items" id="progressItems">
                 <!-- Progress items will be added here -->
-                <div class="empty-state" id="emptyProgress">暂无进行中的任务</div>
+                <div class="empty-state" id="emptyProgress">暂无执行中的任务</div>
               </div>
             </div>
           </div>

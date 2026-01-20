@@ -1,72 +1,3 @@
----
-name: UI升级子Plan 1 - 时间线视图
-overview: 将消息列表升级为时间线步骤视图，包含完整的CSS样式、HTML结构和JavaScript逻辑。这是UI升级的基础模块，包含CSS变量系统供后续子Plan依赖。
-todos:
-  - id: p0-backup
-    content: 'P0.1: 创建 UI 升级分支并备份当前 style.css'
-    status: pending
-  - id: p1-css-status-colors
-    content: 'P1.1: 添加状态色变量 (success/error/info/running) [验收: DevTools 检查 8 个变量]'
-    status: pending
-  - id: p1-css-radius
-    content: 'P1.2: 添加圆角变量 (sm/md/lg/xl) [验收: 4 个变量存在]'
-    status: pending
-  - id: p1-css-shadows
-    content: 'P1.3: 添加阴影变量 (soft/input/card) [验收: 3 个变量存在]'
-    status: pending
-  - id: p1-css-transitions
-    content: 'P1.4: 添加过渡动画变量 (fast/normal/slow) [验收: 3 个变量存在]'
-    status: pending
-  - id: p1-css-breakpoints
-    content: 'P1.5: 添加响应式断点变量 (768px/1024px/1280px) [验收: 媒体查询可用]'
-    status: pending
-  - id: p2-timeline-container
-    content: 'P2.1: 添加 .timeline-container 基础布局 [验收: 空容器正确显示]'
-    status: pending
-  - id: p2-step-marker
-    content: 'P2.2: 添加 .step-marker 及 4 种状态样式 [验收: 4 种颜色圆点]'
-    status: pending
-  - id: p2-step-line
-    content: 'P2.3: 添加步骤之间的连接线样式 [验收: 连接线显示]'
-    status: pending
-  - id: p2-step-content
-    content: 'P2.4: 添加 .step-content 卡片样式 [验收: 卡片有圆角和阴影]'
-    status: pending
-  - id: p2-step-collapse
-    content: 'P2.5: 添加卡片折叠/展开动画 [验收: 点击头部可折叠]'
-    status: pending
-  - id: p2-step-states
-    content: 'P2.6: 添加当前/历史步骤视觉层次 [验收: 当前步骤高亮]'
-    status: pending
-  - id: p7-timeline-wrapper
-    content: 'P7.2: 添加 timeline-container 包装器 [验收: 容器存在]'
-    status: pending
-  - id: p7-timeline-step-tpl
-    content: 'P7.3: 添加时间线步骤模板结构 [验收: 包含 marker + content]'
-    status: pending
-  - id: p9-empty-timeline
-    content: 'P9.1: 添加时间线空状态 UI [验收: 无步骤时显示引导]'
-    status: pending
-  - id: p9-error-state
-    content: 'P9.3: 添加步骤失败状态 UI [验收: 错误时显示重试按钮]'
-    status: pending
-  - id: p10-build-step-html
-    content: 'P10.1: 实现 buildTimelineStepHTML() [验收: 单元测试通过]'
-    status: pending
-  - id: p10-render-timeline
-    content: 'P10.2: 实现 renderTimelineStep() 替换 renderMessage [验收: 消息显示为步骤]'
-    status: pending
-  - id: p10-step-collapse-js
-    content: 'P10.3: 实现步骤折叠/展开交互 [验收: 点击可折叠]'
-    status: pending
-  - id: p10-auto-scroll
-    content: 'P10.4: 实现新步骤自动滚动 [验收: 新步骤自动进入视口]'
-    status: pending
-  - id: p13-state-vars-timeline
-    content: 'P13.1a: 添加 timelineSteps 状态变量'
-    status: pending
----
-
 # UI升级子Plan 1: 时间线视图完整功能
 
 ## 概述
@@ -74,6 +5,7 @@ todos:
 本子Plan实现时间线视图的完整功能，将原有的消息列表升级为可视化的步骤时间线。作为UI升级的第一个子Plan，还包含CSS变量系统（供后续子Plan复用）。
 
 **任务数量**: 21 个
+
 **预估时间**: ~3 小时
 
 ## 依赖关系
@@ -98,8 +30,10 @@ P13.1a 状态变量
 
 ## Phase 0: 准备工作
 
-| ID   | 任务                                                | 验收标准               |
+| ID | 任务 | 验收标准 |
+
 | ---- | --------------------------------------------------- | ---------------------- |
+
 | P0.1 | 创建分支 `feature/ui-upgrade-v2` 并备份 `style.css` | 分支存在，备份文件存在 |
 
 ---
@@ -110,13 +44,19 @@ P13.1a 状态变量
 
 此阶段添加的变量将被后续子Plan (Tab面板、响应式) 复用。
 
-| ID   | 任务         | 验收标准     |
+| ID | 任务 | 验收标准 |
+
 | ---- | ------------ | ------------ |
-| P1.1 | 状态色变量   | 8 个变量存在 |
-| P1.2 | 圆角变量     | 4 个变量存在 |
-| P1.3 | 阴影变量     | 3 个变量存在 |
+
+| P1.1 | 状态色变量 | 8 个变量存在 |
+
+| P1.2 | 圆角变量 | 4 个变量存在 |
+
+| P1.3 | 阴影变量 | 3 个变量存在 |
+
 | P1.4 | 过渡动画变量 | 3 个变量存在 |
-| P1.5 | 响应式断点   | 媒体查询可用 |
+
+| P1.5 | 响应式断点 | 媒体查询可用 |
 
 ### CSS变量代码
 
@@ -154,14 +94,21 @@ P13.1a 状态变量
 
 **文件**: `renderer/style.css`
 
-| ID   | 任务                    | 验收标准       | 依赖       |
+| ID | 任务 | 验收标准 | 依赖 |
+
 | ---- | ----------------------- | -------------- | ---------- |
-| P2.1 | timeline-container 布局 | 空容器正确显示 | P1.1       |
-| P2.2 | step-marker 4 种状态    | 4 种颜色圆点   | P2.1       |
-| P2.3 | 步骤连接线              | 连接线显示     | P2.2       |
-| P2.4 | step-content 卡片       | 有圆角和阴影   | P2.1       |
-| P2.5 | 折叠/展开动画           | 点击可折叠     | P2.4, P1.4 |
-| P2.6 | 当前/历史视觉层次       | 当前步骤高亮   | P2.4       |
+
+| P2.1 | timeline-container 布局 | 空容器正确显示 | P1.1 |
+
+| P2.2 | step-marker 4 种状态 | 4 种颜色圆点 | P2.1 |
+
+| P2.3 | 步骤连接线 | 连接线显示 | P2.2 |
+
+| P2.4 | step-content 卡片 | 有圆角和阴影 | P2.1 |
+
+| P2.5 | 折叠/展开动画 | 点击可折叠 | P2.4, P1.4 |
+
+| P2.6 | 当前/历史视觉层次 | 当前步骤高亮 | P2.4 |
 
 ### 时间线CSS结构
 
@@ -255,10 +202,13 @@ P13.1a 状态变量
 
 **文件**: `renderer/index.html`
 
-| ID   | 任务                           | 验收标准              |
+| ID | 任务 | 验收标准 |
+
 | ---- | ------------------------------ | --------------------- |
-| P7.2 | 添加 timeline-container 包装器 | 容器存在              |
-| P7.3 | 添加时间线步骤模板结构         | 包含 marker + content |
+
+| P7.2 | 添加 timeline-container 包装器 | 容器存在 |
+
+| P7.3 | 添加时间线步骤模板结构 | 包含 marker + content |
 
 ### HTML模板
 
@@ -281,9 +231,12 @@ P13.1a 状态变量
 
 ## Phase 9: 空状态与错误状态
 
-| ID   | 任务            | 验收标准           |
+| ID | 任务 | 验收标准 |
+
 | ---- | --------------- | ------------------ |
-| P9.1 | 时间线空状态 UI | 无步骤时显示引导   |
+
+| P9.1 | 时间线空状态 UI | 无步骤时显示引导 |
+
 | P9.3 | 步骤失败状态 UI | 错误时显示重试按钮 |
 
 ---
@@ -292,12 +245,17 @@ P13.1a 状态变量
 
 **文件**: `renderer/uiHelpers.js`, `renderer/renderer.js`
 
-| ID    | 任务                         | 验收标准           |
+| ID | 任务 | 验收标准 |
+
 | ----- | ---------------------------- | ------------------ |
-| P10.1 | 实现 buildTimelineStepHTML() | 单元测试通过       |
-| P10.2 | 实现 renderTimelineStep()    | 消息显示为步骤     |
-| P10.3 | 实现步骤折叠/展开交互        | 点击可折叠         |
-| P10.4 | 实现新步骤自动滚动           | 新步骤自动进入视口 |
+
+| P10.1 | 实现 buildTimelineStepHTML() | 单元测试通过 |
+
+| P10.2 | 实现 renderTimelineStep() | 消息显示为步骤 |
+
+| P10.3 | 实现步骤折叠/展开交互 | 点击可折叠 |
+
+| P10.4 | 实现新步骤自动滚动 | 新步骤自动进入视口 |
 
 ### 核心函数签名
 
@@ -328,8 +286,10 @@ export function scrollToLatestStep() {
 
 ## Phase 13: 状态变量
 
-| ID     | 任务                        | 验收标准         |
+| ID | 任务 | 验收标准 |
+
 | ------ | --------------------------- | ---------------- |
+
 | P13.1a | 添加 timelineSteps 状态变量 | 变量存在并可读写 |
 
 ```javascript
