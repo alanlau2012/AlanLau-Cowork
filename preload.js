@@ -146,5 +146,15 @@ contextBridge.exposeInMainWorld('electronAPI', {
         message: error.name === 'AbortError' ? '连接超时' : error.message
       };
     }
+  },
+
+  // Select directory dialog for workspace sandbox
+  selectDirectory: async () => {
+    try {
+      return await ipcRenderer.invoke('selectDirectory');
+    } catch (error) {
+      console.error('[PRELOAD] Failed to select directory:', error);
+      throw error;
+    }
   }
 });

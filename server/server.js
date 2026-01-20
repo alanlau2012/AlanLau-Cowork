@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 import { query } from '@anthropic-ai/claude-agent-sdk';
@@ -13,34 +14,125 @@ dotenv.config({ path: path.join(__dirname, '..', '.env') });
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// In-memory config (could be replaced with file-based or shared storage)
-const serverConfig = {
-  apiEndpoint: process.env.ANTHROPIC_API_ENDPOINT || 'https://api.anthropic.com',
-  apiKey: process.env.ANTHROPIC_API_KEY || '',
-  maxTurns: 20,
-  permissionMode: 'bypassPermissions'
-};
+// Config file path for persistence
+const CONFIG_FILE = path.join(__dirname, 'workspace-config.json');
 
-// Optional Composio initialization
-let composio = null;
-const composioSessions = new Map();
-
-// Try to initialize Composio if API key is available
-async function initComposio() {
-  if (process.env.COMPOSIO_API_KEY) {
-    try {
-      const { Composio } = await import('@composio/core');
-      composio = new Composio();
-      console.log('[COMPOSIO] Initialized successfully');
-    } catch (err) {
-      console.warn('[COMPOSIO] Failed to initialize:', err.message);
+// Load persisted config or use defaults
+function loadConfig() {
+  try {
+    if (fs.existsSync(CONFIG_FILE)) {
+      const saved = JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf-8'));
+      return { ...getDefaultConfig(), ...saved };
     }
-  } else {
-    console.log('[COMPOSIO] No API key provided, running without Composio tools');
+  } catch (err) {
+    console.warn('[CONFIG] Failed to load saved config:', err.message);
+  }
+  return getDefaultConfig();
+}
+
+function getDefaultConfig() {
+  return {
+    apiEndpoint: process.env.ANTHROPIC_API_ENDPOINT || 'https://api.anthropic.com',
+    apiKey: process.env.ANTHROPIC_API_KEY || '',
+    maxTurns: 20,
+    permissionMode: 'bypassPermissions',
+    // Workspace sandbox settings
+    workspaceDir: process.env.WORKSPACE_DIR || '',
+    sandboxEnabled: process.env.SANDBOX_ENABLED !== 'false'
+  };
+}
+
+function saveConfig() {
+  try {
+    const toSave = {
+      workspaceDir: serverConfig.workspaceDir,
+      sandboxEnabled: serverConfig.sandboxEnabled,
+      maxTurns: serverConfig.maxTurns
+    };
+    fs.writeFileSync(CONFIG_FILE, JSON.stringify(toSave, null, 2));
+    console.log('[CONFIG] Saved to', CONFIG_FILE);
+  } catch (err) {
+    console.warn('[CONFIG] Failed to save config:', err.message);
   }
 }
 
-initComposio();
+// In-memory config
+const serverConfig = loadConfig();
+
+// ============================================
+// File Sandbox Utilities
+// ============================================
+
+/**
+ * Check if a path is an absolute path (Windows or Unix)
+ */
+function isAbsolutePath(p) {
+  if (!p) {
+    return false;
+  }
+  // Windows: C:\, D:\, etc. or UNC paths \\server\share
+  if (/^[A-Za-z]:[\\/]/.test(p) || p.startsWith('\\\\')) {
+    return true;
+  }
+  // Unix: starts with /
+  if (p.startsWith('/')) {
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Normalize and resolve a path relative to workspace
+ */
+function resolveInWorkspace(targetPath, workspaceDir) {
+  if (!workspaceDir) {
+    return null;
+  }
+
+  const resolved = isAbsolutePath(targetPath)
+    ? path.resolve(targetPath)
+    : path.resolve(workspaceDir, targetPath);
+
+  return resolved;
+}
+
+/**
+ * Check if a resolved path is within the workspace
+ */
+function isPathInWorkspace(resolvedPath, workspaceDir) {
+  if (!workspaceDir || !resolvedPath) {
+    return false;
+  }
+
+  const normalizedWorkspace = path.resolve(workspaceDir).toLowerCase();
+  const normalizedPath = resolvedPath.toLowerCase();
+
+  return (
+    normalizedPath === normalizedWorkspace ||
+    normalizedPath.startsWith(normalizedWorkspace + path.sep)
+  );
+}
+
+/**
+ * Validate file operation path against sandbox
+ * Returns { allowed: boolean, reason?: string }
+ */
+function validateFilePath(targetPath, workspaceDir) {
+  if (!workspaceDir) {
+    return { allowed: false, reason: '工作目录未设置，请先在设置中配置工作目录' };
+  }
+
+  const resolved = resolveInWorkspace(targetPath, workspaceDir);
+
+  if (!isPathInWorkspace(resolved, workspaceDir)) {
+    return {
+      allowed: false,
+      reason: `路径 "${targetPath}" 超出工作目录范围 (${workspaceDir})`
+    };
+  }
+
+  return { allowed: true };
+}
 
 const chatSessions = new Map();
 
@@ -75,7 +167,19 @@ app.post('/api/chat', async (req, res) => {
       existingSessionId || 'none (new chat)'
     );
 
-    // Build query options
+    // Check workspace configuration
+    if (serverConfig.sandboxEnabled && !serverConfig.workspaceDir) {
+      res.write(
+        `data: ${JSON.stringify({
+          type: 'error',
+          message: '请先在设置中配置工作目录（Workspace Directory）'
+        })}\n\n`
+      );
+      res.end();
+      return;
+    }
+
+    // Build query options with workspace sandbox
     const queryOptions = {
       allowedTools: [
         'Read',
@@ -88,25 +192,46 @@ app.post('/api/chat', async (req, res) => {
         'WebFetch',
         'TodoWrite'
       ],
-      maxTurns: 20,
-      permissionMode: 'bypassPermissions'
+      maxTurns: serverConfig.maxTurns,
+      permissionMode: serverConfig.permissionMode
     };
 
-    // Add Composio MCP server if available
-    if (composio) {
-      let composioSession = composioSessions.get(userId);
-      if (!composioSession) {
-        console.log('[COMPOSIO] Creating new session for user:', userId);
-        composioSession = await composio.create(userId);
-        composioSessions.set(userId, composioSession);
-        console.log('[COMPOSIO] Session created with MCP URL:', composioSession.mcp.url);
-      }
-      queryOptions.mcpServers = {
-        composio: {
-          type: 'http',
-          url: composioSession.mcp.url,
-          headers: composioSession.mcp.headers
+    // Set working directory for file sandbox
+    if (serverConfig.workspaceDir) {
+      queryOptions.cwd = serverConfig.workspaceDir;
+      console.log('[SANDBOX] Working directory set to:', serverConfig.workspaceDir);
+    }
+
+    // Add path validation hook when sandbox is enabled
+    if (serverConfig.sandboxEnabled && serverConfig.workspaceDir) {
+      queryOptions.canUseTool = async (toolName, toolInput) => {
+        // File operation tools that need path validation
+        const fileTools = ['Read', 'Write', 'Edit', 'Glob', 'Grep'];
+
+        if (fileTools.includes(toolName)) {
+          // Extract path from various input formats
+          const filePath =
+            toolInput.path ||
+            toolInput.file ||
+            toolInput.target ||
+            toolInput.pattern ||
+            toolInput.glob_pattern;
+
+          if (filePath) {
+            const validation = validateFilePath(filePath, serverConfig.workspaceDir);
+            if (!validation.allowed) {
+              console.log(`[SANDBOX] Blocked ${toolName}: ${validation.reason}`);
+              return { allowed: false, reason: validation.reason };
+            }
+          }
         }
+
+        // Bash commands: log warning but allow (cwd restriction applies)
+        if (toolName === 'Bash') {
+          console.log('[SANDBOX] Bash command in workspace:', toolInput.command?.substring(0, 50));
+        }
+
+        return { allowed: true };
       };
     }
 
@@ -207,13 +332,16 @@ app.get('/api/config', (req, res) => {
     apiEndpoint: serverConfig.apiEndpoint,
     hasApiKey: !!serverConfig.apiKey,
     maxTurns: serverConfig.maxTurns,
-    permissionMode: serverConfig.permissionMode
+    permissionMode: serverConfig.permissionMode,
+    // Sandbox settings
+    workspaceDir: serverConfig.workspaceDir,
+    sandboxEnabled: serverConfig.sandboxEnabled
   });
 });
 
 // Config endpoint - update config (for dynamic configuration)
 app.post('/api/config', (req, res) => {
-  const { apiEndpoint, apiKey, maxTurns, permissionMode } = req.body;
+  const { apiEndpoint, apiKey, maxTurns, permissionMode, workspaceDir, sandboxEnabled } = req.body;
 
   if (apiEndpoint !== undefined) {
     serverConfig.apiEndpoint = apiEndpoint;
@@ -227,12 +355,24 @@ app.post('/api/config', (req, res) => {
   if (permissionMode !== undefined) {
     serverConfig.permissionMode = permissionMode;
   }
+  if (workspaceDir !== undefined) {
+    // Normalize path for Windows
+    serverConfig.workspaceDir = workspaceDir ? path.resolve(workspaceDir) : '';
+  }
+  if (sandboxEnabled !== undefined) {
+    serverConfig.sandboxEnabled = sandboxEnabled;
+  }
+
+  // Persist workspace settings
+  saveConfig();
 
   console.log('[CONFIG] Config updated:', {
     apiEndpoint: serverConfig.apiEndpoint,
     hasApiKey: !!serverConfig.apiKey,
     maxTurns: serverConfig.maxTurns,
-    permissionMode: serverConfig.permissionMode
+    permissionMode: serverConfig.permissionMode,
+    workspaceDir: serverConfig.workspaceDir,
+    sandboxEnabled: serverConfig.sandboxEnabled
   });
 
   res.json({
@@ -241,7 +381,9 @@ app.post('/api/config', (req, res) => {
       apiEndpoint: serverConfig.apiEndpoint,
       hasApiKey: !!serverConfig.apiKey,
       maxTurns: serverConfig.maxTurns,
-      permissionMode: serverConfig.permissionMode
+      permissionMode: serverConfig.permissionMode,
+      workspaceDir: serverConfig.workspaceDir,
+      sandboxEnabled: serverConfig.sandboxEnabled
     }
   });
 });
@@ -250,5 +392,17 @@ app.post('/api/config', (req, res) => {
 app.listen(PORT, () => {
   console.log(`\n✓ Backend server running on http://localhost:${PORT}`);
   console.log(`✓ Chat endpoint: POST http://localhost:${PORT}/api/chat`);
-  console.log(`✓ Health check: GET http://localhost:${PORT}/api/health\n`);
+  console.log(`✓ Health check: GET http://localhost:${PORT}/api/health`);
+
+  // Display sandbox status
+  if (serverConfig.sandboxEnabled) {
+    if (serverConfig.workspaceDir) {
+      console.log(`✓ Sandbox enabled - Workspace: ${serverConfig.workspaceDir}`);
+    } else {
+      console.log('⚠ Sandbox enabled but no workspace directory set');
+    }
+  } else {
+    console.log('⚠ Sandbox disabled - File access unrestricted');
+  }
+  console.log('');
 });

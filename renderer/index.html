@@ -331,6 +331,23 @@
           <span class="input-hint">您的 API 密钥（不会显示在界面上）</span>
         </div>
 
+        <!-- Workspace Sandbox Section -->
+        <div class="settings-group">
+          <label for="workspaceDir">工作目录 (Sandbox)</label>
+          <div class="workspace-input-wrapper">
+            <input type="text" id="workspaceDir" placeholder="D:\Projects\my-workspace" />
+            <button type="button" id="browseWorkspaceBtn" class="browse-btn" title="浏览选择目录">📁</button>
+          </div>
+          <span class="input-hint">Agent 的文件操作将被限制在此目录内</span>
+          <div class="sandbox-toggle">
+            <label class="toggle-label">
+              <input type="checkbox" id="sandboxEnabled" checked />
+              <span class="toggle-text">启用文件沙箱保护</span>
+            </label>
+            <span class="sandbox-status" id="sandboxStatus"></span>
+          </div>
+        </div>
+
         <!-- Models Section -->
         <div class="settings-group">
           <label>可用模型</label>

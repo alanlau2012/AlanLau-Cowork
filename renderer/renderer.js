@@ -1819,6 +1819,12 @@ const addModelBtn = document.getElementById('addModelBtn');
 const diagnoseBtn = document.getElementById('diagnoseBtn');
 const diagnoseResult = document.getElementById('diagnoseResult');
 
+// Workspace Sandbox UI elements
+const workspaceDirInput = document.getElementById('workspaceDir');
+const browseWorkspaceBtn = document.getElementById('browseWorkspaceBtn');
+const sandboxEnabledCheckbox = document.getElementById('sandboxEnabled');
+const sandboxStatus = document.getElementById('sandboxStatus');
+
 // Initialize settings module
 async function initSettings() {
   try {
@@ -1832,7 +1838,7 @@ async function initSettings() {
 }
 
 // Open settings modal
-function openSettingsModal() {
+async function openSettingsModal() {
   if (!settingsModal) {
     return;
   }
@@ -1845,8 +1851,53 @@ function openSettingsModal() {
     apiKeyInput.value = settings.apiKey || '';
   }
 
+  // Load workspace settings from backend
+  await loadWorkspaceSettings();
+
   renderModelsList();
   settingsModal.classList.remove('hidden');
+}
+
+// Load workspace settings from backend API
+async function loadWorkspaceSettings() {
+  try {
+    const response = await fetch('http://localhost:3001/api/config');
+    if (response.ok) {
+      const config = await response.json();
+
+      if (workspaceDirInput) {
+        workspaceDirInput.value = config.workspaceDir || '';
+      }
+      if (sandboxEnabledCheckbox) {
+        sandboxEnabledCheckbox.checked = config.sandboxEnabled !== false;
+      }
+
+      updateSandboxStatus(config);
+    }
+  } catch (error) {
+    console.error('[SETTINGS] Failed to load workspace settings:', error);
+  }
+}
+
+// Update sandbox status indicator
+function updateSandboxStatus(config) {
+  if (!sandboxStatus) {
+    return;
+  }
+
+  const enabled = config.sandboxEnabled !== false;
+  const hasDir = !!config.workspaceDir;
+
+  if (!enabled) {
+    sandboxStatus.textContent = '已禁用';
+    sandboxStatus.className = 'sandbox-status inactive';
+  } else if (!hasDir) {
+    sandboxStatus.textContent = '未配置目录';
+    sandboxStatus.className = 'sandbox-status warning';
+  } else {
+    sandboxStatus.textContent = '已启用';
+    sandboxStatus.className = 'sandbox-status active';
+  }
 }
 
 // Close settings modal
@@ -1951,6 +2002,9 @@ async function saveSettings() {
   }
 
   try {
+    // Save workspace settings to backend
+    await saveWorkspaceSettings();
+
     if (window.electronAPI && window.electronAPI.saveSettings) {
       await window.electronAPI.saveSettings(settings);
       showToast('设置已保存', 'success');
@@ -1962,6 +2016,49 @@ async function saveSettings() {
   } catch (error) {
     console.error('[SETTINGS] Failed to save settings:', error);
     showToast('保存设置失败', 'error');
+  }
+}
+
+// Save workspace settings to backend API
+async function saveWorkspaceSettings() {
+  const workspaceDir = workspaceDirInput?.value?.trim() || '';
+  const sandboxEnabled = sandboxEnabledCheckbox?.checked !== false;
+
+  try {
+    const response = await fetch('http://localhost:3001/api/config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ workspaceDir, sandboxEnabled })
+    });
+
+    if (response.ok) {
+      const result = await response.json();
+      console.log('[SETTINGS] Workspace settings saved:', result.config);
+      updateSandboxStatus(result.config);
+    } else {
+      throw new Error('Failed to save workspace settings');
+    }
+  } catch (error) {
+    console.error('[SETTINGS] Failed to save workspace settings:', error);
+    throw error;
+  }
+}
+
+// Browse for workspace directory (Electron only)
+async function browseWorkspaceDirectory() {
+  try {
+    if (window.electronAPI && window.electronAPI.selectDirectory) {
+      const selectedPath = await window.electronAPI.selectDirectory();
+      if (selectedPath && workspaceDirInput) {
+        workspaceDirInput.value = selectedPath;
+      }
+    } else {
+      // Fallback: show hint for manual input
+      showToast('请手动输入目录路径', 'info');
+    }
+  } catch (error) {
+    console.error('[SETTINGS] Failed to browse directory:', error);
+    showToast('选择目录失败', 'error');
   }
 }
 
@@ -2108,6 +2205,21 @@ function setupSettingsListeners() {
   // Diagnosis button
   if (diagnoseBtn) {
     diagnoseBtn.addEventListener('click', runDiagnosis);
+  }
+
+  // Workspace directory browse button
+  if (browseWorkspaceBtn) {
+    browseWorkspaceBtn.addEventListener('click', browseWorkspaceDirectory);
+  }
+
+  // Sandbox toggle - update status immediately
+  if (sandboxEnabledCheckbox) {
+    sandboxEnabledCheckbox.addEventListener('change', () => {
+      updateSandboxStatus({
+        sandboxEnabled: sandboxEnabledCheckbox.checked,
+        workspaceDir: workspaceDirInput?.value?.trim() || ''
+      });
+    });
   }
 
   // Models list delegation

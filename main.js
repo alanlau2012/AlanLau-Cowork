@@ -1,4 +1,4 @@
-const { app, BrowserWindow, shell, ipcMain, Menu } = require('electron');
+const { app, BrowserWindow, shell, ipcMain, Menu, dialog } = require('electron');
 const path = require('path');
 const { spawn } = require('child_process');
 const Store = require('electron-store');
@@ -151,6 +151,22 @@ ipcMain.handle('resetSettings', () => {
   store.set('settings', DEFAULT_SETTINGS);
   console.log('[MAIN] Settings reset to defaults');
   return DEFAULT_SETTINGS;
+});
+
+// Directory selection dialog for workspace sandbox
+ipcMain.handle('selectDirectory', async () => {
+  const result = await dialog.showOpenDialog(mainWindow, {
+    title: '选择工作目录',
+    properties: ['openDirectory'],
+    buttonLabel: '选择'
+  });
+
+  if (result.canceled || result.filePaths.length === 0) {
+    return null;
+  }
+
+  console.log('[MAIN] Directory selected:', result.filePaths[0]);
+  return result.filePaths[0];
 });
 
 // Create Electron window
