@@ -1,0 +1,114 @@
+{
+  "name": "open-claude-cowork",
+  "version": "1.0.0",
+  "main": "main.js",
+  "scripts": {
+    "dev": "concurrently \"npm run server\" \"cross-env NODE_ENV=development electron .\"",
+    "start": "concurrently \"npm run server\" \"electron .\"",
+    "server": "cd server && npm start",
+    "start:win": "run-electron.bat",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:unit": "vitest run --dir tests/unit",
+    "test:api": "vitest run --dir tests/api",
+    "test:e2e": "npx playwright test",
+    "test:all": "npm run test && npm run test:e2e",
+    "lint": "eslint . --ext .js",
+    "lint:fix": "eslint . --ext .js --fix",
+    "format": "prettier --write \"**/*.{js,json,md}\"",
+    "format:check": "prettier --check \"**/*.{js,json,md}\"",
+    "prepare": "husky install",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder",
+    "dist:win": "electron-builder --win"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "Electron chat app with Claude Agent SDK",
+  "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "^0.2.7",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "electron-store": "^8.2.0",
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.0",
+    "@vitest/coverage-v8": "^4.0.17",
+    "concurrently": "^9.2.1",
+    "cross-env": "^10.1.0",
+    "electron": "^40.0.0",
+    "electron-builder": "^26.4.0",
+    "electron-reload": "^2.0.0-alpha.1",
+    "eslint": "^8.57.0",
+    "eslint-plugin-vitest": "^0.5.4",
+    "husky": "^9.0.11",
+    "lint-staged": "^15.2.2",
+    "prettier": "^3.2.5",
+    "vitest": "^4.0.17"
+  },
+  "lint-staged": {
+    "*.js": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md}": [
+      "prettier --write"
+    ]
+  },
+  "build": {
+    "appId": "com.openclaudecowork.app",
+    "productName": "Open Claude Cowork",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "renderer/**/*",
+      "node_modules/**/*",
+      "!node_modules/*/{CHANGELOG.md,README.md,readme.md,test,tests,__tests__}",
+      "!**/*.{map,ts}"
+    ],
+    "extraResources": [
+      {
+        "from": "server/server.js",
+        "to": "server/server.js"
+      },
+      {
+        "from": "server/package.json",
+        "to": "server/package.json"
+      },
+      {
+        "from": "server/node_modules",
+        "to": "server/node_modules"
+      },
+      {
+        "from": ".env",
+        "to": ".env"
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "differentialPackage": false
+    },
+    "compression": "maximum"
+  }
+}

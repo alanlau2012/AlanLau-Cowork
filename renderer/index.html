@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Claude</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Left Sidebar - Chat History -->
+    <aside class="left-sidebar" id="leftSidebar">
+      <div class="left-sidebar-header">
+        <button class="new-chat-sidebar-btn" onclick="startNewChat()" title="New chat">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          <span>New Chat</span>
+        </button>
+      </div>
+      <!-- Chat Search -->
+      <div class="chat-search-container">
+        <input
+          type="text"
+          id="chatSearch"
+          class="chat-search-input"
+          placeholder="搜索聊天历史..."
+          aria-label="Search chat history"
+        />
+      </div>
+      <div class="chat-history-list" id="chatHistoryList">
+        <!-- Chat history items will be added here -->
+      </div>
+
+      <!-- Settings Button -->
+      <div class="settings-container">
+        <button id="settingsBtn" class="settings-btn" title="Settings">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+          <span>Settings</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="main-content">
+      <!-- Home View (shown when no messages) -->
+      <div class="home-view" id="homeView">
+      <div class="greeting-section">
+        <div class="greeting">
+          <h1 class="greeting-text">GTS Cowork</h1>
+          <p class="tagline">Powered by AI Engineering Dept</p>
+        </div>
+      </div>
+
+      <!-- Quick Start Templates -->
+      <div class="quick-start-templates" id="quickStartTemplates">
+        <div class="templates-header">
+          <h2>快速开始</h2>
+          <p>选择一个模板开始对话</p>
+        </div>
+        <div class="templates-grid">
+          <!-- 第一行 -->
+          <!-- 1. 跨厂商配置翻译 - NIS -->
+          <button class="template-card" data-template="config-translate">
+            <span class="domain-tag nis">NIS</span>
+            <div class="template-icon">🔄</div>
+            <div class="template-title">跨厂商配置翻译</div>
+            <div class="template-desc">旧网/异构网配置导出，翻译成目标脚本，自动勾稽差异</div>
+          </button>
+
+          <!-- 2. LLD实时校准 - NIS -->
+          <button class="template-card" data-template="lld-calibration">
+            <span class="domain-tag nis">NIS</span>
+            <div class="template-icon">📐</div>
+            <div class="template-title">LLD实时校准</div>
+            <div class="template-desc">详细设计与现网数据对比，实时识别资源冲突，避免回滚</div>
+          </button>
+
+          <!-- 3. 验收件自动纠错 - SEC -->
+          <button class="template-card" data-template="pac-review">
+            <span class="domain-tag sec">SEC</span>
+            <div class="template-icon">✅</div>
+            <div class="template-title">验收件自动纠错</div>
+            <div class="template-desc">PAC/FAC截图自动审核，比对合同要求，标记不合格项</div>
+          </button>
+
+          <!-- 第二行 -->
+          <!-- 4. 故障证据链梳理 - AMS -->
+          <button class="template-card" data-template="fault-evidence">
+            <span class="domain-tag ams">AMS</span>
+            <div class="template-icon">🔍</div>
+            <div class="template-title">故障证据链梳理</div>
+            <div class="template-desc">多源日志/邮件自动整合，生成时间轴与根因推测草稿</div>
+          </button>
+
+          <!-- 5. SOC规范应答 - 交付 -->
+          <button class="template-card" data-template="soc-response">
+            <span class="domain-tag delivery">交付</span>
+            <div class="template-icon">📋</div>
+            <div class="template-title">SOC规范应答</div>
+            <div class="template-desc">投标技术规范书逐条判断，快速生成应答初稿供专家审核</div>
+          </button>
+
+          <!-- 6. 分包商影子审计 - SEC -->
+          <button class="template-card" data-template="subcon-audit">
+            <span class="domain-tag sec">SEC</span>
+            <div class="template-icon">👁️</div>
+            <div class="template-title">分包商影子审计</div>
+            <div class="template-desc">全量扫描分包商操作日志，自动抓取违规操作如跳步执行</div>
+          </button>
+        </div>
+      </div>
+
+      <div class="input-container home-input">
+        <form id="homeForm" class="input-form">
+          <div class="input-wrapper">
+            <textarea
+              id="homeInput"
+              class="message-textarea"
+              placeholder="Ask me anything (Shift+Enter for new line)"
+              rows="1"
+            ></textarea>
+            <div class="input-controls">
+              <div class="left-controls">
+                <input type="file" id="homeFileInput" class="file-input-hidden" multiple />
+                <button type="button" class="control-btn attach-btn" id="homeAttachBtn" title="Attach file">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                  </svg>
+                </button>
+                <button type="button" class="control-btn thinking-btn" id="homeThinkingBtn" title="Extended thinking ⇧⌘E">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                  </svg>
+                </button>
+              </div>
+              <div class="right-controls">
+                <!-- Stop Button (hidden by default) -->
+                <button type="button" class="stop-btn" id="homeStopBtn" style="display: none;">
+                  <svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                    <rect x="6" y="6" width="12" height="12" rx="2"></rect>
+                  </svg>
+                  <span>Stop</span>
+                </button>
+                <!-- Model Selector -->
+                <select id="homeModelSelect" class="model-select">
+                  <option value="minimax-2-1" selected>Minimax 2.1</option>
+                  <option value="glm-4-7">GLM 4.7</option>
+                </select>
+                <button type="submit" class="send-btn" id="homeSendBtn" disabled>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <line x1="12" y1="19" x2="12" y2="5"></line>
+                    <polyline points="5 12 12 5 19 12"></polyline>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Chat View (shown when there are messages) -->
+    <div class="chat-view hidden" id="chatView">
+      <div class="chat-main">
+        <header class="chat-header">
+          <button class="chat-title-btn">
+            <span id="chatTitle">New chat</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </button>
+          <button class="sidebar-expand-btn" id="sidebarExpandBtn" onclick="toggleSidebar()" title="展开侧边栏" style="display: none;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+          </button>
+        </header>
+
+        <div class="messages-container" id="chatMessages">
+          <!-- Messages will be added here dynamically -->
+        </div>
+
+        <div class="chat-input-wrapper">
+          <div class="input-container">
+            <form id="chatForm" class="input-form">
+              <div class="input-wrapper">
+                <textarea
+                  id="messageInput"
+                  class="message-textarea"
+                  placeholder="Reply... (Shift+Enter for new line)"
+                  rows="1"
+                ></textarea>
+                <div class="input-controls">
+                  <div class="left-controls">
+                    <input type="file" id="chatFileInput" class="file-input-hidden" multiple />
+                    <button type="button" class="control-btn attach-btn" id="chatAttachBtn" title="Attach file">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                      </svg>
+                    </button>
+                    <button type="button" class="control-btn thinking-btn" id="chatThinkingBtn" title="Extended thinking ⇧⌘E">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                      </svg>
+                    </button>
+                  </div>
+                  <div class="right-controls">
+                    <!-- Stop Button (hidden by default) -->
+                    <button type="button" class="stop-btn" id="chatStopBtn" style="display: none;">
+                      <svg viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                        <rect x="6" y="6" width="12" height="12" rx="2"></rect>
+                      </svg>
+                      <span>Stop</span>
+                    </button>
+                    <!-- Model Selector -->
+                    <select id="chatModelSelect" class="model-select">
+                      <option value="minimax-2-1" selected>Minimax 2.1</option>
+                      <option value="glm-4-7">GLM 4.7</option>
+                    </select>
+                    <button type="submit" class="send-btn" id="chatSendBtn" disabled>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <line x1="12" y1="19" x2="12" y2="5"></line>
+                        <polyline points="5 12 12 5 19 12"></polyline>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </form>
+          </div>
+          <p class="disclaimer">Claude is AI and can make mistakes. Please double-check responses.</p>
+        </div>
+      </div>
+
+      <!-- Right Panel with Tabs -->
+      <aside class="right-panel" id="sidebar">
+        <!-- Panel Header -->
+        <div class="panel-header">
+          <h3>Agent执行过程</h3>
+          <button class="sidebar-toggle" id="sidebarToggle" title="Toggle sidebar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Tab Navigation -->
+        <div class="panel-tabs">
+          <button class="panel-tab active" data-tab="progress" onclick="window.switchPanelTab('progress')">执行过程</button>
+          <button class="panel-tab" data-tab="tools" onclick="window.switchPanelTab('tools')">工具调用</button>
+          <button class="panel-tab" data-tab="files" onclick="window.switchPanelTab('files')">文件变更</button>
+        </div>
+
+        <!-- Tab Content -->
+        <div class="panel-content">
+          <!-- Progress Tab -->
+          <div class="tab-pane active" id="tab-progress">
+            <div class="progress-summary">
+              <div class="progress-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                  <polyline points="22 4 12 14.01 9 11.01"/>
+                </svg>
+                执行过程
+              </div>
+              <div class="progress-items" id="progressItems">
+                <!-- Progress items will be added here -->
+                <div class="empty-state" id="emptyProgress">暂无执行中的任务</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tools Tab -->
+          <div class="tab-pane" id="tab-tools">
+            <div class="tool-calls-list" id="toolCallsList">
+              <!-- Tool calls will be added here -->
+              <div class="empty-state" id="emptyTools">No tool calls yet</div>
+            </div>
+          </div>
+
+          <!-- Files Tab -->
+          <div class="tab-pane" id="tab-files">
+            <div class="file-changes-list" id="fileChangesList">
+              <!-- File changes will be added here -->
+              <div class="empty-state" id="emptyFiles">暂无文件变更</div>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+    </div><!-- end main-content -->
+  </div>
+
+  <script type="module" src="renderer.js"></script>
+
+  <!-- Toast Container -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- Settings Modal -->
+  <div id="settingsModal" class="modal-overlay hidden">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>系统设置</h2>
+        <button id="closeSettingsBtn" class="modal-close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <!-- API Endpoint -->
+        <div class="settings-group">
+          <label for="apiEndpoint">API 端点</label>
+          <input type="url" id="apiEndpoint" placeholder="https://api.anthropic.com" />
+          <span class="input-hint">企业内部 Claude API 端点地址</span>
+        </div>
+
+        <!-- API Key -->
+        <div class="settings-group">
+          <label for="apiKey">API 密钥</label>
+          <div class="password-input-wrapper">
+            <input type="password" id="apiKey" placeholder="sk-ant-xxx..." />
+            <button type="button" id="toggleApiKey" class="toggle-password" title="显示/隐藏">👁</button>
+          </div>
+          <span class="input-hint">您的 API 密钥（不会显示在界面上）</span>
+        </div>
+
+        <!-- Models Section -->
+        <div class="settings-group">
+          <label>可用模型</label>
+          <div id="modelsList" class="models-list">
+            <!-- Models will be rendered here -->
+          </div>
+          <button type="button" id="addModelBtn" class="add-model-btn">+ 添加模型</button>
+        </div>
+
+        <!-- Diagnosis Section -->
+        <div class="settings-group">
+          <label>连接诊断</label>
+          <button type="button" id="diagnoseBtn" class="btn btn-secondary">一键诊断</button>
+          <div id="diagnoseResult" class="diagnose-result hidden"></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="resetSettingsBtn" class="btn btn-secondary">恢复默认</button>
+        <button id="saveSettingsBtn" class="btn btn-primary">保存设置</button>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

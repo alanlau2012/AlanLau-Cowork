@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>快速开始模板 - UX原型</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=EB+Garamond:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-cream: #f5f5f0;
+      --bg-white: #ffffff;
+      --text-primary: #1a1a1a;
+      --text-secondary: #6b6b6b;
+      --text-tertiary: #9a9a9a;
+      --border-light: #e5e5e0;
+      --accent-coral: #c4917b;
+      --accent-coral-dark: #b5826c;
+      
+      /* 领域标签颜色 */
+      --tag-nis: #3b82f6;      /* 蓝色 - 网络服务 */
+      --tag-nis-bg: #eff6ff;
+      --tag-sec: #10b981;      /* 绿色 - 安全合规 */
+      --tag-sec-bg: #ecfdf5;
+      --tag-ams: #f59e0b;      /* 橙色 - 运维服务 */
+      --tag-ams-bg: #fffbeb;
+      --tag-delivery: #8b5cf6; /* 紫色 - 交付 */
+      --tag-delivery-bg: #f5f3ff;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-cream);
+      color: var(--text-primary);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* 模拟完整页面布局 */
+    .app-container {
+      display: flex;
+      flex: 1;
+      height: 100vh;
+    }
+
+    /* 左侧边栏占位 */
+    .left-sidebar {
+      width: 260px;
+      min-width: 260px;
+      background: var(--bg-white);
+      border-right: 1px solid var(--border-light);
+      display: flex;
+      flex-direction: column;
+      padding: 16px;
+    }
+
+    .sidebar-header {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .new-chat-btn {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border: 1px solid var(--border-light);
+      background: var(--bg-white);
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .chat-history-empty {
+      padding: 20px;
+      text-align: center;
+      color: var(--text-tertiary);
+      font-size: 13px;
+    }
+
+    /* 主内容区 */
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 24px;
+      overflow: auto;
+    }
+
+    /* 欢迎区域 */
+    .greeting-section {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .greeting-text {
+      font-family: 'EB Garamond', Georgia, serif;
+      font-size: 42px;
+      font-weight: 400;
+      color: var(--text-primary);
+      letter-spacing: -0.5px;
+    }
+
+    .tagline {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-top: 8px;
+      letter-spacing: 0.3px;
+    }
+
+    /* 快速开始模板区域 */
+    .quick-start-templates {
+      width: 100%;
+      max-width: 900px;
+      margin-bottom: 32px;
+    }
+
+    .templates-header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .templates-header h2 {
+      font-size: 24px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+
+    .templates-header p {
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+
+    /* 模板网格：2行3列 */
+    .templates-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    /* 模板卡片 */
+    .template-card {
+      position: relative;
+      background: var(--bg-white);
+      border: 1px solid var(--border-light);
+      border-radius: 12px;
+      padding: 20px;
+      text-align: left;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      min-height: 120px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .template-card:hover {
+      border-color: var(--accent-coral);
+      box-shadow: 0 4px 12px rgba(196, 145, 123, 0.15);
+      transform: translateY(-2px);
+    }
+
+    .template-card:active {
+      transform: translateY(0);
+    }
+
+    /* 领域标签 */
+    .domain-tag {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+    }
+
+    .domain-tag.nis {
+      background: var(--tag-nis-bg);
+      color: var(--tag-nis);
+    }
+
+    .domain-tag.sec {
+      background: var(--tag-sec-bg);
+      color: var(--tag-sec);
+    }
+
+    .domain-tag.ams {
+      background: var(--tag-ams-bg);
+      color: var(--tag-ams);
+    }
+
+    .domain-tag.delivery {
+      background: var(--tag-delivery-bg);
+      color: var(--tag-delivery);
+    }
+
+    /* 卡片内容 */
+    .template-icon {
+      font-size: 28px;
+      margin-bottom: 12px;
+    }
+
+    .template-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 6px;
+      padding-right: 50px; /* 为右上角标签留空间 */
+    }
+
+    .template-desc {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+      flex: 1;
+    }
+
+    /* 输入区域 */
+    .input-container {
+      width: 100%;
+      max-width: 680px;
+    }
+
+    .input-wrapper {
+      background: var(--bg-white);
+      border-radius: 24px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+      overflow: hidden;
+    }
+
+    .message-textarea {
+      width: 100%;
+      min-height: 44px;
+      max-height: 200px;
+      padding: 20px 24px 12px;
+      border: none;
+      resize: none;
+      font-family: inherit;
+      font-size: 16px;
+      line-height: 1.5;
+      background: transparent;
+      color: var(--text-primary);
+      outline: none;
+    }
+
+    .message-textarea::placeholder {
+      color: var(--text-tertiary);
+    }
+
+    .input-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 24px 12px;
+    }
+
+    .left-controls, .right-controls {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .control-btn {
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: none;
+      background: transparent;
+      border-radius: 8px;
+      cursor: pointer;
+      color: var(--text-tertiary);
+      transition: all 0.15s;
+    }
+
+    .control-btn:hover {
+      background: var(--bg-cream);
+      color: var(--text-secondary);
+    }
+
+    .model-select {
+      padding: 8px 12px;
+      border: 1px solid var(--border-light);
+      background: var(--bg-white);
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 14px;
+      color: var(--text-primary);
+      cursor: pointer;
+    }
+
+    .send-btn {
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: none;
+      background: var(--accent-coral);
+      border-radius: 12px;
+      cursor: pointer;
+      color: white;
+      opacity: 0.4;
+    }
+
+    /* 响应式 */
+    @media (max-width: 900px) {
+      .templates-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 640px) {
+      .left-sidebar {
+        display: none;
+      }
+      
+      .templates-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .greeting-text {
+        font-size: 32px;
+      }
+    }
+
+    /* 原型标注 */
+    .prototype-badge {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      background: #ef4444;
+      color: white;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      z-index: 1000;
+    }
+  </style>
+</head>
+<body>
+  <div class="prototype-badge">UX 原型 - 待确认</div>
+
+  <div class="app-container">
+    <!-- 左侧边栏 -->
+    <aside class="left-sidebar">
+      <div class="sidebar-header">
+        <button class="new-chat-btn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          <span>New Chat</span>
+        </button>
+      </div>
+      <div class="chat-history-empty">暂无聊天记录</div>
+    </aside>
+
+    <!-- 主内容区 -->
+    <main class="main-content">
+      <!-- 欢迎区域 -->
+      <div class="greeting-section">
+        <h1 class="greeting-text">GTS Cowork</h1>
+        <p class="tagline">Powered by AI Engineering Dept</p>
+      </div>
+
+      <!-- 快速开始模板 -->
+      <div class="quick-start-templates">
+        <div class="templates-header">
+          <h2>快速开始</h2>
+          <p>选择一个模板开始对话</p>
+        </div>
+
+        <div class="templates-grid">
+          <!-- 第一行 -->
+          <!-- 1. 跨厂商配置翻译 - NIS -->
+          <div class="template-card" data-template="config-translate">
+            <span class="domain-tag nis">NIS</span>
+            <div class="template-icon">🔄</div>
+            <div class="template-title">跨厂商配置翻译</div>
+            <div class="template-desc">旧网/异构网配置导出，翻译成目标脚本，自动勾稽差异</div>
+          </div>
+
+          <!-- 2. LLD实时校准 - NIS -->
+          <div class="template-card" data-template="lld-calibration">
+            <span class="domain-tag nis">NIS</span>
+            <div class="template-icon">📐</div>
+            <div class="template-title">LLD实时校准</div>
+            <div class="template-desc">详细设计与现网数据对比，实时识别资源冲突，避免回滚</div>
+          </div>
+
+          <!-- 3. 验收件自动纠错 - SEC -->
+          <div class="template-card" data-template="pac-review">
+            <span class="domain-tag sec">SEC</span>
+            <div class="template-icon">✅</div>
+            <div class="template-title">验收件自动纠错</div>
+            <div class="template-desc">PAC/FAC截图自动审核，比对合同要求，标记不合格项</div>
+          </div>
+
+          <!-- 第二行 -->
+          <!-- 4. 故障证据链梳理 - AMS -->
+          <div class="template-card" data-template="fault-evidence">
+            <span class="domain-tag ams">AMS</span>
+            <div class="template-icon">🔍</div>
+            <div class="template-title">故障证据链梳理</div>
+            <div class="template-desc">多源日志/邮件自动整合，生成时间轴与根因推测草稿</div>
+          </div>
+
+          <!-- 5. SOC规范应答 - 交付 -->
+          <div class="template-card" data-template="soc-response">
+            <span class="domain-tag delivery">交付</span>
+            <div class="template-icon">📋</div>
+            <div class="template-title">SOC规范应答</div>
+            <div class="template-desc">投标技术规范书逐条判断，快速生成应答初稿供专家审核</div>
+          </div>
+
+          <!-- 6. 分包商影子审计 - SEC -->
+          <div class="template-card" data-template="subcon-audit">
+            <span class="domain-tag sec">SEC</span>
+            <div class="template-icon">👁️</div>
+            <div class="template-title">分包商影子审计</div>
+            <div class="template-desc">全量扫描分包商操作日志，自动抓取违规操作如跳步执行</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 输入区域 -->
+      <div class="input-container">
+        <div class="input-wrapper">
+          <textarea class="message-textarea" placeholder="Ask me anything (Shift+Enter for new line)" rows="1"></textarea>
+          <div class="input-controls">
+            <div class="left-controls">
+              <button class="control-btn" title="附件">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+              </button>
+              <button class="control-btn" title="Extended thinking">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+              </button>
+            </div>
+            <div class="right-controls">
+              <select class="model-select">
+                <option value="minimax-2-1" selected>Minimax 2.1</option>
+                <option value="glm-4-7">GLM 4.7</option>
+              </select>
+              <button class="send-btn" disabled>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <line x1="12" y1="19" x2="12" y2="5"></line>
+                  <polyline points="5 12 12 5 19 12"></polyline>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // 模板卡片点击交互演示
+    document.querySelectorAll('.template-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const templateId = card.dataset.template;
+        const title = card.querySelector('.template-title').textContent;
+        const textarea = document.querySelector('.message-textarea');
+        
+        // 模拟填充提示词
+        const prompts = {
+          'config-translate': `请帮我进行跨厂商配置翻译。我需要将以下配置翻译为华为设备脚本：
+
+[请粘贴源配置文件内容]
+
+要求：
+1. 识别配置意图并生成目标脚本
+2. 标注无法直接翻译的配置项
+3. 生成差异对比报告`,
+
+          'lld-calibration': `请帮我进行LLD与现网数据校准。
+
+LLD文档：[请上传或粘贴LLD设计文档]
+现网数据：[请上传CME导出的CSV文件]
+
+要求：
+1. 对比资源分配差异
+2. 识别潜在的资源冲突
+3. 生成校准建议报告`,
+
+          'pac-review': `请帮我审核验收交付件。
+
+验收要求：[请描述合同中的验收标准]
+待审核截图：[请上传测试截图]
+
+要求：
+1. 识别截图中的关键指标
+2. 对比合同要求判断是否达标
+3. 标记不合格项并建议重命名`,
+
+          'fault-evidence': `请帮我梳理故障证据链。
+
+故障描述：[请简述故障现象]
+相关日志：[请上传或粘贴日志片段]
+处理记录：[请粘贴处理过程记录]
+
+要求：
+1. 生成故障时间轴
+2. 分析可能的根本原因
+3. 输出复盘草稿`,
+
+          'soc-response': `请帮我应答技术规范书要求。
+
+规范书要求：[请上传或粘贴SOC技术需求条目]
+产品范围：[请说明涉及的产品线]
+
+要求：
+1. 逐条判断是否支持
+2. 生成应答初稿
+3. 标注需要专家确认的条目`,
+
+          'subcon-audit': `请帮我审计分包商作业质量。
+
+审计范围：[请描述需要审计的作业类型]
+操作日志：[请上传分包商提交的操作日志]
+
+要求：
+1. 检查操作步骤完整性
+2. 识别跳步执行等违规操作
+3. 生成审计报告摘要`
+        };
+
+        textarea.value = prompts[templateId] || `开始${title}任务...`;
+        textarea.style.height = 'auto';
+        textarea.style.height = textarea.scrollHeight + 'px';
+        textarea.focus();
+        
+        // 启用发送按钮
+        document.querySelector('.send-btn').style.opacity = '1';
+      });
+    });
+
+    // 输入框自动调整高度
+    const textarea = document.querySelector('.message-textarea');
+    textarea.addEventListener('input', () => {
+      textarea.style.height = 'auto';
+      textarea.style.height = Math.min(textarea.scrollHeight, 200) + 'px';
+      
+      const sendBtn = document.querySelector('.send-btn');
+      sendBtn.style.opacity = textarea.value.trim() ? '1' : '0.4';
+    });
+  </script>
+</body>
+</html>

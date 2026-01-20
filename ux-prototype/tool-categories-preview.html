@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>工具类型视觉区分 - 优化原型</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=EB+Garamond:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      /* 应用主色调 - 保持一致性 */
+      --bg-cream: #f5f5f0;
+      --bg-white: #ffffff;
+      --text-primary: #1a1a1a;
+      --text-secondary: #6b6b6b;
+      --text-tertiary: #9a9a9a;
+      --border-light: #e5e5e0;
+      --accent-coral: #c4917b;
+      --accent-coral-dark: #b5826c;
+      --user-bubble: #e8e8e3;
+      --shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.04);
+      
+      /* 工具类型颜色 - 降低饱和度，更柔和，与应用色调协调 */
+      --tool-shell: #9d8bb5;      /* 柔和的紫灰色 */
+      --tool-shell-bg: rgba(157, 139, 181, 0.06);
+      --tool-read: #7a9bc4;       /* 柔和的蓝灰色 */
+      --tool-read-bg: rgba(122, 155, 196, 0.06);
+      --tool-write: #8fb89f;      /* 柔和的灰绿色 */
+      --tool-write-bg: rgba(143, 184, 159, 0.06);
+      --tool-edit: #c4a87a;       /* 柔和的棕橙色，接近珊瑚色系 */
+      --tool-edit-bg: rgba(196, 168, 122, 0.06);
+      --tool-search: #8db5b8;     /* 柔和的青灰色 */
+      --tool-search-bg: rgba(141, 181, 184, 0.06);
+      --tool-web: #9a9bc4;        /* 柔和的蓝紫色 */
+      --tool-web-bg: rgba(154, 155, 196, 0.06);
+      --tool-ask: #b89a9d;        /* 柔和的粉灰色 */
+      --tool-ask-bg: rgba(184, 154, 157, 0.06);
+      --tool-other: #9a9a9a;      /* 中性灰色 */
+      --tool-other-bg: rgba(154, 154, 154, 0.06);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-cream);
+      color: var(--text-primary);
+      line-height: 1.6;
+      padding: 40px 24px;
+    }
+
+    .container {
+      max-width: 720px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-family: 'EB Garamond', Georgia, serif;
+      font-size: 32px;
+      font-weight: 400;
+      margin-bottom: 8px;
+      color: var(--text-primary);
+      letter-spacing: -0.3px;
+    }
+
+    .subtitle {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: 40px;
+      letter-spacing: 0.2px;
+    }
+
+    .section-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin: 40px 0 20px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border-light);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* 消息容器 - 与应用一致 */
+    .message {
+      background: var(--bg-white);
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: var(--shadow-soft);
+    }
+
+    .message-text {
+      font-size: 15px;
+      line-height: 1.7;
+      color: var(--text-primary);
+      margin-bottom: 16px;
+    }
+
+    /* 内联工具调用 - 更subtle的设计 */
+    .inline-tool-call {
+      background: #fafaf8;
+      border: 1px solid var(--border-light);
+      border-radius: 8px;
+      margin: 12px 0;
+      overflow: hidden;
+      border-left: 3px solid var(--tool-other);
+      transition: border-color 0.2s ease;
+    }
+
+    .inline-tool-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      cursor: pointer;
+      font-size: 13px;
+      color: var(--text-secondary);
+      transition: background 0.15s ease;
+    }
+
+    .inline-tool-header:hover {
+      background: var(--bg-cream);
+    }
+
+    /* 工具图标 - 更subtle，不使用emoji背景色 */
+    .tool-icon {
+      font-size: 15px;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      opacity: 0.85;
+    }
+
+    .tool-name {
+      font-weight: 500;
+      color: var(--text-primary);
+      font-size: 13px;
+    }
+
+    .tool-preview {
+      color: var(--text-tertiary);
+      font-size: 12px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 300px;
+      font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+    }
+
+    .tool-status-badge {
+      margin-left: auto;
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 12px;
+      font-weight: 500;
+      letter-spacing: 0.2px;
+    }
+
+    .tool-status-badge.success {
+      background: rgba(16, 185, 129, 0.08);
+      color: #10b981;
+    }
+
+    .tool-status-badge.running {
+      background: rgba(196, 145, 123, 0.12);
+      color: var(--accent-coral);
+    }
+
+    .expand-icon {
+      width: 14px;
+      height: 14px;
+      color: var(--text-tertiary);
+      transition: transform 0.2s ease;
+      margin-left: 4px;
+    }
+
+    .inline-tool-call.expanded .expand-icon {
+      transform: rotate(180deg);
+    }
+
+    .inline-tool-result {
+      display: none;
+      padding: 12px 14px;
+      background: var(--bg-cream);
+      border-top: 1px solid var(--border-light);
+    }
+
+    .inline-tool-call.expanded .inline-tool-result {
+      display: block;
+    }
+
+    .tool-section {
+      margin-bottom: 10px;
+    }
+
+    .tool-section:last-child {
+      margin-bottom: 0;
+    }
+
+    .tool-section-label {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+
+    .tool-section pre {
+      background: rgba(0, 0, 0, 0.03);
+      color: var(--text-primary);
+      padding: 10px 12px;
+      border-radius: 6px;
+      font-size: 11px;
+      overflow-x: auto;
+      margin: 0;
+      white-space: pre-wrap;
+      word-break: break-all;
+      line-height: 1.5;
+      font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+    }
+
+    .tool-output-section pre {
+      background: rgba(0, 0, 0, 0.05);
+      border-left: 2px solid rgba(16, 185, 129, 0.3);
+    }
+
+    /* 工具类型特定样式 - 更subtle的区分 */
+    .inline-tool-call.tool-shell { 
+      border-left-color: var(--tool-shell); 
+    }
+    .inline-tool-call.tool-shell .tool-name { 
+      color: var(--tool-shell); 
+    }
+
+    .inline-tool-call.tool-read { 
+      border-left-color: var(--tool-read); 
+    }
+    .inline-tool-call.tool-read .tool-name { 
+      color: var(--tool-read); 
+    }
+
+    .inline-tool-call.tool-write { 
+      border-left-color: var(--tool-write); 
+    }
+    .inline-tool-call.tool-write .tool-name { 
+      color: var(--tool-write); 
+    }
+
+    .inline-tool-call.tool-edit { 
+      border-left-color: var(--tool-edit); 
+    }
+    .inline-tool-call.tool-edit .tool-name { 
+      color: var(--tool-edit); 
+    }
+
+    .inline-tool-call.tool-search { 
+      border-left-color: var(--tool-search); 
+    }
+    .inline-tool-call.tool-search .tool-name { 
+      color: var(--tool-search); 
+    }
+
+    .inline-tool-call.tool-web { 
+      border-left-color: var(--tool-web); 
+    }
+    .inline-tool-call.tool-web .tool-name { 
+      color: var(--tool-web); 
+    }
+
+    .inline-tool-call.tool-ask { 
+      border-left-color: var(--tool-ask); 
+    }
+    .inline-tool-call.tool-ask .tool-name { 
+      color: var(--tool-ask); 
+    }
+
+    .inline-tool-call.tool-other { 
+      border-left-color: var(--tool-other); 
+    }
+    .inline-tool-call.tool-other .tool-name { 
+      color: var(--tool-other); 
+    }
+
+    /* 图例 - 更简洁的设计 */
+    .legend {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1px;
+      background: var(--border-light);
+      border: 1px solid var(--border-light);
+      border-radius: 8px;
+      margin-bottom: 40px;
+      overflow: hidden;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 12px;
+      padding: 12px 14px;
+      background: var(--bg-white);
+      transition: background 0.15s ease;
+    }
+
+    .legend-item:hover {
+      background: var(--bg-cream);
+    }
+
+    .legend-icon {
+      font-size: 14px;
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      opacity: 0.8;
+    }
+
+    .legend-text {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .legend-category {
+      font-weight: 500;
+      color: var(--text-primary);
+      font-size: 12px;
+    }
+
+    .legend-tools {
+      font-size: 11px;
+      color: var(--text-tertiary);
+      font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+    }
+
+    /* 对比展示 - 更简洁 */
+    .comparison {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 32px;
+    }
+
+    .comparison-panel {
+      background: var(--bg-white);
+      border-radius: 8px;
+      padding: 16px;
+      border: 1px solid var(--border-light);
+    }
+
+    .comparison-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 16px;
+      text-align: center;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* 原始样式（无颜色区分） */
+    .original .inline-tool-call {
+      border-left: 1px solid var(--border-light);
+    }
+    .original .tool-name {
+      color: var(--text-primary);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>工具类型视觉区分</h1>
+    <p class="subtitle">通过subtle的颜色和图标区分不同工具类型，保持与应用整体风格协调</p>
+
+    <!-- 图例 -->
+    <div class="legend">
+      <div class="legend-item">
+        <div class="legend-icon">💻</div>
+        <div class="legend-text">
+          <span class="legend-category">Shell</span>
+          <span class="legend-tools">Shell, Bash, Task</span>
+        </div>
+      </div>
+      <div class="legend-item">
+        <div class="legend-icon">📖</div>
+        <div class="legend-text">
+          <span class="legend-category">Read</span>
+          <span class="legend-tools">Read, ReadLints, LS</span>
+        </div>
+      </div>
+      <div class="legend-item">
+        <div class="legend-icon">✏️</div>
+        <div class="legend-text">
+          <span class="legend-category">Write</span>
+          <span class="legend-tools">Write, Delete</span>
+        </div>
+      </div>
+      <div class="legend-item">
+        <div class="legend-icon">🔧</div>
+        <div class="legend-text">
+          <span class="legend-category">Edit</span>
+          <span class="legend-tools">StrReplace, EditNotebook</span>
+        </div>
+      </div>
+      <div class="legend-item">
+        <div class="legend-icon">🔍</div>
+        <div class="legend-text">
+          <span class="legend-category">Search</span>
+          <span class="legend-tools">Grep, Glob, SemanticSearch</span>
+        </div>
+      </div>
+      <div class="legend-item">
+        <div class="legend-icon">🌐</div>
+        <div class="legend-text">
+          <span class="legend-category">Web</span>
+          <span class="legend-tools">WebSearch, FetchMcp...</span>
+        </div>
+      </div>
+      <div class="legend-item">
+        <div class="legend-icon">❓</div>
+        <div class="legend-text">
+          <span class="legend-category">Ask</span>
+          <span class="legend-tools">AskQuestion, SwitchMode</span>
+        </div>
+      </div>
+      <div class="legend-item">
+        <div class="legend-icon">⚙️</div>
+        <div class="legend-text">
+          <span class="legend-category">Other</span>
+          <span class="legend-tools">其他未分类工具</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 对比展示 -->
+    <div class="comparison">
+      <!-- 原始样式 -->
+      <div class="comparison-panel original">
+        <div class="comparison-title">改进前</div>
+        
+        <div class="inline-tool-call">
+          <div class="inline-tool-header">
+            <span class="tool-icon">⚙️</span>
+            <span class="tool-name">Shell</span>
+            <span class="tool-preview">command: npm install express</span>
+            <span class="tool-status-badge success">✓</span>
+          </div>
+        </div>
+
+        <div class="inline-tool-call">
+          <div class="inline-tool-header">
+            <span class="tool-icon">⚙️</span>
+            <span class="tool-name">Read</span>
+            <span class="tool-preview">path: /src/config.js</span>
+            <span class="tool-status-badge success">✓</span>
+          </div>
+        </div>
+
+        <div class="inline-tool-call">
+          <div class="inline-tool-header">
+            <span class="tool-icon">⚙️</span>
+            <span class="tool-name">StrReplace</span>
+            <span class="tool-preview">path: /src/app.js</span>
+            <span class="tool-status-badge success">✓</span>
+          </div>
+        </div>
+
+        <div class="inline-tool-call">
+          <div class="inline-tool-header">
+            <span class="tool-icon">⚙️</span>
+            <span class="tool-name">Grep</span>
+            <span class="tool-preview">pattern: "TODO"</span>
+            <span class="tool-status-badge success">✓</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 改进后样式 -->
+      <div class="comparison-panel">
+        <div class="comparison-title">改进后</div>
+        
+        <div class="inline-tool-call tool-shell">
+          <div class="inline-tool-header">
+            <span class="tool-icon">💻</span>
+            <span class="tool-name">Shell</span>
+            <span class="tool-preview">command: npm install express</span>
+            <span class="tool-status-badge success">✓</span>
+          </div>
+        </div>
+
+        <div class="inline-tool-call tool-read">
+          <div class="inline-tool-header">
+            <span class="tool-icon">📖</span>
+            <span class="tool-name">Read</span>
+            <span class="tool-preview">path: /src/config.js</span>
+            <span class="tool-status-badge success">✓</span>
+          </div>
+        </div>
+
+        <div class="inline-tool-call tool-edit">
+          <div class="inline-tool-header">
+            <span class="tool-icon">🔧</span>
+            <span class="tool-name">StrReplace</span>
+            <span class="tool-preview">path: /src/app.js</span>
+            <span class="tool-status-badge success">✓</span>
+          </div>
+        </div>
+
+        <div class="inline-tool-call tool-search">
+          <div class="inline-tool-header">
+            <span class="tool-icon">🔍</span>
+            <span class="tool-name">Grep</span>
+            <span class="tool-preview">pattern: "TODO"</span>
+            <span class="tool-status-badge success">✓</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 完整示例 -->
+    <h2 class="section-title">完整对话示例</h2>
+    
+    <div class="message">
+      <div class="message-text">
+        好的，让我帮你分析一下这个项目的结构并进行优化。
+      </div>
+
+      <!-- Shell 命令 -->
+      <div class="inline-tool-call tool-shell expanded">
+        <div class="inline-tool-header" onclick="this.parentElement.classList.toggle('expanded')">
+          <span class="tool-icon">💻</span>
+          <span class="tool-name">Shell</span>
+          <span class="tool-preview">command: git status</span>
+          <span class="tool-status-badge success">✓</span>
+          <svg class="expand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </div>
+        <div class="inline-tool-result">
+          <div class="tool-section">
+            <div class="tool-section-label">Input</div>
+            <pre>{
+  "command": "git status",
+  "description": "检查当前仓库状态"
+}</pre>
+          </div>
+          <div class="tool-section tool-output-section">
+            <div class="tool-section-label">Output</div>
+            <pre>On branch main
+Changes not staged for commit:
+  modified:   src/app.js
+  modified:   src/config.js</pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- Read 文件 -->
+      <div class="inline-tool-call tool-read">
+        <div class="inline-tool-header" onclick="this.parentElement.classList.toggle('expanded')">
+          <span class="tool-icon">📖</span>
+          <span class="tool-name">Read</span>
+          <span class="tool-preview">path: src/app.js</span>
+          <span class="tool-status-badge success">✓</span>
+          <svg class="expand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </div>
+        <div class="inline-tool-result">
+          <div class="tool-section">
+            <div class="tool-section-label">Input</div>
+            <pre>{ "path": "src/app.js" }</pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- Search 搜索 -->
+      <div class="inline-tool-call tool-search">
+        <div class="inline-tool-header" onclick="this.parentElement.classList.toggle('expanded')">
+          <span class="tool-icon">🔍</span>
+          <span class="tool-name">Grep</span>
+          <span class="tool-preview">pattern: "deprecated"</span>
+          <span class="tool-status-badge success">✓</span>
+          <svg class="expand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </div>
+        <div class="inline-tool-result">
+          <div class="tool-section">
+            <div class="tool-section-label">Input</div>
+            <pre>{
+  "pattern": "deprecated",
+  "path": "src/"
+}</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="message-text" style="margin-top: 16px;">
+        我发现了几处需要优化的代码，现在来修改它们：
+      </div>
+
+      <!-- Edit 编辑 -->
+      <div class="inline-tool-call tool-edit">
+        <div class="inline-tool-header" onclick="this.parentElement.classList.toggle('expanded')">
+          <span class="tool-icon">🔧</span>
+          <span class="tool-name">StrReplace</span>
+          <span class="tool-preview">path: src/app.js (修复废弃API)</span>
+          <span class="tool-status-badge success">✓</span>
+          <svg class="expand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </div>
+        <div class="inline-tool-result">
+          <div class="tool-section">
+            <div class="tool-section-label">Input</div>
+            <pre>{
+  "path": "src/app.js",
+  "old_string": "oldMethod()",
+  "new_string": "newMethod()"
+}</pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- Write 写入 -->
+      <div class="inline-tool-call tool-write">
+        <div class="inline-tool-header" onclick="this.parentElement.classList.toggle('expanded')">
+          <span class="tool-icon">✏️</span>
+          <span class="tool-name">Write</span>
+          <span class="tool-preview">path: src/utils/helpers.js</span>
+          <span class="tool-status-badge success">✓</span>
+          <svg class="expand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </div>
+        <div class="inline-tool-result">
+          <div class="tool-section">
+            <div class="tool-section-label">Input</div>
+            <pre>{
+  "path": "src/utils/helpers.js",
+  "contents": "// New utility functions..."
+}</pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- Web 搜索 -->
+      <div class="inline-tool-call tool-web">
+        <div class="inline-tool-header" onclick="this.parentElement.classList.toggle('expanded')">
+          <span class="tool-icon">🌐</span>
+          <span class="tool-name">WebSearch</span>
+          <span class="tool-preview">search_term: "Express.js best practices 2025"</span>
+          <span class="tool-status-badge success">✓</span>
+          <svg class="expand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </div>
+        <div class="inline-tool-result">
+          <div class="tool-section">
+            <div class="tool-section-label">Input</div>
+            <pre>{
+  "search_term": "Express.js best practices 2025",
+  "explanation": "查找最新的Express最佳实践"
+}</pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- Running 状态示例 -->
+      <div class="inline-tool-call tool-shell">
+        <div class="inline-tool-header" onclick="this.parentElement.classList.toggle('expanded')">
+          <span class="tool-icon">💻</span>
+          <span class="tool-name">Shell</span>
+          <span class="tool-preview">command: npm run build</span>
+          <span class="tool-status-badge running">...</span>
+          <svg class="expand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </div>
+      </div>
+
+      <div class="message-text" style="margin-top: 16px;">
+        优化已完成！我已经：<br>
+        1. 检查了 Git 状态<br>
+        2. 读取并分析了源代码<br>
+        3. 搜索并修复了废弃API调用<br>
+        4. 创建了新的工具函数文件<br>
+        5. 正在构建项目以验证更改
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 点击展开/收起
+    document.querySelectorAll('.inline-tool-header').forEach(header => {
+      header.addEventListener('click', () => {
+        header.parentElement.classList.toggle('expanded');
+      });
+    });
+  </script>
+</body>
+</html>
