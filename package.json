@@ -43,6 +43,7 @@
     "eslint": "^8.57.0",
     "eslint-plugin-vitest": "^0.5.4",
     "husky": "^9.0.11",
+    "jsdom": "^27.4.0",
     "lint-staged": "^15.2.2",
     "prettier": "^3.2.5",
     "vitest": "^4.0.17"
