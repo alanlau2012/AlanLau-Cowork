@@ -3,7 +3,12 @@
  * 提供可测试的 UI 相关纯函数
  */
 
-import { escapeHtmlPure, formatToolPreview, getToolDescription } from './utils.js';
+import {
+  escapeHtmlPure,
+  formatToolPreview,
+  getToolDescription,
+  calculateDiffStats
+} from './utils.js';
 
 /**
  * 计算文本框高度
@@ -35,11 +40,40 @@ export function createToastConfig(type) {
 }
 
 /**
- * 构建内联工具调用 HTML
+ * 构建 Diff 统计 HTML
+ * @param {object} stats - Diff 统计 { added, removed, isFile, read }
+ * @returns {string} HTML 字符串
+ */
+export function buildDiffStatsHTML(stats) {
+  if (!stats) {
+    return '';
+  }
+
+  let html = '<div class="diff-stats">';
+
+  if (stats.read) {
+    html += `<span class="read-lines">${stats.read} 行</span>`;
+  } else if (stats.isFile) {
+    html += '<span class="file-deleted">已删除</span>';
+  } else {
+    if (stats.added > 0) {
+      html += `<span class="additions">+${stats.added}</span>`;
+    }
+    if (stats.removed > 0) {
+      html += `<span class="deletions">-${stats.removed}</span>`;
+    }
+  }
+
+  html += '</div>';
+  return html;
+}
+
+/**
+ * 构建内联工具调用 HTML（Cursor 风格）
  * @param {string} toolName - 工具名称
  * @param {object} toolInput - 工具输入
  * @param {string} toolId - 工具 ID
- * @param {string} status - 状态
+ * @param {string} status - 状态 ('running' | 'success' | 'error')
  * @param {*} result - 结果（可选）
  * @returns {string} HTML 字符串
  */
@@ -52,6 +86,10 @@ export function buildInlineToolCallHTML(
 ) {
   const inputPreview = formatToolPreview(toolInput);
   const inputStr = JSON.stringify(toolInput, null, 2);
+
+  // Calculate diff stats for file operation tools
+  const diffStats = calculateDiffStats(toolName, toolInput);
+  const diffStatsHtml = status === 'success' ? buildDiffStatsHTML(diffStats) : '';
 
   let resultHtml = '';
   if (result !== null && result !== undefined) {
@@ -70,16 +108,34 @@ export function buildInlineToolCallHTML(
       </div>`;
   }
 
-  const statusBadge = status === 'success' ? '✓' : status === 'error' ? '✕' : '...';
+  // Spinner SVG for running state, checkmark for success, X for error
+  let statusIcon;
+  if (status === 'running') {
+    // Circular spinner
+    statusIcon = `
+      <svg class="tool-status-icon running tool-spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10" stroke-opacity="0.25"></circle>
+        <path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round"></path>
+      </svg>`;
+  } else if (status === 'success') {
+    statusIcon = `
+      <svg class="tool-status-icon success" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <polyline points="20 6 9 17 4 12"></polyline>
+      </svg>`;
+  } else {
+    statusIcon = `
+      <svg class="tool-status-icon error" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>`;
+  }
 
   return `
     <div class="inline-tool-header" onclick="toggleInlineToolCall(this)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
-      </svg>
+      ${statusIcon}
       <span class="tool-name">${escapeHtmlPure(toolName)}</span>
       <span class="tool-preview">${escapeHtmlPure(inputPreview)}</span>
-      <span class="tool-status-badge ${status}">${statusBadge}</span>
+      ${diffStatsHtml}
       <svg class="expand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <polyline points="6 9 12 15 18 9"></polyline>
       </svg>

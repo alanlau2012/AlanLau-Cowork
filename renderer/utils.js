@@ -282,3 +282,47 @@ export function formatFileSize(bytes) {
 
   return `${size.toFixed(unitIndex > 0 ? 1 : 0)} ${units[unitIndex]}`;
 }
+
+/**
+ * Calculate diff statistics for file operation tools
+ * @param {string} toolName - Name of the tool
+ * @param {object} toolInput - Tool input parameters
+ * @returns {object|null} Diff stats { added, removed, isFile } or null
+ */
+export function calculateDiffStats(toolName, toolInput) {
+  if (!toolInput || typeof toolInput !== 'object') {
+    return null;
+  }
+
+  // Write tool - all lines are additions
+  if (toolName === 'Write') {
+    const content = toolInput.contents || toolInput.content || '';
+    const lines = content ? content.split('\n').length : 0;
+    return { added: lines, removed: 0 };
+  }
+
+  // StrReplace/Edit tool - compare old and new strings
+  if (toolName === 'StrReplace' || toolName === 'Edit') {
+    const newStr = toolInput.new_string || '';
+    const oldStr = toolInput.old_string || '';
+    const added = newStr ? newStr.split('\n').length : 0;
+    const removed = oldStr ? oldStr.split('\n').length : 0;
+    return { added, removed };
+  }
+
+  // Delete tool - file removed
+  if (toolName === 'Delete') {
+    return { added: 0, removed: 0, isFile: true };
+  }
+
+  // Read tool - show lines read (informational)
+  if (toolName === 'Read') {
+    const limit = toolInput.limit;
+    if (limit) {
+      return { read: limit };
+    }
+    return null;
+  }
+
+  return null;
+}

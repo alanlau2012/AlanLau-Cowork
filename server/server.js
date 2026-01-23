@@ -288,6 +288,26 @@ app.post('/api/chat', async (req, res) => {
 
       // If it's a tool result, format it nicely
       if (chunk.type === 'tool_result' || chunk.type === 'result') {
+        // #region agent log - Debug: log full chunk structure to find tool_use_id field
+        const logData = {
+          location: 'server.js:291',
+          message: 'tool_result chunk structure',
+          data: {
+            chunkKeys: Object.keys(chunk),
+            tool_use_id: chunk.tool_use_id,
+            id: chunk.id,
+            block_id: chunk.block_id,
+            toolId: chunk.toolId
+          },
+          timestamp: Date.now(),
+          sessionId: 'debug-session',
+          hypothesisId: 'B'
+        };
+        fs.appendFileSync(
+          'd:\\AI项目\\AlanLau-cowork\\open-claude-cowork\\.cursor\\debug.log',
+          JSON.stringify(logData) + '\n'
+        );
+        // #endregion
         const eventData = {
           type: 'tool_result',
           result: chunk.result || chunk.content || chunk,

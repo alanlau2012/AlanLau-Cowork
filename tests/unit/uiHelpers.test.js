@@ -80,14 +80,18 @@ describe('buildInlineToolCallHTML', () => {
     expect(html).toContain('/test');
   });
 
-  it('should include status badge', () => {
+  it('should include status icon with correct class', () => {
     const runningHtml = buildInlineToolCallHTML('Read', {}, 'tool_123', 'running');
     const successHtml = buildInlineToolCallHTML('Read', {}, 'tool_123', 'success');
     const errorHtml = buildInlineToolCallHTML('Read', {}, 'tool_123', 'error');
 
-    expect(runningHtml).toContain('...');
-    expect(successHtml).toContain('✓');
-    expect(errorHtml).toContain('✕');
+    // Running state shows spinner
+    expect(runningHtml).toContain('tool-status-icon running');
+    expect(runningHtml).toContain('tool-spinner');
+    // Success state shows checkmark
+    expect(successHtml).toContain('tool-status-icon success');
+    // Error state shows X
+    expect(errorHtml).toContain('tool-status-icon error');
   });
 
   it('should include result when provided', () => {

@@ -8,7 +8,8 @@ import {
   formatRelativeTime,
   formatToolPreview,
   getToolDescription,
-  debounce
+  debounce,
+  calculateDiffStats
 } from './utils.js';
 
 import {
@@ -33,6 +34,7 @@ import {
   buildMessageActionsHTML,
   buildLoadingIndicatorHTML,
   buildErrorRetryHTML,
+  buildDiffStatsHTML,
   getTemplateContent,
   matchesSearch
 } from './uiHelpers.js';
@@ -1320,8 +1322,53 @@ async function handleSendMessage(e) {
           try {
             const jsonStr = line.slice(6);
             const data = JSON.parse(jsonStr);
+            // #region agent log
+            fetch('http://127.0.0.1:7242/ingest/bc4b6979-3551-47d8-8d38-fd1c1280fe34', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                location: 'renderer.js:1323',
+                message: 'SSE data received',
+                data: {
+                  type: data.type,
+                  id: data.id,
+                  tool_use_id: data.tool_use_id,
+                  name: data.name
+                },
+                timestamp: Date.now(),
+                sessionId: 'debug-session',
+                hypothesisId: 'A-B'
+              })
+            }).catch(() => {});
+            // #endregion
 
             if (data.type === 'done') {
+              // #region agent log
+              fetch('http://127.0.0.1:7242/ingest/bc4b6979-3551-47d8-8d38-fd1c1280fe34', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  location: 'renderer.js:1333',
+                  message: 'Done received - pending tools remaining',
+                  data: {
+                    pendingCount: pendingToolCalls.size,
+                    pendingIds: Array.from(pendingToolCalls.keys())
+                  },
+                  timestamp: Date.now(),
+                  sessionId: 'debug-session',
+                  hypothesisId: 'A'
+                })
+              }).catch(() => {});
+              // #endregion
+
+              // FIX: SDK doesn't provide individual tool_use_id in tool_result events
+              // Mark all pending tools as completed when stream ends
+              for (const [apiId, localId] of pendingToolCalls) {
+                updateToolCallStatus(localId, 'success');
+                updateInlineToolResult(localId, null); // Pass null to skip Output section update
+              }
+              pendingToolCalls.clear();
+
               removeGenerationStatus(assistantMessage);
               break;
             } else if (data.type === 'text' && data.content) {
@@ -1339,6 +1386,20 @@ async function handleSendMessage(e) {
               const toolName = data.name || data.tool || 'Tool';
               const toolInput = data.input || {};
               const apiId = data.id; // API's tool ID
+              // #region agent log
+              fetch('http://127.0.0.1:7242/ingest/bc4b6979-3551-47d8-8d38-fd1c1280fe34', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  location: 'renderer.js:1350',
+                  message: 'tool_use event',
+                  data: { toolName, apiId, inputKeys: Object.keys(toolInput) },
+                  timestamp: Date.now(),
+                  sessionId: 'debug-session',
+                  hypothesisId: 'B'
+                })
+              }).catch(() => {});
+              // #endregion
               updateGenerationStatus(assistantMessage, `正在调用工具: ${toolName}...`);
               const toolCall = addToolCall(toolName, toolInput, 'running');
               addInlineToolCall(contentDiv, toolName, toolInput, toolCall.id);
@@ -1366,10 +1427,42 @@ async function handleSendMessage(e) {
             } else if (data.type === 'tool_result' || data.type === 'result') {
               const result = data.result || data.content || data;
               const apiId = data.tool_use_id;
+              // #region agent log
+              fetch('http://127.0.0.1:7242/ingest/bc4b6979-3551-47d8-8d38-fd1c1280fe34', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  location: 'renderer.js:1384',
+                  message: 'tool_result received',
+                  data: {
+                    apiId,
+                    hasPending: pendingToolCalls.has(apiId),
+                    pendingKeys: Array.from(pendingToolCalls.keys())
+                  },
+                  timestamp: Date.now(),
+                  sessionId: 'debug-session',
+                  hypothesisId: 'A-B'
+                })
+              }).catch(() => {});
+              // #endregion
               updateGenerationStatus(assistantMessage, '收到工具执行结果，正在处理...');
 
               // Find the matching tool call by API ID
               const localId = apiId ? pendingToolCalls.get(apiId) : null;
+              // #region agent log
+              fetch('http://127.0.0.1:7242/ingest/bc4b6979-3551-47d8-8d38-fd1c1280fe34', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  location: 'renderer.js:1391',
+                  message: 'tool_result matching',
+                  data: { apiId, localId, foundMatch: !!localId },
+                  timestamp: Date.now(),
+                  sessionId: 'debug-session',
+                  hypothesisId: 'B-C'
+                })
+              }).catch(() => {});
+              // #endregion
               if (localId) {
                 updateToolCallResult(localId, result);
                 updateToolCallStatus(localId, 'success');
@@ -1692,26 +1785,64 @@ function renderMarkdown(contentDiv) {
 }
 
 // Add inline tool call to message (maintains correct order in stream)
+// Uses Cursor-style spinner, streaming preview, and diff statistics
 function addInlineToolCall(contentDiv, toolName, toolInput, toolId) {
   const toolDiv = document.createElement('div');
-  toolDiv.className = 'inline-tool-call expanded'; // Show expanded by default
+  toolDiv.className = 'inline-tool-call expanded running'; // Show expanded by default, running state
   toolDiv.dataset.toolId = toolId;
+  toolDiv.dataset.toolName = toolName; // Store for later use in updateInlineToolResult
 
   const inputPreview = formatToolPreview(toolInput);
   const inputStr = JSON.stringify(toolInput, null, 2);
 
+  // Store diff stats for later display
+  const diffStats = calculateDiffStats(toolName, toolInput);
+  if (diffStats) {
+    toolDiv.dataset.diffStats = JSON.stringify(diffStats);
+  }
+
+  // Check if this tool has streamable content
+  const streamableContent = getStreamableContent(toolName, toolInput);
+  const hasStreamableContent = streamableContent && streamableContent.length > 0;
+
+  // Spinner SVG for running state
+  const spinnerIcon = `
+    <svg class="tool-status-icon running tool-spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="12" cy="12" r="10" stroke-opacity="0.25"></circle>
+      <path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round"></path>
+    </svg>`;
+
+  // Streaming preview section - dynamic label based on tool type
+  const isWriteOperation = ['Write', 'StrReplace', 'Edit'].includes(toolName);
+  const isBashEcho = (toolName === 'Shell' || toolName === 'Bash') && hasStreamableContent;
+  const streamingLabel = isWriteOperation ? '正在写入' : isBashEcho ? '正在输出' : '执行中';
+
+  const streamingPreviewHtml = hasStreamableContent
+    ? `
+    <div class="streaming-preview-section">
+      <div class="streaming-preview-label">
+        ${streamingLabel}
+        <div class="typing-indicator">
+          <span></span><span></span><span></span>
+        </div>
+      </div>
+      <pre class="streaming-preview typing"></pre>
+    </div>
+  `
+    : '';
+
   toolDiv.innerHTML = `
     <div class="inline-tool-header" onclick="toggleInlineToolCall(this)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
-      </svg>
-      <span class="tool-name">${toolName}</span>
-      <span class="tool-preview">${inputPreview}</span>
+      ${spinnerIcon}
+      <span class="tool-name">${escapeHtml(toolName)}</span>
+      <span class="tool-preview">${escapeHtml(inputPreview)}</span>
+      <div class="diff-stats-container"></div>
       <svg class="expand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <polyline points="6 9 12 15 18 9"></polyline>
       </svg>
     </div>
     <div class="inline-tool-result">
+      ${streamingPreviewHtml}
       <div class="tool-section">
         <div class="tool-section-label">Input</div>
         <pre>${escapeHtmlPure(inputStr)}</pre>
@@ -1726,23 +1857,112 @@ function addInlineToolCall(contentDiv, toolName, toolInput, toolId) {
   // Append tool call at end (in stream order)
   contentDiv.appendChild(toolDiv);
 
+  // Start typewriter animation if there's streamable content
+  if (hasStreamableContent) {
+    const previewElement = toolDiv.querySelector('.streaming-preview');
+    if (previewElement) {
+      const timer = startTypewriterAnimation(previewElement, streamableContent, {
+        speed: 8,
+        maxLength: 600
+      });
+      activeTypewriters.set(toolId, timer);
+    }
+  }
+
   // Increment chunk counter so next text creates a new markdown container
   const currentChunk = parseInt(contentDiv.dataset.currentChunk || '0');
   contentDiv.dataset.currentChunk = currentChunk + 1;
 }
 
-// Update inline tool result
+// Update inline tool result with Cursor-style effects
 function updateInlineToolResult(toolId, result) {
   const toolDiv = document.querySelector(`.inline-tool-call[data-tool-id="${toolId}"]`);
+  // #region agent log
+  fetch('http://127.0.0.1:7242/ingest/bc4b6979-3551-47d8-8d38-fd1c1280fe34', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      location: 'renderer.js:1798',
+      message: 'updateInlineToolResult called',
+      data: { toolId, foundToolDiv: !!toolDiv, toolName: toolDiv?.dataset?.toolName },
+      timestamp: Date.now(),
+      sessionId: 'debug-session',
+      hypothesisId: 'C'
+    })
+  }).catch(() => {});
+  // #endregion
   if (toolDiv) {
-    const outputSection = toolDiv.querySelector('.tool-output-section');
-    const outputContent = toolDiv.querySelector('.tool-output-content');
-    if (outputSection && outputContent) {
-      const resultStr =
-        typeof result === 'object' ? JSON.stringify(result, null, 2) : String(result);
-      outputContent.textContent =
-        resultStr.substring(0, 2000) + (resultStr.length > 2000 ? '...' : '');
-      outputSection.style.display = 'block';
+    // Stop typewriter animation
+    stopTypewriterAnimation(toolId);
+
+    // Update streaming preview section
+    const streamingSection = toolDiv.querySelector('.streaming-preview-section');
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/bc4b6979-3551-47d8-8d38-fd1c1280fe34', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        location: 'renderer.js:1810',
+        message: 'updating streaming section',
+        data: { toolId, hasStreamingSection: !!streamingSection },
+        timestamp: Date.now(),
+        sessionId: 'debug-session',
+        hypothesisId: 'C'
+      })
+    }).catch(() => {});
+    // #endregion
+    if (streamingSection) {
+      // Update label to show completion based on tool type
+      const label = streamingSection.querySelector('.streaming-preview-label');
+      if (label) {
+        const storedToolName = toolDiv.dataset.toolName;
+        const isWriteOp = ['Write', 'StrReplace', 'Edit'].includes(storedToolName);
+        const completionLabel = isWriteOp ? '写入完成' : '执行完成';
+        label.innerHTML = `${completionLabel} <span style="color: #22c55e;">✓</span>`;
+      }
+      // Mark preview as completed
+      const preview = streamingSection.querySelector('.streaming-preview');
+      if (preview) {
+        preview.classList.remove('typing');
+        preview.classList.add('completed');
+      }
+    }
+
+    // Update output content (only if result is not null/undefined)
+    if (result !== null && result !== undefined) {
+      const outputSection = toolDiv.querySelector('.tool-output-section');
+      const outputContent = toolDiv.querySelector('.tool-output-content');
+      if (outputSection && outputContent) {
+        const resultStr =
+          typeof result === 'object' ? JSON.stringify(result, null, 2) : String(result);
+        outputContent.textContent =
+          resultStr.substring(0, 2000) + (resultStr.length > 2000 ? '...' : '');
+        outputSection.style.display = 'block';
+      }
+    }
+
+    // Update status: running -> success
+    toolDiv.classList.remove('running');
+    toolDiv.classList.add('success');
+
+    // Replace spinner with success checkmark
+    const statusIcon = toolDiv.querySelector('.tool-status-icon');
+    if (statusIcon) {
+      statusIcon.classList.remove('running', 'tool-spinner');
+      statusIcon.classList.add('success');
+      statusIcon.innerHTML = '<polyline points="20 6 9 17 4 12"></polyline>';
+    }
+
+    // Display diff stats
+    const diffStatsContainer = toolDiv.querySelector('.diff-stats-container');
+    const diffStatsData = toolDiv.dataset.diffStats;
+    if (diffStatsContainer && diffStatsData) {
+      try {
+        const stats = JSON.parse(diffStatsData);
+        diffStatsContainer.innerHTML = buildDiffStatsHTML(stats);
+      } catch (e) {
+        // Silent fail on parse error
+      }
     }
   }
 }
@@ -1752,6 +1972,198 @@ window.toggleInlineToolCall = function (header) {
   const toolDiv = header.closest('.inline-tool-call');
   toolDiv.classList.toggle('expanded');
 };
+
+// Store active typewriter animations for cleanup
+const activeTypewriters = new Map();
+
+/**
+ * Start typewriter animation for streaming preview
+ * @param {HTMLElement} element - Target element to display text
+ * @param {string} content - Content to display
+ * @param {object} options - Animation options
+ * @returns {number} Timer ID for cleanup
+ */
+function startTypewriterAnimation(element, content, options = {}) {
+  const {
+    speed = 5, // ms per character (faster = more realistic)
+    maxLength = 500, // Max characters to show
+    onComplete = null
+  } = options;
+
+  // Truncate content if too long
+  const displayContent =
+    content.length > maxLength ? content.substring(0, maxLength) + '\n...(truncated)' : content;
+
+  let index = 0;
+  element.textContent = '';
+  element.classList.add('typing');
+  element.classList.remove('completed');
+
+  const timer = setInterval(() => {
+    if (index < displayContent.length) {
+      // Add multiple characters per tick for faster effect
+      const charsPerTick = Math.min(3, displayContent.length - index);
+      element.textContent += displayContent.substring(index, index + charsPerTick);
+      index += charsPerTick;
+
+      // Auto-scroll to bottom
+      element.scrollTop = element.scrollHeight;
+    } else {
+      clearInterval(timer);
+      element.classList.remove('typing');
+      element.classList.add('completed');
+      if (onComplete) {
+        onComplete();
+      }
+    }
+  }, speed);
+
+  return timer;
+}
+
+/**
+ * Stop typewriter animation
+ * @param {string} toolId - Tool ID to stop animation for
+ */
+function stopTypewriterAnimation(toolId) {
+  const timer = activeTypewriters.get(toolId);
+  if (timer) {
+    clearInterval(timer);
+    activeTypewriters.delete(toolId);
+  }
+
+  // Mark preview as completed
+  const toolDiv = document.querySelector(`.inline-tool-call[data-tool-id="${toolId}"]`);
+  if (toolDiv) {
+    const preview = toolDiv.querySelector('.streaming-preview');
+    if (preview) {
+      preview.classList.remove('typing');
+      preview.classList.add('completed');
+    }
+  }
+}
+
+/**
+ * Extract streamable content from tool input
+ * @param {string} toolName - Name of the tool
+ * @param {object} toolInput - Tool input parameters
+ * @returns {string|null} Content to stream or null
+ */
+function getStreamableContent(toolName, toolInput) {
+  if (!toolInput) {
+    return null;
+  }
+
+  // Write tool - show file content
+  if (toolName === 'Write') {
+    return toolInput.contents || toolInput.content || null;
+  }
+
+  // StrReplace/Edit - show new content
+  if (toolName === 'StrReplace' || toolName === 'Edit') {
+    return toolInput.new_string || null;
+  }
+
+  // Shell/Bash - extract echo content for better UX
+  if (toolName === 'Shell' || toolName === 'Bash') {
+    const command = toolInput.command || '';
+
+    // Pattern 1: printf format - echo "$(printf 'content\n'%.0s {1..N})" >> file
+    const printfMatch = command.match(/printf\s+['"]([^'"\\]+)(?:\\n)?['"]/);
+    const printfCountMatch = command.match(/\{1\.\.(\d+)\}/);
+    if (printfMatch && printfCountMatch) {
+      const content = printfMatch[1];
+      const repeatCount = parseInt(printfCountMatch[1], 10);
+      const lines = [];
+      for (let i = 1; i <= Math.min(repeatCount, 30); i++) {
+        lines.push(`[${i}/${repeatCount}] ${content}`);
+      }
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/bc4b6979-3551-47d8-8d38-fd1c1280fe34', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          location: 'renderer.js:1975',
+          message: 'Extracted printf loop content',
+          data: { content, repeatCount },
+          timestamp: Date.now(),
+          sessionId: 'debug-session',
+          hypothesisId: 'D-E'
+        })
+      }).catch(() => {});
+      // #endregion
+      return lines.join('\n');
+    }
+
+    // Pattern 2: for loop - for i in {1..N}; do echo "content" >> file; done
+    const forLoopMatch = command.match(
+      /for\s+\w+\s+in\s+\{1\.\.(\d+)\}[^"']*echo\s+["']([^"']+)["']/
+    );
+    if (forLoopMatch) {
+      const repeatCount = parseInt(forLoopMatch[1], 10);
+      const content = forLoopMatch[2];
+      const lines = [];
+      for (let i = 1; i <= Math.min(repeatCount, 30); i++) {
+        lines.push(`[${i}/${repeatCount}] ${content}`);
+      }
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/bc4b6979-3551-47d8-8d38-fd1c1280fe34', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          location: 'renderer.js:1990',
+          message: 'Extracted for-loop echo content',
+          data: { content, repeatCount },
+          timestamp: Date.now(),
+          sessionId: 'debug-session',
+          hypothesisId: 'D-E'
+        })
+      }).catch(() => {});
+      // #endregion
+      return lines.join('\n');
+    }
+
+    // Pattern 3: simple echo - echo "content" >> file
+    const echoMatch = command.match(/echo\s+["']([^"']+)["']\s*>>/);
+    if (echoMatch) {
+      const content = echoMatch[1];
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/bc4b6979-3551-47d8-8d38-fd1c1280fe34', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          location: 'renderer.js:2000',
+          message: 'Extracted simple echo content',
+          data: { content },
+          timestamp: Date.now(),
+          sessionId: 'debug-session',
+          hypothesisId: 'D-E'
+        })
+      }).catch(() => {});
+      // #endregion
+      return content;
+    }
+
+    // Fallback: no streaming for non-echo commands
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/bc4b6979-3551-47d8-8d38-fd1c1280fe34', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        location: 'renderer.js:2007',
+        message: 'getStreamableContent for Shell/Bash (no echo)',
+        data: { toolName, command: command.substring(0, 200) },
+        timestamp: Date.now(),
+        sessionId: 'debug-session',
+        hypothesisId: 'D-E'
+      })
+    }).catch(() => {});
+    // #endregion
+    return null;
+  }
+
+  return null;
+}
 
 // Add tool call to sidebar
 function addToolCall(name, input, status = 'running') {
