@@ -6,6 +6,10 @@ import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 import { query } from '@anthropic-ai/claude-agent-sdk';
 
+// Skills 模块
+import { initSkillsDirectory, buildSkillsPrompt, seedExampleSkill } from './skill-loader.js';
+import skillsRouter from './skills-api.js';
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -140,6 +144,9 @@ const chatSessions = new Map();
 app.use(cors());
 app.use(express.json());
 
+// Skills API 路由
+app.use('/api/skills', skillsRouter);
+
 // Chat endpoint using Claude Agent SDK
 app.post('/api/chat', async (req, res) => {
   const { message, chatId, userId = 'default-user' } = req.body;
@@ -243,9 +250,21 @@ app.post('/api/chat', async (req, res) => {
 
     console.log('[CHAT] Calling Claude Agent SDK...');
 
+    // 构建技能上下文增强 prompt
+    let enhancedPrompt = message;
+    try {
+      const skillsContext = await buildSkillsPrompt();
+      if (skillsContext) {
+        enhancedPrompt = `<available_skills>\n${skillsContext}\n</available_skills>\n\n${message}`;
+        console.log('[SKILLS] Injected skills context');
+      }
+    } catch (skillError) {
+      console.warn('[SKILLS] Failed to build skills prompt:', skillError.message);
+    }
+
     // Stream responses from Claude Agent SDK
     for await (const chunk of query({
-      prompt: message,
+      prompt: enhancedPrompt,
       options: queryOptions
     })) {
       // Capture session ID from system init message
@@ -409,10 +428,21 @@ app.post('/api/config', (req, res) => {
 });
 
 // Start server
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`\n✓ Backend server running on http://localhost:${PORT}`);
   console.log(`✓ Chat endpoint: POST http://localhost:${PORT}/api/chat`);
   console.log(`✓ Health check: GET http://localhost:${PORT}/api/health`);
+  console.log('✓ Skills API: /api/skills/*');
+
+  // 初始化技能目录
+  const skillsInit = await initSkillsDirectory();
+  if (skillsInit.success) {
+    console.log('✓ Skills directory initialized');
+    // 预置示例技能
+    await seedExampleSkill();
+  } else {
+    console.log('⚠ Skills directory init failed:', skillsInit.error);
+  }
 
   // Display sandbox status
   if (serverConfig.sandboxEnabled) {

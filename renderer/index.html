@@ -313,12 +313,32 @@
 
   <!-- Settings Modal -->
   <div id="settingsModal" class="modal-overlay hidden">
-    <div class="modal">
+    <div class="modal modal-large">
       <div class="modal-header">
         <h2>系统设置</h2>
         <button id="closeSettingsBtn" class="modal-close-btn">&times;</button>
       </div>
+      
+      <!-- Settings Tabs -->
+      <div class="settings-tabs">
+        <button class="settings-tab active" data-tab="general" onclick="switchSettingsTab('general')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+          常规设置
+        </button>
+        <button class="settings-tab" data-tab="skills" onclick="switchSettingsTab('skills')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+          </svg>
+          技能管理
+        </button>
+      </div>
+      
       <div class="modal-body">
+        <!-- General Settings Tab -->
+        <div class="settings-tab-content active" id="settingsTab-general">
         <!-- Workspace Directory Card -->
         <div class="settings-card">
           <div class="settings-card-header">
@@ -364,10 +384,127 @@
             <p class="input-hint" style="margin-top: 0;">检查系统连接状态和配置是否正确</p>
           </div>
         </div>
+        </div><!-- end settingsTab-general -->
+        
+        <!-- Skills Tab -->
+        <div class="settings-tab-content" id="settingsTab-skills">
+          <!-- Skills Header -->
+          <div class="skills-header">
+            <div class="skills-header-left">
+              <h3>已安装技能</h3>
+              <span class="skills-count" id="skillsCount">0 个技能</span>
+            </div>
+            <button class="btn btn-primary btn-sm" id="createSkillBtn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+              创建技能
+            </button>
+          </div>
+          
+          <!-- Skills Filter -->
+          <div class="skills-filter">
+            <div class="skills-search">
+              <input type="text" id="skillsSearch" placeholder="搜索技能..." />
+            </div>
+            <div class="skills-source-filter">
+              <select id="skillsSourceFilter">
+                <option value="all">全部来源</option>
+                <option value="local">本地技能</option>
+                <option value="claude-code">Claude Code</option>
+              </select>
+            </div>
+          </div>
+          
+          <!-- Skills List -->
+          <div class="skills-list" id="skillsList">
+            <div class="skills-loading">
+              <div class="loading-spinner"></div>
+              <span>加载技能列表...</span>
+            </div>
+          </div>
+          
+          <!-- Claude Code Compat Toggle -->
+          <div class="settings-card" style="margin-top: 16px;">
+            <div class="settings-card-header">
+              <h3>Claude Code 兼容</h3>
+            </div>
+            <div class="settings-card-body">
+              <label class="sandbox-toggle-label">
+                <div>
+                  <div class="sandbox-toggle-label-text">自动扫描 Claude Code 插件</div>
+                  <div class="sandbox-toggle-label-desc">从 ~/.claude/plugins/ 加载已安装的技能</div>
+                </div>
+                <label class="toggle-switch">
+                  <input type="checkbox" id="claudeCodeEnabled" checked />
+                  <span class="toggle-slider"></span>
+                </label>
+              </label>
+            </div>
+          </div>
+        </div><!-- end settingsTab-skills -->
       </div>
       <div class="modal-footer">
         <button id="resetSettingsBtn" class="btn btn-secondary">恢复默认</button>
         <button id="saveSettingsBtn" class="btn btn-primary">保存设置</button>
+      </div>
+    </div>
+  </div>
+  <!-- Create Skill Modal -->
+  <div id="createSkillModal" class="modal-overlay hidden">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>创建本地技能</h2>
+        <button class="modal-close-btn" onclick="closeCreateSkillModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="newSkillName">技能名称</label>
+          <input type="text" id="newSkillName" placeholder="my-skill" pattern="[a-zA-Z0-9_-]+" />
+          <p class="input-hint">仅支持字母、数字、下划线和连字符</p>
+        </div>
+        <div class="form-group">
+          <label for="newSkillContent">SKILL.md 内容</label>
+          <textarea id="newSkillContent" rows="12" placeholder="---
+name: my-skill
+description: 技能描述
+---
+
+# 技能名称
+
+## Overview
+技能的用途说明
+
+## When to Use
+何时使用此技能
+
+## Instructions
+具体指令内容"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeCreateSkillModal()">取消</button>
+        <button class="btn btn-primary" id="confirmCreateSkillBtn">创建技能</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Skill Detail Modal -->
+  <div id="skillDetailModal" class="modal-overlay hidden">
+    <div class="modal modal-large">
+      <div class="modal-header">
+        <h2 id="skillDetailTitle">技能详情</h2>
+        <button class="modal-close-btn" onclick="closeSkillDetailModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="skill-detail-meta" id="skillDetailMeta"></div>
+        <div class="skill-detail-content">
+          <pre id="skillDetailContent"></pre>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeSkillDetailModal()">关闭</button>
       </div>
     </div>
   </div>
