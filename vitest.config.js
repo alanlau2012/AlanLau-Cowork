@@ -4,7 +4,11 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
-    include: ['**/tests/unit/**/*.test.js', '**/tests/api/**/*.test.js'],
+    include: [
+      '**/tests/unit/**/*.test.js',
+      '**/tests/api/**/*.test.js',
+      '**/tests/integration/**/*.test.js'
+    ],
     exclude: ['**/tests/e2e/**', '**/tests/*.spec.js', '**/node_modules/**'],
     coverage: {
       provider: 'v8',
@@ -20,10 +24,13 @@ export default defineConfig({
         'renderer/modules/theme.js'
       ],
       thresholds: {
-        statements: 35,
-        branches: 35,
-        functions: 35,
-        lines: 35
+        // Current baseline: 40% (up from 35%)
+        // Next target: 50% after adding remaining module tests
+        // Final target: 70% with full integration tests
+        statements: 40,
+        branches: 40,
+        functions: 40,
+        lines: 40
       }
     },
     testTimeout: 10000

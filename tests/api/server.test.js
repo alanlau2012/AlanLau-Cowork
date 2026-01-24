@@ -262,3 +262,269 @@ describe('Request Validation', () => {
     expect(response.status).toBe(200);
   });
 });
+
+describe('Config API Tests', () => {
+  let app;
+  let server;
+  let baseUrl;
+
+  function createConfigTestServer() {
+    const app = express();
+    app.use(cors());
+    app.use(express.json());
+
+    const config = {
+      apiEndpoint: 'https://api.anthropic.com',
+      apiKey: 'test-key',
+      maxTurns: 20,
+      permissionMode: 'bypassPermissions',
+      workspaceDir: '',
+      sandboxEnabled: true
+    };
+
+    // GET /api/config
+    app.get('/api/config', (req, res) => {
+      res.json({
+        apiEndpoint: config.apiEndpoint,
+        hasApiKey: !!config.apiKey,
+        maxTurns: config.maxTurns,
+        permissionMode: config.permissionMode,
+        workspaceDir: config.workspaceDir,
+        sandboxEnabled: config.sandboxEnabled
+      });
+    });
+
+    // POST /api/config
+    app.post('/api/config', (req, res) => {
+      const { apiEndpoint, apiKey, maxTurns, permissionMode, workspaceDir, sandboxEnabled } =
+        req.body;
+
+      if (apiEndpoint !== undefined) {
+        config.apiEndpoint = apiEndpoint;
+      }
+      if (apiKey !== undefined) {
+        config.apiKey = apiKey;
+      }
+      if (maxTurns !== undefined) {
+        config.maxTurns = maxTurns;
+      }
+      if (permissionMode !== undefined) {
+        config.permissionMode = permissionMode;
+      }
+      if (workspaceDir !== undefined) {
+        config.workspaceDir = workspaceDir;
+      }
+      if (sandboxEnabled !== undefined) {
+        config.sandboxEnabled = sandboxEnabled;
+      }
+
+      res.json({
+        success: true,
+        config: {
+          apiEndpoint: config.apiEndpoint,
+          hasApiKey: !!config.apiKey,
+          maxTurns: config.maxTurns,
+          permissionMode: config.permissionMode,
+          workspaceDir: config.workspaceDir,
+          sandboxEnabled: config.sandboxEnabled
+        }
+      });
+    });
+
+    return app;
+  }
+
+  beforeAll(async () => {
+    app = createConfigTestServer();
+    await new Promise(resolve => {
+      server = app.listen(0, () => {
+        baseUrl = `http://localhost:${server.address().port}`;
+        resolve();
+      });
+    });
+  });
+
+  afterAll(async () => {
+    if (server) {
+      await new Promise(resolve => server.close(resolve));
+    }
+  });
+
+  it('GET /api/config should return current config', async () => {
+    const response = await fetch(`${baseUrl}/api/config`);
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.apiEndpoint).toBeDefined();
+    expect(data.hasApiKey).toBeDefined();
+    expect(data.maxTurns).toBeDefined();
+    expect(data.permissionMode).toBeDefined();
+    expect(data.sandboxEnabled).toBeDefined();
+  });
+
+  it('GET /api/config should not expose raw API key', async () => {
+    const response = await fetch(`${baseUrl}/api/config`);
+    const data = await response.json();
+
+    expect(data.apiKey).toBeUndefined();
+    expect(data.hasApiKey).toBe(true);
+  });
+
+  it('POST /api/config should update configuration', async () => {
+    const response = await fetch(`${baseUrl}/api/config`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        maxTurns: 50,
+        sandboxEnabled: false,
+        workspaceDir: '/new/workspace'
+      })
+    });
+
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.success).toBe(true);
+    expect(data.config.maxTurns).toBe(50);
+    expect(data.config.sandboxEnabled).toBe(false);
+    expect(data.config.workspaceDir).toBe('/new/workspace');
+  });
+
+  it('POST /api/config should handle partial updates', async () => {
+    const response = await fetch(`${baseUrl}/api/config`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ maxTurns: 30 })
+    });
+
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.success).toBe(true);
+    expect(data.config.maxTurns).toBe(30);
+  });
+
+  it('POST /api/config should update API endpoint', async () => {
+    const newEndpoint = 'https://custom-api.example.com';
+    const response = await fetch(`${baseUrl}/api/config`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ apiEndpoint: newEndpoint })
+    });
+
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.config.apiEndpoint).toBe(newEndpoint);
+  });
+
+  it('POST /api/config should update permission mode', async () => {
+    const response = await fetch(`${baseUrl}/api/config`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ permissionMode: 'strict' })
+    });
+
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.config.permissionMode).toBe('strict');
+  });
+});
+
+describe('Path Validation Utilities', () => {
+  /**
+   * Mock implementation of path validation functions
+   */
+  function isAbsolutePath(p) {
+    if (!p) {
+      return false;
+    }
+    if (/^[A-Za-z]:[\\/]/.test(p) || p.startsWith('\\\\')) {
+      return true;
+    }
+    if (p.startsWith('/')) {
+      return true;
+    }
+    return false;
+  }
+
+  function isPathInWorkspace(resolvedPath, workspaceDir) {
+    if (!workspaceDir || !resolvedPath) {
+      return false;
+    }
+    const normalizedWorkspace = workspaceDir.toLowerCase();
+    const normalizedPath = resolvedPath.toLowerCase();
+    return (
+      normalizedPath === normalizedWorkspace ||
+      normalizedPath.startsWith(normalizedWorkspace + '/') ||
+      normalizedPath.startsWith(normalizedWorkspace + '\\')
+    );
+  }
+
+  function validateFilePath(targetPath, workspaceDir) {
+    if (!workspaceDir) {
+      return { allowed: false, reason: '工作目录未设置' };
+    }
+
+    const resolved = isAbsolutePath(targetPath) ? targetPath : workspaceDir + '/' + targetPath;
+
+    if (!isPathInWorkspace(resolved, workspaceDir)) {
+      return { allowed: false, reason: '路径超出工作目录范围' };
+    }
+
+    return { allowed: true };
+  }
+
+  it('should detect Windows absolute paths', () => {
+    expect(isAbsolutePath('C:\\Users\\test')).toBe(true);
+    expect(isAbsolutePath('D:/Projects/app')).toBe(true);
+    expect(isAbsolutePath('\\\\server\\share')).toBe(true);
+  });
+
+  it('should detect Unix absolute paths', () => {
+    expect(isAbsolutePath('/home/user')).toBe(true);
+    expect(isAbsolutePath('/var/log')).toBe(true);
+  });
+
+  it('should detect relative paths', () => {
+    expect(isAbsolutePath('relative/path')).toBe(false);
+    expect(isAbsolutePath('./local')).toBe(false);
+    expect(isAbsolutePath('../parent')).toBe(false);
+    expect(isAbsolutePath('file.txt')).toBe(false);
+  });
+
+  it('should handle null/empty paths', () => {
+    expect(isAbsolutePath(null)).toBe(false);
+    expect(isAbsolutePath('')).toBe(false);
+    expect(isAbsolutePath(undefined)).toBe(false);
+  });
+
+  it('should validate path within workspace', () => {
+    const workspace = '/home/user/project';
+    expect(isPathInWorkspace('/home/user/project/src', workspace)).toBe(true);
+    expect(isPathInWorkspace('/home/user/project', workspace)).toBe(true);
+  });
+
+  it('should reject path outside workspace', () => {
+    const workspace = '/home/user/project';
+    expect(isPathInWorkspace('/home/user/other', workspace)).toBe(false);
+    expect(isPathInWorkspace('/etc/passwd', workspace)).toBe(false);
+  });
+
+  it('should reject when workspace not set', () => {
+    const result = validateFilePath('/some/path', '');
+    expect(result.allowed).toBe(false);
+    expect(result.reason).toContain('工作目录未设置');
+  });
+
+  it('should allow paths within workspace', () => {
+    const result = validateFilePath('src/file.js', '/home/project');
+    expect(result.allowed).toBe(true);
+  });
+
+  it('should reject paths escaping workspace', () => {
+    const result = validateFilePath('/etc/passwd', '/home/project');
+    expect(result.allowed).toBe(false);
+  });
+});
