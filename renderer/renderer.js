@@ -96,7 +96,21 @@ function init() {
   renderChatHistory();
   initializeSearch();
   setupResizers();
+  initializeSidebarState();
   homeInput.focus();
+}
+
+// Initialize sidebar state (check if collapsed and show/hide expand button)
+function initializeSidebarState() {
+  const sidebarExpandBtn = document.getElementById('sidebarExpandBtn');
+  if (sidebar && sidebarExpandBtn) {
+    // Check if sidebar is collapsed: has collapsed class OR width is 0 or very small (<= 1px)
+    const hasCollapsedClass = sidebar.classList.contains('collapsed');
+    const sidebarWidth = sidebar.offsetWidth;
+    const computedWidth = parseFloat(window.getComputedStyle(sidebar).width);
+    const isCollapsed = hasCollapsedClass || sidebarWidth <= 1 || computedWidth <= 1;
+    sidebarExpandBtn.style.display = isCollapsed ? 'flex' : 'none';
+  }
 }
 
 /**
@@ -974,10 +988,23 @@ window.removeAttachedFile = function (index, context) {
 window.toggleSidebar = function () {
   sidebar.classList.toggle('collapsed');
 
+  // When expanding, clear inline style width to let CSS control the width
+  // Also clear localStorage saved width to prevent restoring collapsed state
+  const isNowCollapsed = sidebar.classList.contains('collapsed');
+  if (!isNowCollapsed) {
+    // Expanding - reset inline style to let CSS take over
+    sidebar.style.width = '';
+    localStorage.removeItem('rightSidebarWidth');
+  }
+
   // Show/hide expand button when sidebar is collapsed
   const sidebarExpandBtn = document.getElementById('sidebarExpandBtn');
   if (sidebarExpandBtn) {
-    sidebarExpandBtn.style.display = sidebar.classList.contains('collapsed') ? 'flex' : 'none';
+    // Check both class and width to determine if collapsed
+    const hasCollapsedClass = sidebar.classList.contains('collapsed');
+    const sidebarWidth = sidebar.offsetWidth;
+    const shouldShow = hasCollapsedClass || sidebarWidth <= 1;
+    sidebarExpandBtn.style.display = shouldShow ? 'flex' : 'none';
   }
 };
 
@@ -1136,6 +1163,8 @@ function handleKeyPress(e, form) {
 function switchToChatView() {
   homeView.classList.add('hidden');
   chatView.classList.remove('hidden');
+  // Initialize sidebar state when switching to chat view
+  initializeSidebarState();
   messageInput.focus();
 }
 
@@ -2294,8 +2323,12 @@ function setupResizers() {
     leftSidebar.style.width = savedLeftWidth + 'px';
     leftSidebar.style.minWidth = savedLeftWidth + 'px';
   }
-  if (savedRightWidth) {
+  // Only restore right sidebar width if it's a reasonable value (not collapsed)
+  if (savedRightWidth && parseInt(savedRightWidth) >= 200) {
     rightSidebar.style.width = savedRightWidth + 'px';
+  } else if (savedRightWidth) {
+    // Remove invalid saved width
+    localStorage.removeItem('rightSidebarWidth');
   }
 
   // Left Sidebar Resizer
