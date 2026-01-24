@@ -147,3 +147,12 @@ vite.config.ts.timestamp-*
 
 # SpecStory history files
 .specstory/
+
+# Test reports and artifacts
+playwright-report/
+test-results/
+
+# Test screenshots and videos
+**/screenshots/
+**/videos/
+**/snapshots/
