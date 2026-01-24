@@ -121,7 +121,7 @@ npm run lint:fix    # 自动修复代码风格问题
 
 - **[renderer/index.html](renderer/index.html)** - 聊天界面 HTML
 - **[renderer/renderer.js](renderer/renderer.js)** - 前端逻辑，处理 UI 交互、SSE 流式响应、多会话管理
-- **[renderer/style.css](renderer/style.css)** - 样式文件
+- **[renderer/styles/](renderer/styles/)** - 模块化样式文件（base.css, layout.css, chatView.css 等）
 
 ### 后端服务器
 

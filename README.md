@@ -200,7 +200,7 @@ open-claude-cowork/
 ├── renderer/
 │   ├── index.html          # Chat interface
 │   ├── renderer.js         # Frontend logic
-│   └── style.css           # Styling
+│   └── styles/             # Modular CSS files
 ├── server/
 │   ├── server.js           # Express + Claude Agent SDK + Composio
 │   └── package.json
