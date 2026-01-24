@@ -1,0 +1,271 @@
+/* ==================== INPUT STYLES ==================== */
+.input-container {
+  width: 100%;
+  max-width: 680px;
+  box-sizing: border-box;
+}
+
+.home-input {
+  margin-top: 8px;
+  width: 100%;
+  max-width: 680px;
+}
+
+.input-form {
+  width: 100%;
+}
+
+.input-wrapper {
+  background: var(--bg-white);
+  border-radius: 24px;
+  box-shadow: var(--shadow-input);
+  overflow: hidden;
+  position: relative;
+  /* 确保所有子元素都在容器内 */
+  contain: layout style;
+}
+
+.message-input {
+  width: 100%;
+  padding: 20px 24px 12px;
+  border: none;
+  outline: none;
+  font-family: inherit;
+  font-size: 16px;
+  background: transparent;
+  color: var(--text-primary);
+}
+
+.message-input::placeholder {
+  color: var(--text-tertiary);
+}
+
+.input-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 24px 12px;
+}
+
+.left-controls,
+.right-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.control-btn {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--text-tertiary);
+  transition: background 0.15s, color 0.15s;
+}
+
+.control-btn:hover {
+  background: var(--bg-cream);
+  color: var(--text-secondary);
+}
+
+.control-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* Native Model Select */
+.model-select {
+  padding: 8px 12px;
+  border: 1px solid var(--border-light);
+  background: var(--bg-white);
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--text-primary);
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.model-select:hover {
+  border-color: var(--text-tertiary);
+}
+
+.model-select:focus {
+  border-color: var(--accent-coral);
+}
+
+.send-btn {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: var(--accent-coral);
+  border-radius: 12px;
+  cursor: pointer;
+  color: white;
+  transition: background 0.15s, opacity 0.15s;
+}
+
+.send-btn:hover:not(:disabled) {
+  background: var(--accent-coral-dark);
+}
+
+.send-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.send-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* Hidden file input */
+.file-input-hidden {
+  display: none;
+}
+
+/* Attached files preview */
+.attached-files {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px 16px 0;
+}
+
+.attached-file {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: var(--bg-cream);
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.attached-file svg {
+  width: 14px;
+  height: 14px;
+}
+
+.attached-file .remove-file {
+  cursor: pointer;
+  color: var(--text-tertiary);
+  transition: color 0.15s;
+}
+
+.attached-file .remove-file:hover {
+  color: #c0392b;
+}
+
+/* Thinking button toggle */
+.thinking-btn.active {
+  color: var(--accent-coral);
+  background: rgba(196, 145, 123, 0.15);
+}
+
+/* ==================== AUTO-RESIZE TEXTAREA ==================== */
+.message-textarea {
+  width: 100%;
+  min-height: 44px;
+  max-height: 200px;
+  padding: 20px 18px 12px 24px; /* 右侧 padding 减小，为滚动条留出空间 */
+  border: none;
+  border-radius: 0;
+  resize: none;
+  overflow-y: auto;
+  overflow-x: hidden;
+  font-family: inherit;
+  font-size: 16px;
+  line-height: 1.5;
+  box-sizing: border-box;
+  background: transparent;
+  color: var(--text-primary);
+  transition: none;
+  /* 确保不会超出容器 */
+  max-width: 100%;
+  margin: 0;
+  /* 移除 scrollbar-gutter 避免右侧空白 */
+  /* 确保宽度不会超出父容器 */
+  min-width: 0;
+}
+
+.message-textarea:focus {
+  outline: none;
+  border: none;
+  box-shadow: none;
+}
+
+.message-textarea::placeholder {
+  color: var(--text-tertiary);
+}
+
+/* Custom scrollbar for textarea - 默认隐藏，hover/focus 时显示 */
+.message-textarea::-webkit-scrollbar {
+  width: 6px;
+}
+
+.message-textarea::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.message-textarea::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 3px;
+  transition: background 0.2s ease;
+}
+
+/* 只在 hover 或 focus 时显示滚动条滑块 */
+.message-textarea:hover::-webkit-scrollbar-thumb,
+.message-textarea:focus::-webkit-scrollbar-thumb {
+  background: var(--border-light);
+}
+
+.message-textarea:hover::-webkit-scrollbar-thumb:hover,
+.message-textarea:focus::-webkit-scrollbar-thumb:hover {
+  background: var(--text-tertiary);
+}
+
+/* 如果内容溢出，即使不 hover 也显示滚动条（通过 JavaScript 添加类） */
+.message-textarea.has-scroll::-webkit-scrollbar-thumb {
+  background: var(--border-light);
+}
+
+/* Stop Generation Button */
+.stop-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.stop-btn:hover {
+  background: #dc2626;
+}
+
+.stop-btn:active {
+  background: #b91c1c;
+  transform: scale(0.98);
+}
+
+.stop-btn svg {
+  width: 14px;
+  height: 14px;
+}

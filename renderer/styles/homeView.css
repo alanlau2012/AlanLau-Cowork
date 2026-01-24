@@ -1,0 +1,190 @@
+/* ==================== HOME VIEW ==================== */
+.home-view {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+  overflow: hidden;
+}
+
+/* Plan Badge */
+.plan-badge {
+  position: absolute;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: var(--bg-white);
+  border: 1px solid var(--border-light);
+  border-radius: 20px;
+  font-size: 14px;
+  box-shadow: var(--shadow-soft);
+}
+
+.plan-text {
+  color: var(--text-secondary);
+}
+
+.separator {
+  color: var(--text-tertiary);
+}
+
+.upgrade-link {
+  color: var(--text-primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.upgrade-link:hover {
+  color: var(--text-secondary);
+}
+
+/* Greeting Section */
+.greeting-section {
+  margin-bottom: 32px;
+}
+
+.greeting {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.asterisk-icon {
+  width: 32px;
+  height: 32px;
+  color: var(--accent-coral);
+}
+
+.greeting-text {
+  font-family: 'EB Garamond', Georgia, serif;
+  font-size: 42px;
+  font-weight: 400;
+  color: var(--text-primary);
+  letter-spacing: -0.5px;
+}
+
+.tagline {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+  letter-spacing: 0.3px;
+}
+
+/* Quick Start Templates */
+.quick-start-templates {
+  padding: 40px 20px;
+  text-align: center;
+}
+
+.templates-header {
+  margin-bottom: 32px;
+}
+
+.templates-header h2 {
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 8px 0;
+}
+
+.templates-header p {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.templates-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.template-card {
+  position: relative;
+  background: var(--bg-white);
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  padding: 20px;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-height: 120px;
+  display: flex;
+  flex-direction: column;
+}
+
+.template-card:hover {
+  border-color: #c4917b;
+  box-shadow: 0 4px 12px rgba(196, 145, 123, 0.15);
+  transform: translateY(-2px);
+}
+
+.template-card:active {
+  transform: translateY(0);
+}
+
+/* 领域标签 */
+.domain-tag {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.domain-tag.nis {
+  background: var(--tag-nis-bg);
+  color: var(--tag-nis);
+}
+
+.domain-tag.sec {
+  background: var(--tag-sec-bg);
+  color: var(--tag-sec);
+}
+
+.domain-tag.ams {
+  background: var(--tag-ams-bg);
+  color: var(--tag-ams);
+}
+
+.domain-tag.delivery {
+  background: var(--tag-delivery-bg);
+  color: var(--tag-delivery);
+}
+
+.template-icon {
+  font-size: 28px;
+  margin-bottom: 12px;
+}
+
+.template-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+  padding-right: 50px; /* 为右上角标签留空间 */
+}
+
+.template-desc {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  flex: 1;
+}
+
+.quick-start-templates.hidden {
+  display: none;
+}

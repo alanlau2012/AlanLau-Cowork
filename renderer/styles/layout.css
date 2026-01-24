@@ -1,0 +1,96 @@
+/* App Container */
+.app-container {
+  height: 100vh;
+  display: flex;
+  flex-direction: row;
+  overflow: hidden;
+}
+
+/* Main Content */
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+}
+
+/* Resizer */
+.resizer.horizontal {
+  width: 4px;
+  cursor: col-resize;
+  background: transparent;
+  transition: background 0.2s;
+  flex-shrink: 0;
+  z-index: 10;
+  position: relative;
+}
+
+/* Subtle visual hint for resizer - barely visible but discoverable */
+.resizer.horizontal::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--border-light);
+  opacity: 0.3;
+  transform: translateX(-50%);
+  transition: opacity 0.2s;
+}
+
+.resizer.horizontal:hover::before,
+.resizer.horizontal.active::before {
+  opacity: 0;
+}
+
+.resizer.horizontal:hover,
+.resizer.horizontal.active {
+  background: var(--accent-coral);
+}
+
+/* ==================== RESPONSIVE ==================== */
+@media (max-width: 900px) {
+  .templates-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .greeting-text {
+    font-size: 32px;
+  }
+
+  .templates-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .input-container {
+    max-width: 100%;
+  }
+
+  .message-input {
+    font-size: 16px;
+  }
+
+  .user .message-content {
+    max-width: 85%;
+  }
+}
+
+@media (max-width: 480px) {
+  .plan-badge {
+    font-size: 13px;
+    padding: 6px 12px;
+  }
+
+  .greeting-text {
+    font-size: 28px;
+  }
+
+  .asterisk-icon {
+    width: 24px;
+    height: 24px;
+  }
+}

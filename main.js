@@ -8,8 +8,10 @@ const isDev = process.env.NODE_ENV === 'development';
 if (isDev) {
   try {
     // Enable live-reload for the main and renderer processes during development
+    // Exclude styles directory to prevent CSS file changes from triggering reloads
     require('electron-reload')(__dirname, {
-      electron: path.join(__dirname, 'node_modules', '.bin', 'electron')
+      electron: path.join(__dirname, 'node_modules', '.bin', 'electron'),
+      ignored: [/renderer[\\/]styles[\\/].*\.css$/, /\.git[\\/]/, /node_modules[\\/]/, /dist[\\/]/]
     });
   } catch (err) {
     console.warn('Live reload unavailable:', err);
