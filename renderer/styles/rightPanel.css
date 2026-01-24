@@ -42,8 +42,11 @@
   background: transparent;
   border-radius: 6px;
   cursor: pointer;
-  color: var(--text-tertiary);
+  color: var(--text-secondary);
   transition: background 0.15s, color 0.15s;
+  opacity: 1;
+  visibility: visible;
+  flex-shrink: 0;
 }
 
 .sidebar-toggle:hover {
@@ -64,6 +67,28 @@
   cursor: pointer;
   color: var(--text-secondary);
   transition: all 0.15s;
+  opacity: 1;
+  visibility: visible;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 10;
+}
+
+/* Ensure expand button is visible when explicitly shown via inline style */
+.chat-header .sidebar-expand-btn[style*="flex"],
+.chat-header .sidebar-expand-btn[style*="display: flex"],
+.chat-header #sidebarExpandBtn[style*="flex"],
+.chat-header #sidebarExpandBtn[style*="display: flex"] {
+  display: flex !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Ensure button is always visible when its display is set to flex via JavaScript */
+#sidebarExpandBtn[style*="flex"] {
+  display: flex !important;
+  opacity: 1 !important;
+  visibility: visible !important;
 }
 
 .sidebar-expand-btn:hover {
@@ -504,6 +529,20 @@
   border-left: none;
 }
 
+/* Hide panel content when collapsed */
+.right-panel.collapsed .panel-header,
+.right-panel.collapsed .panel-tabs,
+.right-panel.collapsed .panel-content {
+  display: none !important;
+}
+
+/* Ensure toggle button is visible when panel is expanded */
+.right-panel:not(.collapsed) .sidebar-toggle {
+  display: flex !important;
+  opacity: 1;
+  visibility: visible;
+}
+
 /* Panel Header */
 .panel-header {
   display: flex;
@@ -512,6 +551,8 @@
   padding: 16px 20px;
   border-bottom: 1px solid var(--border-light);
   flex-shrink: 0;
+  position: relative;
+  z-index: 1;
 }
 
 .panel-header h3 {

@@ -13,7 +13,8 @@
       "Bash(timeout:*)",
       "Skill(superpowers:executing-plans)",
       "Skill(superpowers:executing-plans:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(dir:*)"
     ]
   }
 }
