@@ -23,7 +23,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
 
   // Send a chat message to the backend with chat ID for session management
-  sendMessage: async (message, chatId) => {
+  sendMessage: async (message, chatId, files = []) => {
     const requestId = generateRequestId();
     const controller = new AbortController();
 
@@ -33,6 +33,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     return new Promise((resolve, reject) => {
       console.log('[PRELOAD] Sending message to backend:', message);
       console.log('[PRELOAD] Chat ID:', chatId);
+      console.log('[PRELOAD] Files:', files.length);
       console.log('[PRELOAD] Request ID:', requestId);
 
       const timeoutId = setTimeout(() => {
@@ -49,7 +50,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ message, chatId }),
+        body: JSON.stringify({ message, chatId, files }),
         signal: controller.signal
       })
         .then(response => {

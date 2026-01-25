@@ -211,7 +211,18 @@ async function handleSendMessage(e) {
   const contentDiv = assistantMessage.querySelector('.message-content');
 
   try {
-    const response = await window.electronAPI.sendMessage(message, state.currentChatId);
+    // 准备文件附件
+    const filesToSend = state.attachedFiles.map(f => ({
+      name: f.name,
+      type: f.type,
+      data: f.data
+    }));
+
+    const response = await window.electronAPI.sendMessage(
+      message,
+      state.currentChatId,
+      filesToSend
+    );
     state.currentRequestId = response.requestId;
     const reader = await response.getReader();
 
@@ -260,6 +271,13 @@ async function handleSendMessage(e) {
     saveState();
     updateSendButton(messageInput, chatSendBtn);
     messageInput.focus();
+
+    // 发送后清空附件
+    if (state.attachedFiles.length > 0) {
+      state.attachedFiles = [];
+      const context = state.isFirstMessage ? 'home' : 'chat';
+      renderAttachedFiles(state.attachedFiles, context);
+    }
   }
 }
 
