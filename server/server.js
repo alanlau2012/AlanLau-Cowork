@@ -142,17 +142,18 @@ const chatSessions = new Map();
 
 // Middleware
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
 
 // Skills API 路由
 app.use('/api/skills', skillsRouter);
 
 // Chat endpoint using Claude Agent SDK
 app.post('/api/chat', async (req, res) => {
-  const { message, chatId, userId = 'default-user' } = req.body;
+  const { message, chatId, userId = 'default-user', files } = req.body;
 
   console.log('[CHAT] Request received:', message);
   console.log('[CHAT] Chat ID:', chatId);
+  console.log('[CHAT] Files attached:', files?.length || 0);
 
   if (!message) {
     return res.status(400).json({ error: 'Message is required' });
@@ -250,12 +251,44 @@ app.post('/api/chat', async (req, res) => {
 
     console.log('[CHAT] Calling Claude Agent SDK...');
 
-    // 构建技能上下文增强 prompt
+    // 构建增强 prompt：消息 + 文件附件
     let enhancedPrompt = message;
+
+    // 如果有附件文件，将其内容添加到 prompt 中
+    if (files && files.length > 0) {
+      // 确保临时目录存在
+      const tempDir = path.join(__dirname, '.temp');
+      if (!fs.existsSync(tempDir)) {
+        fs.mkdirSync(tempDir, { recursive: true });
+      }
+
+      const fileContents = files.map(file => {
+        if (file.type.startsWith('image/')) {
+          // 图片文件：保存到本地，传递文件路径
+          const base64Data = file.data.replace(/^data:image\/\w+;base64,/, '');
+          const buffer = Buffer.from(base64Data, 'base64');
+          const ext = file.type.split('/')[1] || 'png';
+          const filename = `img_${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
+          const filePath = path.join(tempDir, filename);
+
+          fs.writeFileSync(filePath, buffer);
+          console.log('[CHAT] Image saved to:', filePath);
+
+          return `[Image: ${file.name}]\n文件路径: ${filePath}`;
+        } else {
+          // 文本文件：直接包含内容
+          return `[File: ${file.name}]\n\`\`\`\n${file.data}\n\`\`\``;
+        }
+      }).join('\n\n');
+
+      enhancedPrompt = `${message}\n\n---\n**附件内容：**\n\n${fileContents}`;
+    }
+
+    // 构建技能上下文增强 prompt
     try {
       const skillsContext = await buildSkillsPrompt();
       if (skillsContext) {
-        enhancedPrompt = `<available_skills>\n${skillsContext}\n</available_skills>\n\n${message}`;
+        enhancedPrompt = `<available_skills>\n${skillsContext}\n</available_skills>\n\n${enhancedPrompt}`;
         console.log('[SKILLS] Injected skills context');
       }
     } catch (skillError) {
@@ -307,26 +340,6 @@ app.post('/api/chat', async (req, res) => {
 
       // If it's a tool result, format it nicely
       if (chunk.type === 'tool_result' || chunk.type === 'result') {
-        // #region agent log - Debug: log full chunk structure to find tool_use_id field
-        const logData = {
-          location: 'server.js:291',
-          message: 'tool_result chunk structure',
-          data: {
-            chunkKeys: Object.keys(chunk),
-            tool_use_id: chunk.tool_use_id,
-            id: chunk.id,
-            block_id: chunk.block_id,
-            toolId: chunk.toolId
-          },
-          timestamp: Date.now(),
-          sessionId: 'debug-session',
-          hypothesisId: 'B'
-        };
-        fs.appendFileSync(
-          'd:\\AI项目\\AlanLau-cowork\\open-claude-cowork\\.cursor\\debug.log',
-          JSON.stringify(logData) + '\n'
-        );
-        // #endregion
         const eventData = {
           type: 'tool_result',
           result: chunk.result || chunk.content || chunk,
