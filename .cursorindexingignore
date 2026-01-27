@@ -26,7 +26,6 @@ playwright-report/**
 test-results/**
 screenshots/**
 videos/**
-skills/**
 
 # Exclude large documentation files that are rarely needed in context
 冗余文件分析报告.md
