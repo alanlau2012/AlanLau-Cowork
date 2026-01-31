@@ -61,18 +61,42 @@ cd server && npm install
 ### 测试命令
 
 ```bash
-npm test        # 运行所有单元测试 (Vitest)
+npm test            # 运行所有单元测试 (Vitest)
 npm run test:unit   # 运行单元测试
 npm run test:api    # 运行 API 测试
 npm run test:e2e    # 运行 E2E 测试 (Playwright)
+npm run test:e2e:smoke  # 运行 E2E 烟雾测试（仅关键路径）
+npm run test:bench  # 运行性能基准测试
 npm run test:all    # 运行所有测试
 npm run lint        # 检查代码风格
 npm run lint:fix    # 自动修复代码风格问题
 ```
 
+### 多层验证命令（AI Coding 必用）
+
+```bash
+npm run verify:quick  # 快速验证 (<30s) - Lint + 单元测试
+npm run verify        # 标准验证 (<60s) - Lint + 单元 + 集成 [日常推荐]
+npm run verify:full   # 完整验证 (2-3min) - 全部 + E2E + 性能 [提 PR 前必跑]
+```
+
+**验证流程**：
+
+| 命令           | 时间   | 包含检查                    | 使用场景         |
+| -------------- | ------ | --------------------------- | ---------------- |
+| `verify:quick` | <30s   | Lint + 单元测试             | 开发中快速验证   |
+| `verify`       | <60s   | Lint + 单元 + 集成 + 覆盖率 | **日常提交推荐** |
+| `verify:full`  | 2-3min | 全部 + E2E + 性能基准       | 提 PR 前必跑     |
+
+**合并标准**：
+
+- `npm run verify` 通过 = 可提交到分支
+- `npm run verify:full` 通过 = 可创建 PR
+- CI 全部绿色 = 可安全合并到 main
+
 **重要：代码修改后必须运行测试验证**
 
-- 完成任何代码修改后，必须运行 `npm test` 验证所有测试用例通过
+- 完成任何代码修改后，必须运行 `npm run verify` 验证所有测试用例通过
 - 如果测试失败，必须修复问题后再提交代码
 - 这是强制要求，不得跳过测试验证步骤
 

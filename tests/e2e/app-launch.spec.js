@@ -35,7 +35,7 @@ test.describe('应用启动测试', () => {
     }
   });
 
-  test('1. 应用窗口正常启动', async () => {
+  test('1. 应用窗口正常启动 @smoke', async () => {
     // 验证窗口存在
     expect(window).toBeTruthy();
 
@@ -44,7 +44,7 @@ test.describe('应用启动测试', () => {
     expect(title).toBe('Claude');
   });
 
-  test('2. 主页视图正确显示', async () => {
+  test('2. 主页视图正确显示 @smoke', async () => {
     // 验证主页视图可见
     const homeView = window.locator('#homeView');
     await expect(homeView).toBeVisible();
@@ -68,7 +68,7 @@ test.describe('应用启动测试', () => {
     await expect(searchInput).toBeVisible();
   });
 
-  test('4. 输入框存在且可聚焦', async () => {
+  test('4. 输入框存在且可聚焦 @smoke', async () => {
     // 验证主页输入框
     const homeInput = window.locator('#homeInput');
     await expect(homeInput).toBeVisible();

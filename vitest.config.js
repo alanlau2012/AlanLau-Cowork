@@ -4,6 +4,10 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
+    // 启用并行执行以加速测试 (Vitest 4 配置)
+    pool: 'threads',
+    minThreads: 1,
+    maxThreads: 4,
     include: [
       '**/tests/unit/**/*.test.js',
       '**/tests/api/**/*.test.js',
@@ -24,15 +28,20 @@ export default defineConfig({
         'renderer/modules/theme.js'
       ],
       thresholds: {
-        // Current baseline: 40% (up from 35%)
-        // Next target: 50% after adding remaining module tests
+        // Updated target: 50% (up from 40%)
         // Final target: 70% with full integration tests
-        statements: 40,
-        branches: 40,
-        functions: 40,
-        lines: 40
+        statements: 50,
+        branches: 50,
+        functions: 50,
+        lines: 50
       }
     },
     testTimeout: 10000
+  },
+  // Benchmark 配置
+  bench: {
+    include: ['**/tests/benchmark/**/*.bench.js'],
+    reporters: ['default'],
+    outputFile: './benchmark-results.json'
   }
 });

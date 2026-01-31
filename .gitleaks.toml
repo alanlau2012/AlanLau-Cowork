@@ -1,0 +1,71 @@
+# Gitleaks 配置文件
+# 用于扫描敏感信息（API Keys, 密码, 令牌等）
+# 文档: https://github.com/gitleaks/gitleaks
+
+title = "Gitleaks Configuration for Open Claude Cowork"
+
+[extend]
+# 使用 gitleaks 默认规则集
+useDefault = true
+
+# 自定义规则
+[[rules]]
+id = "anthropic-api-key"
+description = "Anthropic API Key"
+regex = '''(?i)(anthropic[_-]?api[_-]?key|ANTHROPIC_API_KEY)\s*[:=]\s*["']?([a-zA-Z0-9_-]{40,})["']?'''
+secretGroup = 2
+keywords = ["anthropic", "claude"]
+
+[[rules]]
+id = "composio-api-key"
+description = "Composio API Key"
+regex = '''(?i)(composio[_-]?api[_-]?key|COMPOSIO_API_KEY)\s*[:=]\s*["']?([a-zA-Z0-9_-]{20,})["']?'''
+secretGroup = 2
+keywords = ["composio"]
+
+[[rules]]
+id = "generic-api-key"
+description = "Generic API Key"
+regex = '''(?i)(api[_-]?key|apikey|api_secret)\s*[:=]\s*["']?([a-zA-Z0-9_-]{20,})["']?'''
+secretGroup = 2
+keywords = ["api_key", "apikey", "api-key"]
+
+[[rules]]
+id = "jwt-token"
+description = "JWT Token"
+regex = '''eyJ[a-zA-Z0-9_-]*\.eyJ[a-zA-Z0-9_-]*\.[a-zA-Z0-9_-]*'''
+keywords = ["eyJ"]
+
+# 允许列表 - 排除误报
+[allowlist]
+description = "Global allowlist"
+paths = [
+    # 依赖目录
+    '''node_modules/''',
+    # 测试文件中的 mock 数据
+    '''tests/.*\.test\.js$''',
+    '''tests/.*\.spec\.js$''',
+    # 示例配置文件
+    '''\.env\.example$''',
+    # 锁文件
+    '''package-lock\.json$''',
+    # 文档
+    '''\.md$''',
+    # 构建输出
+    '''dist/''',
+    '''build/''',
+    # 覆盖率报告
+    '''coverage/'''
+]
+
+# 提交信息允许列表
+commits = []
+
+# 正则允许列表
+regexes = [
+    # 允许示例占位符
+    '''sk-[\.]{3,}''',
+    '''your[-_]api[-_]key[-_]here''',
+    '''<your[-_].*[-_]key>''',
+    '''PLACEHOLDER'''
+]

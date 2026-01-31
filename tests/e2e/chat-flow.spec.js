@@ -38,7 +38,7 @@ test.describe('聊天流程测试', () => {
     }
   });
 
-  test('1. 输入消息启用发送按钮', async () => {
+  test('1. 输入消息启用发送按钮 @smoke', async () => {
     const homeInput = window.locator('#homeInput');
     const sendBtn = window.locator('#homeSendBtn');
 
@@ -54,7 +54,7 @@ test.describe('聊天流程测试', () => {
     await expect(sendBtn).toBeDisabled();
   });
 
-  test('2. 发送消息切换到聊天视图', async () => {
+  test('2. 发送消息切换到聊天视图 @smoke', async () => {
     const homeInput = window.locator('#homeInput');
     const sendBtn = window.locator('#homeSendBtn');
 
@@ -71,7 +71,7 @@ test.describe('聊天流程测试', () => {
     await expect(homeView).toHaveClass(/hidden/);
   });
 
-  test('3. 用户消息显示在聊天区域', async () => {
+  test('3. 用户消息显示在聊天区域 @smoke', async () => {
     const homeInput = window.locator('#homeInput');
     const sendBtn = window.locator('#homeSendBtn');
     const testMessage = 'This is a test message ' + Date.now();

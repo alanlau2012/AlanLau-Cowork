@@ -202,6 +202,14 @@ window.viewSkillDetail = async function (name, source) {
 
     const skill = data.skill;
 
+    // 构建 meta HTML
+    const installedAtHtml = skill.installedAt
+      ? `<div class="skill-detail-meta-item">
+          <span class="skill-detail-meta-label">安装时间</span>
+          <span class="skill-detail-meta-value">${new Date(skill.installedAt).toLocaleDateString()}</span>
+        </div>`
+      : '';
+
     metaEl.innerHTML = `
       <div class="skill-detail-meta-item">
         <span class="skill-detail-meta-label">来源</span>
@@ -211,16 +219,7 @@ window.viewSkillDetail = async function (name, source) {
         <span class="skill-detail-meta-label">状态</span>
         <span class="skill-detail-meta-value">${skill.enabled ? '✅ 已启用' : '⏸️ 已禁用'}</span>
       </div>
-      ${
-        skill.installedAt
-          ? `
-        <div class="skill-detail-meta-item">
-          <span class="skill-detail-meta-label">安装时间</span>
-          <span class="skill-detail-meta-value">${new Date(skill.installedAt).toLocaleDateString()}</span>
-        </div>
-      `
-          : ''
-      }
+      ${installedAtHtml}
     `;
 
     contentEl.textContent = skill.content || '(无内容)';
