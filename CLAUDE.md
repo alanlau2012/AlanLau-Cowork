@@ -212,6 +212,52 @@ npm run verify:full   # 完整验证 (2-3min) - 全部 + E2E + 性能 [提 PR �
 4. **会话恢复**：确保在调用 SDK 时传递正确的 `resume` 参数以恢复会话上下文
 5. **热重载**：开发模式下使用 `electron-reload` 实现自动重载
 
+## Git 提交规范
+
+### 提交消息格式
+
+使用 Conventional Commits 格式：`类型(范围): 描述`
+
+常用类型：
+
+- `feat` - 新功能
+- `fix` - Bug 修复
+- `refactor` - 代码重构（不改变功能）
+- `style` - 代码格式调整
+- `docs` - 文档更新
+- `test` - 测试相关
+- `chore` - 构建/工具变更
+
+### Windows PowerShell 提交命令
+
+**重要：本项目在 Windows 环境运行，PowerShell 不支持 heredoc 语法。**
+
+正确的提交方式：
+
+```powershell
+# 单行提交（推荐）
+git commit -m "feat(chat): 添加消息搜索功能"
+
+# 多行提交 - 使用反引号换行
+git commit -m "feat(chat): 添加消息搜索功能`n`n- 支持关键词搜索`n- 支持日期筛选"
+```
+
+**禁止使用**（会导致语法错误）：
+
+```bash
+# 以下 heredoc 语法在 PowerShell 中不可用
+git commit -m "$(cat <<'EOF'
+提交消息
+EOF
+)"
+```
+
+### 提交前检查
+
+1. 运行 `npm run verify` 确保所有测试通过
+2. 使用 `git status` 确认暂存的文件
+3. 使用 `git diff --staged` 检查变更内容
+
 ## Plan 文档组织规范
 
 所有开发计划文档统一存放在 `docs/plans/` 目录，按照以下规则组织：
