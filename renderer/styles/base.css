@@ -27,6 +27,14 @@
   --status-success: #4ade80;
   --status-error: #ef4444;
 
+  /* 交互色 */
+  --hover-bg-light: rgba(0, 0, 0, 0.04);
+  --hover-bg-medium: rgba(0, 0, 0, 0.08);
+
+  /* 代码块色 */
+  --code-bg: #1e1e1e;
+  --code-text: #d4d4d4;
+
   /* 领域标签颜色 */
   --tag-nis: #3b82f6; /* 蓝色 - 网络服务 */
   --tag-nis-bg: #eff6ff;
@@ -58,6 +66,10 @@
   --tag-sec-bg: rgba(16, 185, 129, 0.15);
   --tag-ams-bg: rgba(245, 158, 11, 0.15);
   --tag-delivery-bg: rgba(139, 92, 246, 0.15);
+
+  /* 交互色调整 */
+  --hover-bg-light: rgba(255, 255, 255, 0.06);
+  --hover-bg-medium: rgba(255, 255, 255, 0.1);
 }
 
 /* Dark mode scrollbar enhancements */
@@ -99,4 +111,52 @@ body {
 
 .hidden {
   display: none !important;
+}
+
+/* ==================== 通用动画 ==================== */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ==================== 通用滚动条样式 ==================== */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: var(--border-light);
+  border-radius: 3px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: var(--text-tertiary);
 }

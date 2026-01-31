@@ -75,3 +75,100 @@
     transform: translateX(100%);
   }
 }
+
+/* ==================== 基础按钮类 ==================== */
+.btn-base {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  color: var(--text-tertiary);
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+
+.btn-base:hover {
+  background: var(--hover-bg-light);
+  color: var(--text-secondary);
+}
+
+.btn-base:active {
+  background: var(--hover-bg-medium);
+}
+
+.btn-icon {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+}
+
+.btn-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* ==================== 基础输入框类 ==================== */
+.input-base {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  background: var(--bg-white);
+  color: var(--text-primary);
+  font-size: 14px;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
+}
+
+.input-base:focus {
+  outline: none;
+  border-color: var(--accent-coral);
+  box-shadow: 0 0 0 3px rgba(196, 145, 123, 0.1);
+}
+
+.input-base::placeholder {
+  color: var(--text-tertiary);
+}
+
+/* ==================== 基础卡片类 ==================== */
+.card-base {
+  background: var(--bg-white);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  transition: all 0.2s;
+}
+
+.card-base:hover {
+  border-color: var(--accent-coral);
+  box-shadow: var(--shadow-soft);
+}
+
+.card-interactive {
+  cursor: pointer;
+}
+
+/* ==================== 空状态样式 ==================== */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  color: var(--text-tertiary);
+  text-align: center;
+}
+
+.empty-state .empty-icon {
+  font-size: 32px;
+  margin-bottom: 12px;
+}
+
+.empty-state .empty-text {
+  font-size: 14px;
+}

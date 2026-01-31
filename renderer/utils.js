@@ -326,3 +326,125 @@ export function calculateDiffStats(toolName, toolInput) {
 
   return null;
 }
+
+// ============================================================
+// Tool Call Utility Functions (从 sessionManager.js 整合)
+// ============================================================
+
+/**
+ * 截断工具结果以便显示
+ * @param {*} result - 工具结果
+ * @param {number} maxLength - 最大长度（默认2000）
+ * @returns {string} 截断后的字符串
+ */
+export function truncateResult(result, maxLength = 2000) {
+  if (result === null || result === undefined) {
+    return '';
+  }
+
+  const resultStr = typeof result === 'object' ? JSON.stringify(result, null, 2) : String(result);
+
+  if (resultStr.length <= maxLength) {
+    return resultStr;
+  }
+
+  return resultStr.substring(0, maxLength) + '...';
+}
+
+/**
+ * 格式化工具调用状态文本
+ * @param {string} status - 状态 ('running' | 'success' | 'error')
+ * @returns {string} 状态文本
+ */
+export function formatToolStatus(status) {
+  switch (status) {
+    case 'success':
+      return 'Completed';
+    case 'error':
+      return 'Failed';
+    case 'running':
+    default:
+      return 'Running...';
+  }
+}
+
+// ============================================================
+// DOM Utility Functions (统一DOM操作)
+// ============================================================
+
+/**
+ * 显示元素（移除 hidden 类）
+ * @param {HTMLElement} element - 要显示的元素
+ */
+export function showElement(element) {
+  if (element) {
+    element.classList.remove('hidden');
+  }
+}
+
+/**
+ * 隐藏元素（添加 hidden 类）
+ * @param {HTMLElement} element - 要隐藏的元素
+ */
+export function hideElement(element) {
+  if (element) {
+    element.classList.add('hidden');
+  }
+}
+
+/**
+ * 清空容器内容
+ * @param {HTMLElement} container - 要清空的容器
+ */
+export function clearContainer(container) {
+  if (container) {
+    container.innerHTML = '';
+  }
+}
+
+/**
+ * 渲染空状态提示
+ * @param {HTMLElement} container - 容器元素
+ * @param {string} message - 空状态消息
+ * @param {string} icon - 可选图标（默认为空文件夹图标）
+ */
+export function renderEmptyState(container, message, icon = '📭') {
+  if (!container) {
+    return;
+  }
+
+  container.innerHTML = `
+    <div class="empty-state">
+      <span class="empty-icon">${icon}</span>
+      <span class="empty-text">${escapeHtmlPure(message)}</span>
+    </div>
+  `;
+}
+
+/**
+ * 安全获取 DOM 元素（带日志）
+ * @param {string} id - 元素 ID
+ * @param {boolean} silent - 是否静默（不打印警告）
+ * @returns {HTMLElement|null} 元素或 null
+ */
+export function getElementSafe(id, silent = false) {
+  const element = document.getElementById(id);
+  if (!element && !silent) {
+    console.warn(`[utils] Element not found: #${id}`);
+  }
+  return element;
+}
+
+/**
+ * 从路径中提取文件名
+ * @param {string} filePath - 完整文件路径
+ * @returns {string} 文件名
+ */
+export function extractFileName(filePath) {
+  if (!filePath || typeof filePath !== 'string') {
+    return '';
+  }
+  // 支持 Windows 和 Unix 路径
+  const parts = filePath.replace(/\\/g, '/').split('/');
+  return parts[parts.length - 1] || '';
+}
