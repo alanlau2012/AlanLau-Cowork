@@ -20,11 +20,16 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install dependencies
-        run: npm install
+      - name: Install dependencies (fresh install for cross-platform compatibility)
+        run: |
+          rm -rf node_modules package-lock.json
+          npm install
 
       - name: Install server dependencies
-        run: cd server && npm install
+        run: |
+          cd server
+          rm -rf node_modules
+          npm install
 
       # ==========================================
       # Layer 1: Static Analysis (~5s)
@@ -103,8 +108,10 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install dependencies
-        run: npm install
+      - name: Install dependencies (fresh install for cross-platform compatibility)
+        run: |
+          rm -rf node_modules package-lock.json
+          npm install
 
       - name: Audit dependencies
         run: npm audit --audit-level=high
