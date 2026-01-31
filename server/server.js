@@ -262,24 +262,26 @@ app.post('/api/chat', async (req, res) => {
         fs.mkdirSync(tempDir, { recursive: true });
       }
 
-      const fileContents = files.map(file => {
-        if (file.type.startsWith('image/')) {
-          // 图片文件：保存到本地，传递文件路径
-          const base64Data = file.data.replace(/^data:image\/\w+;base64,/, '');
-          const buffer = Buffer.from(base64Data, 'base64');
-          const ext = file.type.split('/')[1] || 'png';
-          const filename = `img_${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
-          const filePath = path.join(tempDir, filename);
+      const fileContents = files
+        .map(file => {
+          if (file.type.startsWith('image/')) {
+            // 图片文件：保存到本地，传递文件路径
+            const base64Data = file.data.replace(/^data:image\/\w+;base64,/, '');
+            const buffer = Buffer.from(base64Data, 'base64');
+            const ext = file.type.split('/')[1] || 'png';
+            const filename = `img_${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
+            const filePath = path.join(tempDir, filename);
 
-          fs.writeFileSync(filePath, buffer);
-          console.log('[CHAT] Image saved to:', filePath);
+            fs.writeFileSync(filePath, buffer);
+            console.log('[CHAT] Image saved to:', filePath);
 
-          return `[Image: ${file.name}]\n文件路径: ${filePath}`;
-        } else {
-          // 文本文件：直接包含内容
-          return `[File: ${file.name}]\n\`\`\`\n${file.data}\n\`\`\``;
-        }
-      }).join('\n\n');
+            return `[Image: ${file.name}]\n文件路径: ${filePath}`;
+          } else {
+            // 文本文件：直接包含内容
+            return `[File: ${file.name}]\n\`\`\`\n${file.data}\n\`\`\``;
+          }
+        })
+        .join('\n\n');
 
       enhancedPrompt = `${message}\n\n---\n**附件内容：**\n\n${fileContents}`;
     }
