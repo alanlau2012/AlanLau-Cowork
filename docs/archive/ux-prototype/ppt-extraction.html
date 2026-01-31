@@ -1,0 +1,1239 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GTS Cowork - PPT 信息提取</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-cream: #f5f5f0;
+      --bg-white: #ffffff;
+      --text-primary: #1a1a1a;
+      --text-secondary: #6b6b6b;
+      --text-tertiary: #9a9a9a;
+      --border-light: #e5e5e0;
+      --accent-coral: #c4917b;
+      --accent-coral-dark: #b5826c;
+      --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.08);
+      --bg-secondary: #f3f4f6;
+      --bg-tertiary: #f0f0eb;
+      --status-success: #4ade80;
+      --status-error: #ef4444;
+      --status-warning: #f59e0b;
+      --ppt-orange: #d24726;
+      --ppt-orange-bg: #fff3e0;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-cream);
+      color: var(--text-primary);
+      height: 100vh;
+      line-height: 1.5;
+      overflow: hidden;
+    }
+
+    .app-container {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header */
+    .header {
+      display: flex;
+      align-items: center;
+      padding: 14px 24px;
+      background: var(--bg-white);
+      border-bottom: 1px solid var(--border-light);
+      gap: 16px;
+    }
+
+    .back-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 12px;
+      border: 1px solid var(--border-light);
+      background: var(--bg-white);
+      border-radius: 8px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    .back-btn:hover { background: var(--bg-cream); }
+    .back-btn svg { width: 16px; height: 16px; }
+
+    .header-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex: 1;
+    }
+
+    .header-icon {
+      width: 36px;
+      height: 36px;
+      background: var(--ppt-orange-bg);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+
+    .header-info h1 { font-size: 16px; font-weight: 600; }
+    .header-meta { font-size: 12px; color: var(--text-tertiary); }
+
+    .header-actions { display: flex; gap: 10px; }
+
+    .btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      font-family: inherit;
+      transition: all 0.15s;
+    }
+
+    .btn-secondary {
+      background: var(--bg-white);
+      border: 1px solid var(--border-light);
+      color: var(--text-primary);
+    }
+
+    .btn-secondary:hover { background: var(--bg-cream); }
+    .btn svg { width: 14px; height: 14px; }
+
+    /* Main Layout */
+    .main-layout {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+
+    /* PPT Preview Panel */
+    .preview-panel {
+      width: 55%;
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid var(--border-light);
+      background: #2d2d2d;
+    }
+
+    .preview-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 16px;
+      background: #1a1a1a;
+      border-bottom: 1px solid #404040;
+    }
+
+    .toolbar-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .file-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      background: var(--ppt-orange);
+      border-radius: 6px;
+      color: white;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .file-badge svg { width: 14px; height: 14px; }
+
+    .page-nav {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #999;
+      font-size: 13px;
+    }
+
+    .page-nav-btn {
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #404040;
+      border: none;
+      border-radius: 4px;
+      color: #ccc;
+      cursor: pointer;
+    }
+
+    .page-nav-btn:hover { background: #555; }
+    .page-nav-btn svg { width: 14px; height: 14px; }
+
+    .page-input {
+      width: 50px;
+      padding: 4px 8px;
+      background: #404040;
+      border: 1px solid #555;
+      border-radius: 4px;
+      color: white;
+      font-size: 13px;
+      text-align: center;
+    }
+
+    .toolbar-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .view-mode {
+      display: flex;
+      background: #404040;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .view-btn {
+      padding: 6px 12px;
+      background: transparent;
+      border: none;
+      color: #999;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .view-btn.active {
+      background: var(--accent-coral);
+      color: white;
+    }
+
+    .view-btn:hover:not(.active) { background: #555; }
+
+    /* Slide View */
+    .slide-container {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+
+    /* Thumbnail Strip */
+    .thumbnail-strip {
+      width: 160px;
+      background: #1a1a1a;
+      border-right: 1px solid #404040;
+      overflow-y: auto;
+      padding: 12px;
+    }
+
+    .thumbnail {
+      margin-bottom: 10px;
+      cursor: pointer;
+      border-radius: 6px;
+      overflow: hidden;
+      border: 2px solid transparent;
+      transition: all 0.15s;
+      position: relative;
+    }
+
+    .thumbnail:hover { border-color: #666; }
+
+    .thumbnail.active { border-color: var(--accent-coral); }
+
+    .thumbnail.selected {
+      border-color: var(--status-success);
+    }
+
+    .thumbnail.selected::after {
+      content: '✓';
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      width: 18px;
+      height: 18px;
+      background: var(--status-success);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      color: white;
+    }
+
+    .thumbnail-img {
+      width: 100%;
+      aspect-ratio: 16/9;
+      background: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      color: #666;
+      position: relative;
+    }
+
+    .thumbnail-num {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 2px 6px;
+      background: rgba(0,0,0,0.7);
+      color: #ccc;
+      font-size: 10px;
+      text-align: center;
+    }
+
+    .slide-preview-mock {
+      background: linear-gradient(135deg, #e8e8e8, #f5f5f5);
+      padding: 12px;
+    }
+
+    .slide-title-mock {
+      font-size: 9px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 6px;
+    }
+
+    .slide-content-mock {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .slide-line-mock {
+      height: 4px;
+      background: #ddd;
+      border-radius: 2px;
+    }
+
+    .slide-line-mock:nth-child(2) { width: 80%; }
+    .slide-line-mock:nth-child(3) { width: 60%; }
+
+    /* Main Slide View */
+    .main-slide {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: #3d3d3d;
+    }
+
+    .slide-frame {
+      width: 100%;
+      max-width: 800px;
+      aspect-ratio: 16/9;
+      background: white;
+      border-radius: 4px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+      padding: 32px;
+      position: relative;
+    }
+
+    .slide-header {
+      margin-bottom: 24px;
+    }
+
+    .slide-title {
+      font-size: 24px;
+      font-weight: 700;
+      color: #1a1a1a;
+      margin-bottom: 8px;
+    }
+
+    .slide-subtitle {
+      font-size: 14px;
+      color: #666;
+    }
+
+    .slide-body {
+      display: flex;
+      gap: 24px;
+    }
+
+    .slide-text-content {
+      flex: 1;
+    }
+
+    .slide-bullet {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 12px;
+      font-size: 14px;
+      color: #333;
+    }
+
+    .slide-bullet::before {
+      content: '•';
+      color: var(--ppt-orange);
+      font-weight: bold;
+      font-size: 18px;
+      line-height: 1;
+    }
+
+    .slide-chart {
+      width: 200px;
+      height: 120px;
+      background: linear-gradient(135deg, #f0f0f0, #e8e8e8);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #999;
+      font-size: 12px;
+    }
+
+    .highlight-box {
+      position: absolute;
+      border: 2px solid var(--status-success);
+      background: rgba(74, 222, 128, 0.1);
+      border-radius: 4px;
+      pointer-events: none;
+    }
+
+    .highlight-box.box1 {
+      top: 70px;
+      left: 30px;
+      right: 30px;
+      height: 40px;
+    }
+
+    .highlight-label {
+      position: absolute;
+      top: -24px;
+      left: 0;
+      padding: 2px 8px;
+      background: var(--status-success);
+      color: white;
+      font-size: 10px;
+      font-weight: 500;
+      border-radius: 3px;
+    }
+
+    /* Preview Footer */
+    .preview-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 16px;
+      background: #1a1a1a;
+      border-top: 1px solid #404040;
+      color: #999;
+      font-size: 12px;
+    }
+
+    .footer-stats { display: flex; gap: 20px; }
+    .footer-stat strong { color: #fff; }
+
+    .selection-badge {
+      padding: 6px 12px;
+      background: rgba(74, 222, 128, 0.2);
+      border-radius: 6px;
+      color: var(--status-success);
+      font-weight: 500;
+    }
+
+    /* Processing Panel */
+    .processing-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg-cream);
+      overflow: hidden;
+    }
+
+    .processing-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+    }
+
+    /* Task Card */
+    .task-card {
+      background: var(--bg-white);
+      border: 1px solid var(--border-light);
+      border-radius: 12px;
+      margin-bottom: 16px;
+      overflow: hidden;
+    }
+
+    .task-card-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 16px;
+      background: var(--bg-tertiary);
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    .task-card-icon {
+      width: 28px;
+      height: 28px;
+      background: var(--accent-coral);
+      color: white;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+
+    .task-card-title { font-size: 14px; font-weight: 600; }
+
+    .task-card-badge {
+      margin-left: auto;
+      padding: 4px 10px;
+      background: rgba(74, 222, 128, 0.15);
+      color: #16a34a;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 500;
+    }
+
+    .task-card-body { padding: 16px; }
+
+    /* Extraction Config */
+    .config-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .config-item {
+      padding: 12px;
+      background: var(--bg-cream);
+      border-radius: 8px;
+      border: 1px solid var(--border-light);
+    }
+
+    .config-label {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-tertiary);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .config-value {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .keyword-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .keyword-tag {
+      padding: 4px 10px;
+      background: rgba(196, 145, 123, 0.15);
+      color: var(--accent-coral);
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    /* Progress */
+    .progress-card {
+      background: var(--bg-white);
+      border: 1px solid var(--border-light);
+      border-radius: 12px;
+      margin-bottom: 16px;
+      overflow: hidden;
+    }
+
+    .progress-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background: var(--bg-tertiary);
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    .progress-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid var(--border-light);
+      border-top-color: var(--accent-coral);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .progress-percent { font-size: 14px; font-weight: 600; color: var(--accent-coral); }
+
+    .progress-bar-wrap { padding: 12px 16px; background: var(--bg-tertiary); }
+
+    .progress-bar {
+      height: 6px;
+      background: var(--border-light);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent-coral), var(--accent-coral-dark));
+      border-radius: 3px;
+    }
+
+    .progress-details { padding: 16px; }
+
+    .progress-step {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    .progress-step:last-child { border-bottom: none; }
+
+    .step-icon {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .step-icon.done { background: var(--status-success); color: white; }
+    .step-icon.active { background: var(--accent-coral); color: white; }
+    .step-icon.pending { background: var(--border-light); color: var(--text-tertiary); }
+    .step-icon svg { width: 12px; height: 12px; }
+
+    .step-info { flex: 1; }
+    .step-name { font-size: 13px; font-weight: 500; margin-bottom: 2px; }
+    .step-desc { font-size: 12px; color: var(--text-tertiary); }
+
+    /* Results */
+    .results-card {
+      background: var(--bg-white);
+      border: 1px solid var(--border-light);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .results-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background: var(--bg-tertiary);
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    .results-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .results-title svg { width: 16px; height: 16px; color: var(--text-tertiary); }
+
+    .results-body { padding: 16px; }
+
+    /* Extracted Items */
+    .extracted-list { display: flex; flex-direction: column; gap: 12px; }
+
+    .extracted-item {
+      display: flex;
+      gap: 14px;
+      padding: 14px;
+      background: var(--bg-cream);
+      border-radius: 10px;
+      border: 1px solid var(--border-light);
+    }
+
+    .extracted-thumb {
+      width: 80px;
+      height: 45px;
+      background: white;
+      border-radius: 4px;
+      border: 1px solid #ddd;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      color: #999;
+      flex-shrink: 0;
+    }
+
+    .extracted-content { flex: 1; min-width: 0; }
+
+    .extracted-page {
+      font-size: 11px;
+      color: var(--accent-coral);
+      font-weight: 500;
+      margin-bottom: 4px;
+    }
+
+    .extracted-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+
+    .extracted-text {
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .extracted-tags {
+      display: flex;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .extracted-tag {
+      padding: 2px 8px;
+      background: rgba(196, 145, 123, 0.1);
+      color: var(--accent-coral);
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 500;
+    }
+
+    /* AI Summary */
+    .ai-summary {
+      margin-top: 16px;
+      padding: 14px;
+      background: linear-gradient(135deg, rgba(196, 145, 123, 0.08), rgba(196, 145, 123, 0.02));
+      border: 1px solid rgba(196, 145, 123, 0.2);
+      border-radius: 10px;
+    }
+
+    .ai-summary-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .ai-avatar {
+      width: 24px;
+      height: 24px;
+      background: var(--accent-coral);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 10px;
+      font-weight: 700;
+    }
+
+    .ai-label { font-size: 12px; font-weight: 600; color: var(--accent-coral); }
+
+    .ai-summary-text {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    .ai-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .ai-action {
+      padding: 6px 12px;
+      background: var(--bg-white);
+      border: 1px solid var(--border-light);
+      border-radius: 6px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .ai-action:hover {
+      border-color: var(--accent-coral);
+      color: var(--accent-coral);
+    }
+
+    .ai-action svg { width: 12px; height: 12px; }
+
+    /* Footer */
+    .action-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 20px;
+      background: var(--bg-white);
+      border-top: 1px solid var(--border-light);
+    }
+
+    .footer-info {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      font-size: 12px;
+      color: var(--text-tertiary);
+    }
+
+    .footer-info strong { color: var(--text-primary); }
+
+    .footer-actions { display: flex; gap: 10px; }
+
+    .btn-primary { background: var(--accent-coral); color: white; }
+    .btn-primary:hover { background: var(--accent-coral-dark); }
+
+    .btn-success { background: var(--status-success); color: white; }
+    .btn-success:hover { background: #22c55e; }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="header">
+      <a href="sop-marketplace.html" class="back-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+        返回
+      </a>
+      <div class="header-title">
+        <div class="header-icon">📑</div>
+        <div class="header-info">
+          <h1>5G 网络规划方案 - 关键信息提取</h1>
+          <div class="header-meta">使用 SOP: PPT关键信息提取 · 李工 v1.6</div>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-secondary">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
+          历史
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Layout -->
+    <div class="main-layout">
+      <!-- PPT Preview Panel -->
+      <div class="preview-panel">
+        <div class="preview-toolbar">
+          <div class="toolbar-left">
+            <div class="file-badge">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                <line x1="8" y1="21" x2="16" y2="21"></line>
+                <line x1="12" y1="17" x2="12" y2="21"></line>
+              </svg>
+              网络规划方案_v3.pptx
+            </div>
+            <div class="page-nav">
+              <button class="page-nav-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
+              </button>
+              <input type="text" class="page-input" value="45">
+              <span>/ 248 页</span>
+              <button class="page-nav-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div class="toolbar-right">
+            <div class="view-mode">
+              <button class="view-btn active">单页</button>
+              <button class="view-btn">缩略图</button>
+              <button class="view-btn">大纲</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="slide-container">
+          <!-- Thumbnail Strip -->
+          <div class="thumbnail-strip">
+            <div class="thumbnail">
+              <div class="thumbnail-img">
+                <div class="slide-preview-mock">
+                  <div class="slide-title-mock">封面</div>
+                </div>
+                <div class="thumbnail-num">1</div>
+              </div>
+            </div>
+            <div class="thumbnail selected">
+              <div class="thumbnail-img">
+                <div class="slide-preview-mock">
+                  <div class="slide-title-mock">5G核心网架构</div>
+                  <div class="slide-content-mock">
+                    <div class="slide-line-mock"></div>
+                    <div class="slide-line-mock"></div>
+                  </div>
+                </div>
+                <div class="thumbnail-num">12</div>
+              </div>
+            </div>
+            <div class="thumbnail selected">
+              <div class="thumbnail-img">
+                <div class="slide-preview-mock">
+                  <div class="slide-title-mock">BBU部署规划</div>
+                  <div class="slide-content-mock">
+                    <div class="slide-line-mock"></div>
+                    <div class="slide-line-mock"></div>
+                  </div>
+                </div>
+                <div class="thumbnail-num">28</div>
+              </div>
+            </div>
+            <div class="thumbnail active selected">
+              <div class="thumbnail-img">
+                <div class="slide-preview-mock">
+                  <div class="slide-title-mock">站点容量规划</div>
+                  <div class="slide-content-mock">
+                    <div class="slide-line-mock"></div>
+                    <div class="slide-line-mock"></div>
+                    <div class="slide-line-mock"></div>
+                  </div>
+                </div>
+                <div class="thumbnail-num">45</div>
+              </div>
+            </div>
+            <div class="thumbnail selected">
+              <div class="thumbnail-img">
+                <div class="slide-preview-mock">
+                  <div class="slide-title-mock">频谱资源分配</div>
+                  <div class="slide-content-mock">
+                    <div class="slide-line-mock"></div>
+                    <div class="slide-line-mock"></div>
+                  </div>
+                </div>
+                <div class="thumbnail-num">67</div>
+              </div>
+            </div>
+            <div class="thumbnail">
+              <div class="thumbnail-img">
+                <div class="slide-preview-mock">
+                  <div class="slide-title-mock">投资估算</div>
+                  <div class="slide-content-mock">
+                    <div class="slide-line-mock"></div>
+                  </div>
+                </div>
+                <div class="thumbnail-num">89</div>
+              </div>
+            </div>
+            <div class="thumbnail selected">
+              <div class="thumbnail-img">
+                <div class="slide-preview-mock">
+                  <div class="slide-title-mock">5G参数配置</div>
+                  <div class="slide-content-mock">
+                    <div class="slide-line-mock"></div>
+                    <div class="slide-line-mock"></div>
+                  </div>
+                </div>
+                <div class="thumbnail-num">112</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Main Slide -->
+          <div class="main-slide">
+            <div class="slide-frame">
+              <div class="highlight-box box1">
+                <div class="highlight-label">已提取: 标题</div>
+              </div>
+              <div class="slide-header">
+                <div class="slide-title">5G 站点容量规划方案</div>
+                <div class="slide-subtitle">深圳南山区 · Phase 1 · 2026年1月</div>
+              </div>
+              <div class="slide-body">
+                <div class="slide-text-content">
+                  <div class="slide-bullet">单站覆盖半径: 500m (密集城区)</div>
+                  <div class="slide-bullet">预计用户密度: 8,000 用户/km²</div>
+                  <div class="slide-bullet">峰值流量预测: 2.5 Gbps/站</div>
+                  <div class="slide-bullet">BBU 配置: 3 BBU per site</div>
+                  <div class="slide-bullet">AAU 配置: 64T64R Massive MIMO</div>
+                </div>
+                <div class="slide-chart">[容量规划图表]</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="preview-footer">
+          <div class="footer-stats">
+            <span>总页数: <strong>248</strong></span>
+            <span>文件大小: <strong>156 MB</strong></span>
+            <span>已扫描: <strong>178 / 248</strong></span>
+          </div>
+          <div class="selection-badge">
+            ✓ 已匹配 23 页含 "5G" 关键词
+          </div>
+        </div>
+      </div>
+
+      <!-- Processing Panel -->
+      <div class="processing-panel">
+        <div class="processing-scroll">
+          <!-- Task Config -->
+          <div class="task-card">
+            <div class="task-card-header">
+              <span class="task-card-icon">🎯</span>
+              <span class="task-card-title">提取配置</span>
+              <span class="task-card-badge">SOP 已匹配</span>
+            </div>
+            <div class="task-card-body">
+              <div class="config-grid">
+                <div class="config-item">
+                  <div class="config-label">目标关键词</div>
+                  <div class="keyword-tags">
+                    <span class="keyword-tag">5G</span>
+                    <span class="keyword-tag">BBU</span>
+                    <span class="keyword-tag">容量规划</span>
+                  </div>
+                </div>
+                <div class="config-item">
+                  <div class="config-label">提取范围</div>
+                  <div class="config-value">全部 248 页</div>
+                </div>
+                <div class="config-item">
+                  <div class="config-label">提取内容</div>
+                  <div class="config-value">标题 + 要点 + 表格</div>
+                </div>
+                <div class="config-item">
+                  <div class="config-label">输出格式</div>
+                  <div class="config-value">结构化报告 (Word)</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Progress -->
+          <div class="progress-card">
+            <div class="progress-header">
+              <div class="progress-title">
+                <span class="spinner"></span>
+                扫描进度
+              </div>
+              <span class="progress-percent">72%</span>
+            </div>
+            <div class="progress-bar-wrap">
+              <div class="progress-bar">
+                <div class="progress-fill" style="width: 72%"></div>
+              </div>
+            </div>
+            <div class="progress-details">
+              <div class="progress-step">
+                <div class="step-icon done">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                </div>
+                <div class="step-info">
+                  <div class="step-name">1. 解析 PPT 文件结构</div>
+                  <div class="step-desc">识别到 248 页，含 156 个图表</div>
+                </div>
+              </div>
+              <div class="progress-step">
+                <div class="step-icon done">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                </div>
+                <div class="step-info">
+                  <div class="step-name">2. OCR 识别图片文字</div>
+                  <div class="step-desc">完成 89 张图片的文字识别</div>
+                </div>
+              </div>
+              <div class="progress-step">
+                <div class="step-icon active">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation: spin 1s linear infinite;">
+                    <line x1="12" y1="2" x2="12" y2="6"></line>
+                  </svg>
+                </div>
+                <div class="step-info">
+                  <div class="step-name">3. 按关键词筛选页面</div>
+                  <div class="step-desc">扫描中... 178 / 248 页</div>
+                </div>
+              </div>
+              <div class="progress-step">
+                <div class="step-icon pending">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                  </svg>
+                </div>
+                <div class="step-info">
+                  <div class="step-name">4. 提取并结构化内容</div>
+                  <div class="step-desc">等待执行...</div>
+                </div>
+              </div>
+              <div class="progress-step">
+                <div class="step-icon pending">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                  </svg>
+                </div>
+                <div class="step-info">
+                  <div class="step-name">5. 生成汇总报告</div>
+                  <div class="step-desc">等待执行...</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Results -->
+          <div class="results-card">
+            <div class="results-header">
+              <div class="results-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                </svg>
+                已提取内容 (实时)
+              </div>
+            </div>
+            <div class="results-body">
+              <div class="extracted-list">
+                <div class="extracted-item">
+                  <div class="extracted-thumb">P.12</div>
+                  <div class="extracted-content">
+                    <div class="extracted-page">第 12 页</div>
+                    <div class="extracted-title">5G 核心网架构设计</div>
+                    <div class="extracted-text">本方案采用 SA 独立组网架构，核心网部署于深圳数据中心，支持 eMBB、URLLC、mMTC 三大场景...</div>
+                    <div class="extracted-tags">
+                      <span class="extracted-tag">5G</span>
+                      <span class="extracted-tag">核心网</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="extracted-item">
+                  <div class="extracted-thumb">P.28</div>
+                  <div class="extracted-content">
+                    <div class="extracted-page">第 28 页</div>
+                    <div class="extracted-title">BBU 集中部署规划</div>
+                    <div class="extracted-text">采用 C-RAN 架构，BBU 集中部署于机房，每个 BBU 池支持 20 个 RRU 拉远连接，最大传输距离 10km...</div>
+                    <div class="extracted-tags">
+                      <span class="extracted-tag">BBU</span>
+                      <span class="extracted-tag">C-RAN</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="extracted-item">
+                  <div class="extracted-thumb">P.45</div>
+                  <div class="extracted-content">
+                    <div class="extracted-page">第 45 页</div>
+                    <div class="extracted-title">站点容量规划方案</div>
+                    <div class="extracted-text">深圳南山区 Phase 1 规划，单站覆盖半径 500m，预计用户密度 8,000 用户/km²，峰值流量 2.5 Gbps/站...</div>
+                    <div class="extracted-tags">
+                      <span class="extracted-tag">5G</span>
+                      <span class="extracted-tag">容量规划</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- AI Summary -->
+              <div class="ai-summary">
+                <div class="ai-summary-header">
+                  <div class="ai-avatar">AI</div>
+                  <span class="ai-label">智能摘要</span>
+                </div>
+                <div class="ai-summary-text">
+                  已从 248 页 PPT 中识别出 <strong>23 页</strong> 包含目标关键词。主要涉及：5G 核心网架构 (8页)、BBU/RRU 部署 (6页)、容量规划 (5页)、参数配置 (4页)。建议重点关注第 12、28、45、67 页的技术参数。
+                </div>
+                <div class="ai-actions">
+                  <button class="ai-action">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    </svg>
+                    生成 Word 报告
+                  </button>
+                  <button class="ai-action">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                      <line x1="3" y1="9" x2="21" y2="9"></line>
+                    </svg>
+                    导出为 Excel
+                  </button>
+                  <button class="ai-action">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                    </svg>
+                    生成精简 PPT
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="action-footer">
+          <div class="footer-info">
+            <span>已用时: <strong>2 分 45 秒</strong></span>
+            <span>匹配页数: <strong>23 / 248</strong></span>
+          </div>
+          <div class="footer-actions">
+            <button class="btn btn-secondary">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="6" y="6" width="12" height="12" rx="2"></rect>
+              </svg>
+              停止
+            </button>
+            <button class="btn btn-success" disabled>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              下载报告
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

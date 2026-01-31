@@ -1,0 +1,1242 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GTS Cowork - SOP 市场</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=EB+Garamond:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-cream: #f5f5f0;
+      --bg-white: #ffffff;
+      --text-primary: #1a1a1a;
+      --text-secondary: #6b6b6b;
+      --text-tertiary: #9a9a9a;
+      --border-light: #e5e5e0;
+      --accent-coral: #c4917b;
+      --accent-coral-dark: #b5826c;
+      --shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.04);
+      --shadow-input: 0 4px 16px rgba(0, 0, 0, 0.06);
+      --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.08);
+      --bg-secondary: #f3f4f6;
+      --bg-tertiary: #f0f0eb;
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+      --radius-xl: 20px;
+      --status-success: #4ade80;
+      --status-error: #ef4444;
+      --tag-nis: #3b82f6;
+      --tag-nis-bg: #eff6ff;
+      --tag-sec: #10b981;
+      --tag-sec-bg: #ecfdf5;
+      --tag-ams: #f59e0b;
+      --tag-ams-bg: #fffbeb;
+      --tag-delivery: #8b5cf6;
+      --tag-delivery-bg: #f5f3ff;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-cream);
+      color: var(--text-primary);
+      height: 100vh;
+      line-height: 1.5;
+      overflow: hidden;
+    }
+
+    .app-container {
+      height: 100vh;
+      display: flex;
+      overflow: hidden;
+    }
+
+    /* ==================== LEFT SIDEBAR ==================== */
+    .left-sidebar {
+      width: 280px;
+      min-width: 280px;
+      height: 100vh;
+      background: var(--bg-white);
+      border-right: 1px solid var(--border-light);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .left-sidebar-header {
+      padding: 20px 16px;
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .brand-logo {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, var(--accent-coral), var(--accent-coral-dark));
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 700;
+      font-size: 16px;
+    }
+
+    .brand-text h1 {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .brand-text span {
+      font-size: 11px;
+      color: var(--text-tertiary);
+    }
+
+    .nav-section {
+      padding: 12px 8px;
+    }
+
+    .nav-section-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 0 12px;
+      margin-bottom: 8px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      color: var(--text-secondary);
+      transition: all 0.15s;
+      margin-bottom: 2px;
+    }
+
+    .nav-item:hover {
+      background: var(--bg-cream);
+      color: var(--text-primary);
+    }
+
+    .nav-item.active {
+      background: rgba(196, 145, 123, 0.12);
+      color: var(--accent-coral);
+    }
+
+    .nav-item svg {
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+    }
+
+    .nav-badge {
+      margin-left: auto;
+      background: var(--accent-coral);
+      color: white;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
+
+    .execution-history {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px;
+    }
+
+    .history-item {
+      padding: 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-bottom: 4px;
+      border: 1px solid transparent;
+      transition: all 0.15s;
+    }
+
+    .history-item:hover {
+      background: var(--bg-cream);
+    }
+
+    .history-item.active {
+      background: var(--bg-tertiary);
+      border-color: var(--border-light);
+    }
+
+    .history-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+
+    .history-status {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .history-status.success { background: var(--status-success); }
+    .history-status.running { background: var(--accent-coral); animation: pulse 2s infinite; }
+    .history-status.error { background: var(--status-error); }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .history-title {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-primary);
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .history-meta {
+      font-size: 11px;
+      color: var(--text-tertiary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .sidebar-footer {
+      padding: 12px;
+      border-top: 1px solid var(--border-light);
+    }
+
+    .settings-btn {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border: none;
+      background: transparent;
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 14px;
+      color: var(--text-secondary);
+      transition: all 0.15s;
+    }
+
+    .settings-btn:hover {
+      background: var(--bg-cream);
+      color: var(--text-primary);
+    }
+
+    .settings-btn svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    /* ==================== MAIN CONTENT ==================== */
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: var(--bg-cream);
+    }
+
+    .main-header {
+      padding: 20px 32px;
+      background: var(--bg-white);
+      border-bottom: 1px solid var(--border-light);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .search-box {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex: 1;
+      max-width: 480px;
+    }
+
+    .search-input {
+      flex: 1;
+      padding: 12px 16px;
+      border: 1px solid var(--border-light);
+      border-radius: 10px;
+      font-size: 14px;
+      background: var(--bg-cream);
+      color: var(--text-primary);
+      transition: all 0.2s;
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: var(--accent-coral);
+      background: var(--bg-white);
+      box-shadow: 0 0 0 3px rgba(196, 145, 123, 0.1);
+    }
+
+    .search-input::placeholder {
+      color: var(--text-tertiary);
+    }
+
+    .filter-tabs {
+      display: flex;
+      gap: 8px;
+    }
+
+    .filter-tab {
+      padding: 8px 16px;
+      border: 1px solid var(--border-light);
+      background: var(--bg-white);
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .filter-tab:hover {
+      border-color: var(--text-tertiary);
+    }
+
+    .filter-tab.active {
+      background: var(--accent-coral);
+      border-color: var(--accent-coral);
+      color: white;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 12px;
+    }
+
+    .btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+      border: none;
+      font-family: inherit;
+    }
+
+    .btn-primary {
+      background: var(--accent-coral);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-coral-dark);
+    }
+
+    .btn-secondary {
+      background: var(--bg-white);
+      border: 1px solid var(--border-light);
+      color: var(--text-primary);
+    }
+
+    .btn-secondary:hover {
+      background: var(--bg-cream);
+      border-color: var(--text-tertiary);
+    }
+
+    .btn svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    /* ==================== SOP MARKETPLACE ==================== */
+    .marketplace-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px 32px;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .section-subtitle {
+      font-size: 13px;
+      color: var(--text-tertiary);
+      margin-left: 12px;
+    }
+
+    .view-all {
+      font-size: 13px;
+      color: var(--accent-coral);
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    .view-all:hover {
+      text-decoration: underline;
+    }
+
+    /* Featured SOPs */
+    .featured-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .sop-card {
+      background: var(--bg-white);
+      border: 1px solid var(--border-light);
+      border-radius: 14px;
+      padding: 20px;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+    }
+
+    .sop-card:hover {
+      border-color: var(--accent-coral);
+      box-shadow: var(--shadow-card);
+      transform: translateY(-2px);
+    }
+
+    .sop-card-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+
+    .sop-icon {
+      width: 48px;
+      height: 48px;
+      background: var(--bg-cream);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      flex-shrink: 0;
+    }
+
+    .sop-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .sop-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .domain-tag {
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+    }
+
+    .domain-tag.nis {
+      background: var(--tag-nis-bg);
+      color: var(--tag-nis);
+    }
+
+    .domain-tag.sec {
+      background: var(--tag-sec-bg);
+      color: var(--tag-sec);
+    }
+
+    .domain-tag.ams {
+      background: var(--tag-ams-bg);
+      color: var(--tag-ams);
+    }
+
+    .domain-tag.delivery {
+      background: var(--tag-delivery-bg);
+      color: var(--tag-delivery);
+    }
+
+    .sop-author {
+      font-size: 12px;
+      color: var(--text-tertiary);
+    }
+
+    .sop-desc {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+      margin-bottom: 16px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .sop-meta {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding-top: 14px;
+      border-top: 1px solid var(--border-light);
+    }
+
+    .sop-stat {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--text-tertiary);
+    }
+
+    .sop-stat svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    .sop-card-actions {
+      margin-left: auto;
+    }
+
+    .run-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      background: var(--accent-coral);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .run-btn:hover {
+      background: var(--accent-coral-dark);
+    }
+
+    .run-btn svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    /* SOP List by Category */
+    .category-section {
+      margin-bottom: 24px;
+    }
+
+    .category-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 0;
+      cursor: pointer;
+    }
+
+    .category-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+
+    .category-icon.nis { background: var(--tag-nis-bg); }
+    .category-icon.sec { background: var(--tag-sec-bg); }
+    .category-icon.ams { background: var(--tag-ams-bg); }
+    .category-icon.delivery { background: var(--tag-delivery-bg); }
+
+    .category-name {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .category-count {
+      font-size: 12px;
+      color: var(--text-tertiary);
+      margin-left: auto;
+    }
+
+    .category-toggle {
+      color: var(--text-tertiary);
+      transition: transform 0.2s;
+    }
+
+    .category-toggle.expanded {
+      transform: rotate(180deg);
+    }
+
+    .category-list {
+      background: var(--bg-white);
+      border: 1px solid var(--border-light);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .sop-list-item {
+      display: flex;
+      align-items: center;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border-light);
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .sop-list-item:last-child {
+      border-bottom: none;
+    }
+
+    .sop-list-item:hover {
+      background: var(--bg-cream);
+    }
+
+    .sop-list-icon {
+      width: 36px;
+      height: 36px;
+      background: var(--bg-cream);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      margin-right: 14px;
+    }
+
+    .sop-list-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .sop-list-title {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-primary);
+      margin-bottom: 2px;
+    }
+
+    .sop-list-meta {
+      font-size: 12px;
+      color: var(--text-tertiary);
+      display: flex;
+      gap: 12px;
+    }
+
+    .sop-list-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .icon-btn {
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--border-light);
+      background: var(--bg-white);
+      border-radius: 6px;
+      cursor: pointer;
+      color: var(--text-tertiary);
+      transition: all 0.15s;
+    }
+
+    .icon-btn:hover {
+      background: var(--bg-cream);
+      color: var(--text-secondary);
+    }
+
+    .icon-btn svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    /* ==================== FREE CHAT SECTION ==================== */
+    .free-chat-section {
+      padding: 24px 32px;
+      background: var(--bg-white);
+      border-top: 1px solid var(--border-light);
+    }
+
+    .free-chat-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--text-tertiary);
+      margin-bottom: 12px;
+    }
+
+    .free-chat-label svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .input-wrapper {
+      background: var(--bg-cream);
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid var(--border-light);
+      transition: all 0.2s;
+    }
+
+    .input-wrapper:focus-within {
+      border-color: var(--accent-coral);
+      box-shadow: 0 0 0 3px rgba(196, 145, 123, 0.1);
+      background: var(--bg-white);
+    }
+
+    .free-chat-input {
+      width: 100%;
+      padding: 16px 20px;
+      border: none;
+      background: transparent;
+      font-size: 15px;
+      color: var(--text-primary);
+      resize: none;
+      font-family: inherit;
+    }
+
+    .free-chat-input:focus {
+      outline: none;
+    }
+
+    .free-chat-input::placeholder {
+      color: var(--text-tertiary);
+    }
+
+    .input-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 16px 12px;
+    }
+
+    .left-controls {
+      display: flex;
+      gap: 4px;
+    }
+
+    .control-btn {
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: none;
+      background: transparent;
+      border-radius: 8px;
+      cursor: pointer;
+      color: var(--text-tertiary);
+      transition: all 0.15s;
+    }
+
+    .control-btn:hover {
+      background: var(--bg-secondary);
+      color: var(--text-secondary);
+    }
+
+    .control-btn svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    .send-btn {
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: none;
+      background: var(--accent-coral);
+      border-radius: 12px;
+      cursor: pointer;
+      color: white;
+      transition: all 0.15s;
+    }
+
+    .send-btn:hover {
+      background: var(--accent-coral-dark);
+    }
+
+    .send-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .send-btn svg {
+      width: 20px;
+      height: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Left Sidebar -->
+    <aside class="left-sidebar">
+      <div class="left-sidebar-header">
+        <div class="brand">
+          <div class="brand-logo">G</div>
+          <div class="brand-text">
+            <h1>GTS Cowork</h1>
+            <span>AI Engineering Dept</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-section-title">导航</div>
+        <div class="nav-item active">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="7"></rect>
+            <rect x="14" y="3" width="7" height="7"></rect>
+            <rect x="14" y="14" width="7" height="7"></rect>
+            <rect x="3" y="14" width="7" height="7"></rect>
+          </svg>
+          <span>SOP 市场</span>
+        </div>
+        <div class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+          </svg>
+          <span>我的收藏</span>
+          <span class="nav-badge">3</span>
+        </div>
+        <div class="nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="12" y1="18" x2="12" y2="12"></line>
+            <line x1="9" y1="15" x2="15" y2="15"></line>
+          </svg>
+          <span>我创建的</span>
+        </div>
+      </div>
+
+      <div class="nav-section">
+        <div class="nav-section-title">执行历史</div>
+      </div>
+
+      <div class="execution-history">
+        <div class="history-item active">
+          <div class="history-header">
+            <span class="history-status running"></span>
+            <span class="history-title">跨厂商配置翻译</span>
+          </div>
+          <div class="history-meta">
+            <span>执行中...</span>
+            <span>•</span>
+            <span>78%</span>
+          </div>
+        </div>
+        <div class="history-item">
+          <div class="history-header">
+            <span class="history-status success"></span>
+            <span class="history-title">验收件自动纠错</span>
+          </div>
+          <div class="history-meta">
+            <span>今天 14:32</span>
+            <span>•</span>
+            <span>成功</span>
+          </div>
+        </div>
+        <div class="history-item">
+          <div class="history-header">
+            <span class="history-status success"></span>
+            <span class="history-title">LLD实时校准</span>
+          </div>
+          <div class="history-meta">
+            <span>今天 11:20</span>
+            <span>•</span>
+            <span>成功</span>
+          </div>
+        </div>
+        <div class="history-item">
+          <div class="history-header">
+            <span class="history-status error"></span>
+            <span class="history-title">故障证据链梳理</span>
+          </div>
+          <div class="history-meta">
+            <span>昨天 16:45</span>
+            <span>•</span>
+            <span>失败</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="sidebar-footer">
+        <button class="settings-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+          <span>系统设置</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Header -->
+      <header class="main-header">
+        <div class="search-box">
+          <input type="text" class="search-input" placeholder="🔍 搜索 SOP 技能...">
+          <div class="filter-tabs">
+            <button class="filter-tab active">全部</button>
+            <button class="filter-tab">NIS</button>
+            <button class="filter-tab">SEC</button>
+            <button class="filter-tab">AMS</button>
+            <button class="filter-tab">交付</button>
+          </div>
+        </div>
+        <div class="header-actions">
+          <button class="btn btn-secondary">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="17 8 12 3 7 8"></polyline>
+              <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
+            导入 SOP
+          </button>
+          <button class="btn btn-primary">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            创建新 SOP
+          </button>
+        </div>
+      </header>
+
+      <!-- Marketplace Content -->
+      <div class="marketplace-content">
+        <!-- Featured SOPs -->
+        <div class="section-header">
+          <div style="display: flex; align-items: baseline;">
+            <h2 class="section-title">⭐ 热门 SOP</h2>
+            <span class="section-subtitle">本月使用最多</span>
+          </div>
+          <a class="view-all">查看全部 →</a>
+        </div>
+
+        <div class="featured-grid">
+          <!-- Card 1 -->
+          <div class="sop-card" onclick="location.href='sop-execution.html'">
+            <div class="sop-card-header">
+              <div class="sop-icon">🔄</div>
+              <div class="sop-info">
+                <div class="sop-title">
+                  跨厂商配置翻译
+                  <span class="domain-tag nis">NIS</span>
+                </div>
+                <div class="sop-author">陈工 · v2.3</div>
+              </div>
+            </div>
+            <div class="sop-desc">旧网/异构网配置导出，翻译成目标厂商脚本，自动勾稽差异，支持华为、中兴、爱立信互转</div>
+            <div class="sop-meta">
+              <div class="sop-stat">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                </svg>
+                <span>执行 156 次</span>
+              </div>
+              <div class="sop-stat">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>
+                </svg>
+                <span>98%</span>
+              </div>
+              <div class="sop-card-actions">
+                <button class="run-btn">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                  </svg>
+                  执行
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 2 -->
+          <div class="sop-card">
+            <div class="sop-card-header">
+              <div class="sop-icon">✅</div>
+              <div class="sop-info">
+                <div class="sop-title">
+                  验收件自动纠错
+                  <span class="domain-tag sec">SEC</span>
+                </div>
+                <div class="sop-author">王工 · v1.8</div>
+              </div>
+            </div>
+            <div class="sop-desc">PAC/FAC 截图自动审核，比对合同要求，标记不合格项，生成整改清单</div>
+            <div class="sop-meta">
+              <div class="sop-stat">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                </svg>
+                <span>执行 234 次</span>
+              </div>
+              <div class="sop-stat">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>
+                </svg>
+                <span>95%</span>
+              </div>
+              <div class="sop-card-actions">
+                <button class="run-btn">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                  </svg>
+                  执行
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card 3 -->
+          <div class="sop-card">
+            <div class="sop-card-header">
+              <div class="sop-icon">📊</div>
+              <div class="sop-info">
+                <div class="sop-title">
+                  KPI报表自动生成
+                  <span class="domain-tag ams">AMS</span>
+                </div>
+                <div class="sop-author">周工 · v3.1</div>
+              </div>
+            </div>
+            <div class="sop-desc">从运维月报 Excel 提取关键 KPI，按模板生成管理层汇报 PPT，自动计算环比趋势</div>
+            <div class="sop-meta">
+              <div class="sop-stat">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                </svg>
+                <span>执行 189 次</span>
+              </div>
+              <div class="sop-stat">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>
+                </svg>
+                <span>97%</span>
+              </div>
+              <div class="sop-card-actions">
+                <button class="run-btn">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                  </svg>
+                  执行
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Category: NIS -->
+        <div class="category-section">
+          <div class="category-header">
+            <div class="category-icon nis">🌐</div>
+            <span class="category-name">NIS 网络集成</span>
+            <span class="category-count">5 个 SOP</span>
+            <svg class="category-toggle expanded" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </div>
+          <div class="category-list">
+            <div class="sop-list-item">
+              <div class="sop-list-icon">🔄</div>
+              <div class="sop-list-info">
+                <div class="sop-list-title">跨厂商配置翻译</div>
+                <div class="sop-list-meta">
+                  <span>陈工</span>
+                  <span>执行 156 次</span>
+                  <span>v2.3</span>
+                </div>
+              </div>
+              <div class="sop-list-actions">
+                <button class="icon-btn" title="收藏">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                  </svg>
+                </button>
+                <button class="icon-btn" title="详情">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                  </svg>
+                </button>
+                <button class="run-btn">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                  </svg>
+                  执行
+                </button>
+              </div>
+            </div>
+            <div class="sop-list-item">
+              <div class="sop-list-icon">📐</div>
+              <div class="sop-list-info">
+                <div class="sop-list-title">LLD实时校准</div>
+                <div class="sop-list-meta">
+                  <span>李工</span>
+                  <span>执行 89 次</span>
+                  <span>v1.5</span>
+                </div>
+              </div>
+              <div class="sop-list-actions">
+                <button class="icon-btn" title="收藏">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                  </svg>
+                </button>
+                <button class="icon-btn" title="详情">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                  </svg>
+                </button>
+                <button class="run-btn">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                  </svg>
+                  执行
+                </button>
+              </div>
+            </div>
+            <div class="sop-list-item">
+              <div class="sop-list-icon">🔙</div>
+              <div class="sop-list-info">
+                <div class="sop-list-title">割接回滚方案生成</div>
+                <div class="sop-list-meta">
+                  <span>张工</span>
+                  <span>执行 45 次</span>
+                  <span>v1.2</span>
+                </div>
+              </div>
+              <div class="sop-list-actions">
+                <button class="icon-btn" title="收藏">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                  </svg>
+                </button>
+                <button class="icon-btn" title="详情">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                  </svg>
+                </button>
+                <button class="run-btn">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                  </svg>
+                  执行
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Category: SEC -->
+        <div class="category-section">
+          <div class="category-header">
+            <div class="category-icon sec">🛡️</div>
+            <span class="category-name">SEC 交付保障</span>
+            <span class="category-count">4 个 SOP</span>
+            <svg class="category-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Category: AMS -->
+        <div class="category-section">
+          <div class="category-header">
+            <div class="category-icon ams">⚙️</div>
+            <span class="category-name">AMS 运维服务</span>
+            <span class="category-count">3 个 SOP</span>
+            <svg class="category-toggle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- Free Chat Section -->
+      <div class="free-chat-section">
+        <div class="free-chat-label">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+          </svg>
+          <span>自由对话模式（无 SOP 约束）</span>
+        </div>
+        <div class="input-wrapper">
+          <textarea class="free-chat-input" placeholder="描述你的任务，AI 将自由发挥..." rows="1"></textarea>
+          <div class="input-controls">
+            <div class="left-controls">
+              <button class="control-btn" title="上传文件">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="12" y1="5" x2="12" y2="19"></line>
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+              </button>
+            </div>
+            <button class="send-btn" disabled>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <line x1="12" y1="19" x2="12" y2="5"></line>
+                <polyline points="5 12 12 5 19 12"></polyline>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

@@ -1,0 +1,1307 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GTS Cowork - SOP 执行</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=EB+Garamond:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-cream: #f5f5f0;
+      --bg-white: #ffffff;
+      --text-primary: #1a1a1a;
+      --text-secondary: #6b6b6b;
+      --text-tertiary: #9a9a9a;
+      --border-light: #e5e5e0;
+      --accent-coral: #c4917b;
+      --accent-coral-dark: #b5826c;
+      --shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.04);
+      --shadow-input: 0 4px 16px rgba(0, 0, 0, 0.06);
+      --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.08);
+      --bg-secondary: #f3f4f6;
+      --bg-tertiary: #f0f0eb;
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+      --radius-xl: 20px;
+      --status-success: #4ade80;
+      --status-error: #ef4444;
+      --status-warning: #f59e0b;
+      --tag-nis: #3b82f6;
+      --tag-nis-bg: #eff6ff;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-cream);
+      color: var(--text-primary);
+      height: 100vh;
+      line-height: 1.5;
+      overflow: hidden;
+    }
+
+    .app-container {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ==================== HEADER ==================== */
+    .exec-header {
+      display: flex;
+      align-items: center;
+      padding: 16px 24px;
+      background: var(--bg-white);
+      border-bottom: 1px solid var(--border-light);
+      gap: 16px;
+    }
+
+    .back-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border: 1px solid var(--border-light);
+      background: var(--bg-white);
+      border-radius: 8px;
+      font-size: 14px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s;
+      text-decoration: none;
+    }
+
+    .back-btn:hover {
+      background: var(--bg-cream);
+      color: var(--text-primary);
+    }
+
+    .back-btn svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .exec-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex: 1;
+    }
+
+    .exec-icon {
+      width: 40px;
+      height: 40px;
+      background: var(--bg-cream);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+
+    .exec-info h1 {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .domain-tag {
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+      background: var(--tag-nis-bg);
+      color: var(--tag-nis);
+    }
+
+    .exec-meta {
+      font-size: 13px;
+      color: var(--text-tertiary);
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 12px;
+    }
+
+    .btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+      border: none;
+      font-family: inherit;
+    }
+
+    .btn-secondary {
+      background: var(--bg-white);
+      border: 1px solid var(--border-light);
+      color: var(--text-primary);
+    }
+
+    .btn-secondary:hover {
+      background: var(--bg-cream);
+    }
+
+    .btn svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    /* ==================== MAIN CONTENT ==================== */
+    .exec-content {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+
+    /* Left Panel - Config */
+    .config-panel {
+      width: 420px;
+      min-width: 420px;
+      background: var(--bg-white);
+      border-right: 1px solid var(--border-light);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .config-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+    }
+
+    .config-section {
+      margin-bottom: 28px;
+    }
+
+    .config-section:last-child {
+      margin-bottom: 0;
+    }
+
+    .config-section-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .section-number {
+      width: 28px;
+      height: 28px;
+      background: var(--accent-coral);
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .section-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    /* File Upload */
+    .file-upload-area {
+      border: 2px dashed var(--border-light);
+      border-radius: 12px;
+      padding: 32px 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: var(--bg-cream);
+    }
+
+    .file-upload-area:hover {
+      border-color: var(--accent-coral);
+      background: rgba(196, 145, 123, 0.05);
+    }
+
+    .file-upload-area.has-file {
+      border-style: solid;
+      border-color: var(--status-success);
+      background: rgba(74, 222, 128, 0.05);
+    }
+
+    .upload-icon {
+      width: 48px;
+      height: 48px;
+      margin: 0 auto 12px;
+      color: var(--text-tertiary);
+    }
+
+    .upload-icon svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    .upload-text {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 4px;
+    }
+
+    .upload-hint {
+      font-size: 12px;
+      color: var(--text-tertiary);
+    }
+
+    .uploaded-file {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      background: var(--bg-white);
+      border: 1px solid var(--border-light);
+      border-radius: 10px;
+      margin-top: 12px;
+    }
+
+    .file-icon {
+      width: 40px;
+      height: 40px;
+      background: var(--tag-nis-bg);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+
+    .file-info {
+      flex: 1;
+    }
+
+    .file-name {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .file-size {
+      font-size: 12px;
+      color: var(--text-tertiary);
+    }
+
+    .file-remove {
+      width: 28px;
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: none;
+      background: transparent;
+      border-radius: 6px;
+      cursor: pointer;
+      color: var(--text-tertiary);
+      transition: all 0.15s;
+    }
+
+    .file-remove:hover {
+      background: rgba(239, 68, 68, 0.1);
+      color: var(--status-error);
+    }
+
+    .file-remove svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    /* Form Controls */
+    .form-row {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .form-row:last-child {
+      margin-bottom: 0;
+    }
+
+    .form-group {
+      flex: 1;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+
+    .form-select {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid var(--border-light);
+      border-radius: 10px;
+      font-size: 14px;
+      background: var(--bg-white);
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .form-select:focus {
+      outline: none;
+      border-color: var(--accent-coral);
+      box-shadow: 0 0 0 3px rgba(196, 145, 123, 0.1);
+    }
+
+    .checkbox-group {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .checkbox-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+    }
+
+    .checkbox-item input {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--accent-coral);
+      cursor: pointer;
+    }
+
+    .checkbox-item span {
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    /* Config Footer */
+    .config-footer {
+      padding: 20px 24px;
+      border-top: 1px solid var(--border-light);
+      background: var(--bg-white);
+    }
+
+    .run-btn-large {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 16px 24px;
+      background: var(--accent-coral);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .run-btn-large:hover {
+      background: var(--accent-coral-dark);
+    }
+
+    .run-btn-large:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .run-btn-large svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    /* ==================== RIGHT PANEL - EXECUTION ==================== */
+    .execution-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: var(--bg-cream);
+    }
+
+    .execution-scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px 32px;
+    }
+
+    /* SOP Overview */
+    .sop-overview {
+      background: var(--bg-white);
+      border: 1px solid var(--border-light);
+      border-radius: 14px;
+      padding: 20px;
+      margin-bottom: 24px;
+    }
+
+    .sop-overview-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .sop-overview-header svg {
+      width: 18px;
+      height: 18px;
+      color: var(--text-tertiary);
+    }
+
+    .sop-overview-header span {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .sop-overview-text {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    /* Execution Progress */
+    .execution-progress {
+      background: var(--bg-white);
+      border: 1px solid var(--border-light);
+      border-radius: 14px;
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+
+    .progress-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-light);
+      background: var(--bg-tertiary);
+    }
+
+    .progress-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .progress-title svg {
+      width: 18px;
+      height: 18px;
+      color: var(--accent-coral);
+      animation: spin 1.5s linear infinite;
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .progress-percentage {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--accent-coral);
+    }
+
+    .progress-bar-container {
+      padding: 0 20px;
+      background: var(--bg-tertiary);
+      padding-bottom: 16px;
+    }
+
+    .progress-bar {
+      height: 8px;
+      background: var(--border-light);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent-coral), var(--accent-coral-dark));
+      border-radius: 4px;
+      transition: width 0.5s ease;
+    }
+
+    .progress-steps {
+      padding: 16px 20px;
+    }
+
+    .step-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    .step-item:last-child {
+      border-bottom: none;
+    }
+
+    .step-status {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .step-status.completed {
+      background: var(--status-success);
+      color: white;
+    }
+
+    .step-status.running {
+      background: var(--accent-coral);
+      color: white;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
+
+    .step-status.pending {
+      background: var(--border-light);
+      color: var(--text-tertiary);
+    }
+
+    .step-status svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    .step-content {
+      flex: 1;
+    }
+
+    .step-title {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+
+    .step-desc {
+      font-size: 13px;
+      color: var(--text-tertiary);
+    }
+
+    .step-progress {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .step-progress-bar {
+      flex: 1;
+      height: 4px;
+      background: var(--border-light);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .step-progress-fill {
+      height: 100%;
+      background: var(--accent-coral);
+      border-radius: 2px;
+      transition: width 0.3s;
+    }
+
+    .step-progress-text {
+      font-size: 12px;
+      color: var(--text-tertiary);
+      min-width: 60px;
+      text-align: right;
+    }
+
+    /* Output Preview */
+    .output-preview {
+      background: var(--bg-white);
+      border: 1px solid var(--border-light);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+
+    .output-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    .output-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .output-title svg {
+      width: 18px;
+      height: 18px;
+      color: var(--text-tertiary);
+    }
+
+    .output-tabs {
+      display: flex;
+      gap: 4px;
+    }
+
+    .output-tab {
+      padding: 6px 14px;
+      border: 1px solid var(--border-light);
+      background: var(--bg-white);
+      border-radius: 6px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .output-tab:hover {
+      background: var(--bg-cream);
+    }
+
+    .output-tab.active {
+      background: var(--accent-coral);
+      border-color: var(--accent-coral);
+      color: white;
+    }
+
+    .output-content {
+      padding: 20px;
+    }
+
+    .output-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .output-table th,
+    .output-table td {
+      padding: 12px 16px;
+      text-align: left;
+      border-bottom: 1px solid var(--border-light);
+    }
+
+    .output-table th {
+      background: var(--bg-tertiary);
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .output-table td {
+      color: var(--text-secondary);
+    }
+
+    .output-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .status-badge.success {
+      background: rgba(74, 222, 128, 0.15);
+      color: #16a34a;
+    }
+
+    .status-badge.warning {
+      background: rgba(245, 158, 11, 0.15);
+      color: #d97706;
+    }
+
+    .status-badge.error {
+      background: rgba(239, 68, 68, 0.15);
+      color: #dc2626;
+    }
+
+    .status-badge svg {
+      width: 12px;
+      height: 12px;
+    }
+
+    /* AI Explanation */
+    .ai-explanation {
+      background: var(--bg-white);
+      border: 1px solid var(--border-light);
+      border-radius: 14px;
+      padding: 20px;
+      margin-top: 24px;
+    }
+
+    .ai-explanation-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .ai-avatar {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, var(--accent-coral), var(--accent-coral-dark));
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .ai-label {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .ai-explanation-text {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      padding-left: 42px;
+    }
+
+    /* Execution Footer */
+    .execution-footer {
+      padding: 16px 32px;
+      border-top: 1px solid var(--border-light);
+      background: var(--bg-white);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .footer-stats {
+      display: flex;
+      gap: 24px;
+    }
+
+    .footer-stat {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--text-tertiary);
+    }
+
+    .footer-stat svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .footer-stat strong {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    .footer-actions {
+      display: flex;
+      gap: 12px;
+    }
+
+    .btn-success {
+      background: var(--status-success);
+      color: white;
+    }
+
+    .btn-success:hover {
+      background: #22c55e;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="exec-header">
+      <a href="sop-marketplace.html" class="back-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+        返回
+      </a>
+      <div class="exec-title">
+        <div class="exec-icon">🔄</div>
+        <div class="exec-info">
+          <h1>
+            跨厂商配置翻译
+            <span class="domain-tag">NIS</span>
+          </h1>
+          <div class="exec-meta">陈工 · v2.3 · 累计执行 156 次</div>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-secondary">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="16" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+          </svg>
+          查看 SOP 详情
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="exec-content">
+      <!-- Left Panel - Configuration -->
+      <div class="config-panel">
+        <div class="config-scroll">
+          <!-- Step 1: Upload Files -->
+          <div class="config-section">
+            <div class="config-section-header">
+              <span class="section-number">1</span>
+              <span class="section-title">上传输入文件</span>
+            </div>
+            
+            <div class="file-upload-area has-file">
+              <div class="upload-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="17 8 12 3 7 8"></polyline>
+                  <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+              </div>
+              <div class="upload-text">拖拽文件到此处，或点击选择</div>
+              <div class="upload-hint">支持 .cfg .xml .txt 格式</div>
+            </div>
+
+            <div class="uploaded-file">
+              <div class="file-icon">📄</div>
+              <div class="file-info">
+                <div class="file-name">ZTE_RAN_config_v1.cfg</div>
+                <div class="file-size">2.3 MB · 1,247 条配置项</div>
+              </div>
+              <button class="file-remove">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Step 2: Configure Parameters -->
+          <div class="config-section">
+            <div class="config-section-header">
+              <span class="section-number">2</span>
+              <span class="section-title">配置参数</span>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">源厂商</label>
+                <select class="form-select">
+                  <option value="zte" selected>中兴 (ZTE)</option>
+                  <option value="ericsson">爱立信 (Ericsson)</option>
+                  <option value="nokia">诺基亚 (Nokia)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">目标厂商</label>
+                <select class="form-select">
+                  <option value="huawei" selected>华为 (Huawei)</option>
+                  <option value="zte">中兴 (ZTE)</option>
+                  <option value="ericsson">爱立信 (Ericsson)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">设备类型</label>
+                <select class="form-select">
+                  <option value="bbu" selected>BBU 基带单元</option>
+                  <option value="aau">AAU 有源天线</option>
+                  <option value="rru">RRU 射频拉远</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">输出格式</label>
+                <select class="form-select">
+                  <option value="cli" selected>CLI 脚本</option>
+                  <option value="xml">XML 配置</option>
+                  <option value="json">JSON 格式</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 3: Options -->
+          <div class="config-section">
+            <div class="config-section-header">
+              <span class="section-number">3</span>
+              <span class="section-title">输出选项</span>
+            </div>
+
+            <div class="checkbox-group">
+              <label class="checkbox-item">
+                <input type="checkbox" checked>
+                <span>生成差异勾稽报告</span>
+              </label>
+              <label class="checkbox-item">
+                <input type="checkbox" checked>
+                <span>标记不兼容配置项</span>
+              </label>
+              <label class="checkbox-item">
+                <input type="checkbox">
+                <span>包含回滚脚本</span>
+              </label>
+              <label class="checkbox-item">
+                <input type="checkbox">
+                <span>生成变更说明文档</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div class="config-footer">
+          <button class="run-btn-large">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="5 3 19 12 5 21 5 3"></polygon>
+            </svg>
+            开始执行 SOP
+          </button>
+        </div>
+      </div>
+
+      <!-- Right Panel - Execution -->
+      <div class="execution-panel">
+        <div class="execution-scroll">
+          <!-- SOP Overview -->
+          <div class="sop-overview">
+            <div class="sop-overview-header">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="16" x2="12" y2="12"></line>
+                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+              </svg>
+              <span>SOP 概述</span>
+            </div>
+            <div class="sop-overview-text">
+              本 SOP 用于将华为/中兴/爱立信等异厂商的配置文件，翻译成目标厂商的配置脚本，并自动生成差异勾稽报告。支持 BBU、AAU、RRU 等多种设备类型，内置完整的参数映射规则库。
+            </div>
+          </div>
+
+          <!-- Execution Progress -->
+          <div class="execution-progress">
+            <div class="progress-header">
+              <div class="progress-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="12" y1="2" x2="12" y2="6"></line>
+                  <line x1="12" y1="18" x2="12" y2="22"></line>
+                  <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line>
+                  <line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line>
+                  <line x1="2" y1="12" x2="6" y2="12"></line>
+                  <line x1="18" y1="12" x2="22" y2="12"></line>
+                  <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line>
+                  <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line>
+                </svg>
+                SOP 执行进度
+              </div>
+              <span class="progress-percentage">78%</span>
+            </div>
+            <div class="progress-bar-container">
+              <div class="progress-bar">
+                <div class="progress-bar-fill" style="width: 78%"></div>
+              </div>
+            </div>
+            <div class="progress-steps">
+              <!-- Step 1 -->
+              <div class="step-item">
+                <div class="step-status completed">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                </div>
+                <div class="step-content">
+                  <div class="step-title">1. 解析源配置文件</div>
+                  <div class="step-desc">解析完成: 1,247 条配置项</div>
+                </div>
+              </div>
+
+              <!-- Step 2 -->
+              <div class="step-item">
+                <div class="step-status completed">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                </div>
+                <div class="step-content">
+                  <div class="step-title">2. 识别设备类型和版本</div>
+                  <div class="step-desc">检测到: BBU3900 V100R015</div>
+                </div>
+              </div>
+
+              <!-- Step 3 -->
+              <div class="step-item">
+                <div class="step-status completed">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                </div>
+                <div class="step-content">
+                  <div class="step-title">3. 加载翻译规则库</div>
+                  <div class="step-desc">匹配规则: ZTE→HW BBU 映射表 v3.2</div>
+                </div>
+              </div>
+
+              <!-- Step 4 - Running -->
+              <div class="step-item">
+                <div class="step-status running">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="2" x2="12" y2="6"></line>
+                    <line x1="12" y1="18" x2="12" y2="22"></line>
+                    <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line>
+                  </svg>
+                </div>
+                <div class="step-content">
+                  <div class="step-title">4. 逐条翻译配置项</div>
+                  <div class="step-desc">正在处理配置项...</div>
+                  <div class="step-progress">
+                    <div class="step-progress-bar">
+                      <div class="step-progress-fill" style="width: 78%"></div>
+                    </div>
+                    <span class="step-progress-text">972 / 1,247</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Step 5 - Pending -->
+              <div class="step-item">
+                <div class="step-status pending">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                  </svg>
+                </div>
+                <div class="step-content">
+                  <div class="step-title">5. 生成差异勾稽报告</div>
+                  <div class="step-desc">等待执行...</div>
+                </div>
+              </div>
+
+              <!-- Step 6 - Pending -->
+              <div class="step-item">
+                <div class="step-status pending">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                  </svg>
+                </div>
+                <div class="step-content">
+                  <div class="step-title">6. 输出目标脚本</div>
+                  <div class="step-desc">等待执行...</div>
+                </div>
+              </div>
+
+              <!-- Step 7 - Pending -->
+              <div class="step-item">
+                <div class="step-status pending">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                  </svg>
+                </div>
+                <div class="step-content">
+                  <div class="step-title">7. 质量校验</div>
+                  <div class="step-desc">等待执行...</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Output Preview -->
+          <div class="output-preview">
+            <div class="output-header">
+              <div class="output-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                </svg>
+                实时输出预览
+              </div>
+              <div class="output-tabs">
+                <button class="output-tab active">勾稽报告</button>
+                <button class="output-tab">目标脚本</button>
+                <button class="output-tab">原始日志</button>
+              </div>
+            </div>
+            <div class="output-content">
+              <table class="output-table">
+                <thead>
+                  <tr>
+                    <th>序号</th>
+                    <th>源配置项</th>
+                    <th>目标配置项</th>
+                    <th>状态</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>1</td>
+                    <td>NE_NAME=Site_SZ_001</td>
+                    <td>set name "Site_SZ_001"</td>
+                    <td>
+                      <span class="status-badge success">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                        已转换
+                      </span>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>2</td>
+                    <td>FREQ_BAND=n78</td>
+                    <td>frequency-band n78</td>
+                    <td>
+                      <span class="status-badge success">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <polyline points="20 6 9 17 4 12"></polyline>
+                        </svg>
+                        已转换
+                      </span>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>3</td>
+                    <td>TX_POWER=43dBm</td>
+                    <td>max-tx-power 43</td>
+                    <td>
+                      <span class="status-badge warning">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                          <line x1="12" y1="9" x2="12" y2="13"></line>
+                          <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                        </svg>
+                        需确认
+                      </span>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>4</td>
+                    <td>MIMO_MODE=4T4R</td>
+                    <td>—</td>
+                    <td>
+                      <span class="status-badge error">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <circle cx="12" cy="12" r="10"></circle>
+                          <line x1="15" y1="9" x2="9" y2="15"></line>
+                          <line x1="9" y1="9" x2="15" y2="15"></line>
+                        </svg>
+                        不兼容
+                      </span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- AI Explanation -->
+          <div class="ai-explanation">
+            <div class="ai-explanation-header">
+              <div class="ai-avatar">AI</div>
+              <span class="ai-label">执行说明</span>
+            </div>
+            <div class="ai-explanation-text">
+              正在处理第 4 步...发现 12 条配置项的参数格式与目标厂商不完全匹配，已按照 SOP 中定义的"参数近似匹配"规则进行转换。其中 3 条配置项（MIMO_MODE 相关）在目标厂商设备中没有对应参数，已标记为"不兼容"，建议人工处理。
+            </div>
+          </div>
+        </div>
+
+        <!-- Execution Footer -->
+        <div class="execution-footer">
+          <div class="footer-stats">
+            <div class="footer-stat">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+              <span>已用时: <strong>2 分 34 秒</strong></span>
+            </div>
+            <div class="footer-stat">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+              </svg>
+              <span>成功: <strong style="color: #16a34a">960</strong></span>
+            </div>
+            <div class="footer-stat">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+              </svg>
+              <span>待确认: <strong style="color: #d97706">12</strong></span>
+            </div>
+            <div class="footer-stat">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="15" y1="9" x2="9" y2="15"></line>
+                <line x1="9" y1="9" x2="15" y2="15"></line>
+              </svg>
+              <span>不兼容: <strong style="color: #dc2626">3</strong></span>
+            </div>
+          </div>
+          <div class="footer-actions">
+            <button class="btn btn-secondary">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="6" y="6" width="12" height="12" rx="2"></rect>
+              </svg>
+              停止执行
+            </button>
+            <button class="btn btn-success" disabled>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              下载结果
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
